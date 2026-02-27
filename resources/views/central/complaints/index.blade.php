@@ -2,29 +2,29 @@
 
 @section('content')
     <div x-data="{ 
-            showModal: false,
-            currentComplaint: null,
-            actionUrl: '',
-            status: '',
-            resolution: '',
+                    showModal: false,
+                    currentComplaint: null,
+                    actionUrl: '',
+                    status: '',
+                    resolution: '',
 
-            edit(complaint) {
-                this.currentComplaint = complaint;
-                this.status = complaint.status;
-                this.resolution = complaint.resolution || '';
-                this.actionUrl = '{{ route('central.complaints.update', ':id') }}'.replace(':id', complaint.id);
-                this.showModal = true;
-            },
+                    edit(complaint) {
+                        this.currentComplaint = complaint;
+                        this.status = complaint.status;
+                        this.resolution = complaint.resolution || '';
+                        this.actionUrl = '{{ route('central.complaints.update', ':id') }}'.replace(':id', complaint.id);
+                        this.showModal = true;
+                    },
 
-            closeModal() {
-                this.showModal = false;
-                setTimeout(() => {
-                    this.currentComplaint = null;
-                    this.status = '';
-                    this.resolution = '';
-                }, 300);
-            }
-        }" class="flex flex-col space-y-8 p-8 max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
+                    closeModal() {
+                        this.showModal = false;
+                        setTimeout(() => {
+                            this.currentComplaint = null;
+                            this.status = '';
+                            this.resolution = '';
+                        }, 300);
+                    }
+                }" class="flex flex-col space-y-8 p-8 max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
 
         <!-- Header -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -144,7 +144,7 @@
                     class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-primary/20 transition-all duration-300 overflow-hidden relative">
                     <!-- Status Accent Line -->
                     <div class="absolute left-0 top-0 bottom-0 w-1 
-                                {{ $complaint->status === 'open' ? 'bg-amber-400' :
+                                                {{ $complaint->status === 'open' ? 'bg-amber-400' :
                 ($complaint->status === 'in_progress' ? 'bg-blue-500' :
                     ($complaint->status === 'resolved' ? 'bg-emerald-500' :
                         ($complaint->status === 'closed' ? 'bg-gray-500' : 'bg-gray-300'))) }}"></div>
@@ -153,7 +153,7 @@
                     <div class="absolute top-0 right-0 overflow-hidden w-16 h-16 pointer-events-none opacity-80"
                         x-show="'{{ $complaint->priority }}' === 'urgent' || '{{ $complaint->priority }}' === 'high'">
                         <div class="absolute top-4 -right-6 origin-center rotate-45 py-1 px-8 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm flex items-center justify-center
-                                    {{ $complaint->priority === 'urgent' ? 'bg-red-500' : 'bg-orange-500' }}">
+                                                    {{ $complaint->priority === 'urgent' ? 'bg-red-500' : 'bg-orange-500' }}">
                             {{ $complaint->priority }}
                         </div>
                     </div>
@@ -170,7 +170,7 @@
                                             </h3>
                                             <span
                                                 class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest
-                                                        {{ $complaint->status === 'open' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-500/20' :
+                                                                        {{ $complaint->status === 'open' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-500/20' :
                 ($complaint->status === 'in_progress' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-500/20' :
                     ($complaint->status === 'resolved' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500/20' :
                         ($complaint->status === 'closed' ? 'bg-gray-100 text-gray-700 ring-1 ring-gray-400/30' : 'bg-gray-50 text-gray-700'))) }}">
@@ -233,6 +233,24 @@
                                     <span class="text-xs font-medium text-gray-700 pr-2 uppercase">{{ $complaint->type }}</span>
                                 </div>
 
+                                <!-- Creator details -->
+                                <div
+                                    class="flex items-center gap-2 inline-flex bg-gray-50 rounded-lg p-1.5 border border-gray-100">
+                                    <div
+                                        class="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center text-[10px] font-bold text-gray-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                            <circle cx="9" cy="7" r="4" />
+                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700 pr-2">Logged by:
+                                        {{ $complaint->user->name ?? 'System' }}</span>
+                                </div>
+
                                 <!-- Description -->
                                 <div
                                     class="bg-gray-50/50 p-4 rounded-xl border border-dashed border-gray-200 text-sm text-gray-700 leading-relaxed italic">
@@ -253,6 +271,60 @@
                                         </div>
                                         <span class="font-bold text-emerald-900 block mb-1">Resolution Provided:</span>
                                         <span class="opacity-90">{{ $complaint->resolution }}</span>
+                                    </div>
+                                @endif
+
+                                <!-- Activity Timeline -->
+                                @if($complaint->activities->isNotEmpty())
+                                    <div class="mt-6 pt-6 border-t border-gray-100">
+                                        <h4
+                                            class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            Case History
+                                        </h4>
+                                        <div class="space-y-4">
+                                            @foreach($complaint->activities as $loopIndex => $activity)
+                                                <div class="flex gap-3">
+                                                    <div class="relative mt-1">
+                                                        @if(!$loop->last)
+                                                            <div
+                                                                class="absolute left-1/2 top-4 bottom-[-1.5rem] w-px bg-gray-200 -translate-x-1/2">
+                                                            </div>
+                                                        @endif
+                                                        <div
+                                                            class="w-2 h-2 rounded-full bg-indigo-400 ring-4 ring-indigo-50 relative z-10">
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        class="flex-1 bg-white p-3 rounded-xl border border-gray-100 shadow-sm text-xs mt-[-0.5rem]">
+                                                        <div class="flex items-center justify-between mb-1.5 text-gray-500">
+                                                            <span
+                                                                class="font-bold text-gray-800">{{ $activity->causer->name ?? 'System' }}</span>
+                                                            <span
+                                                                class="text-[10px]">{{ $activity->created_at->format('M d, Y h:i A') }}</span>
+                                                        </div>
+                                                        <div class="text-gray-600">
+                                                            @if(isset($activity->properties['attributes']['status']) && isset($activity->properties['old']['status']))
+                                                                Status changed: <span
+                                                                    class="font-bold border bg-gray-50 px-1 rounded uppercase min-w-[3rem] inline-block text-center">{{ str_replace('_', ' ', $activity->properties['old']['status']) }}</span>
+                                                                &rarr; <span
+                                                                    class="font-bold border bg-indigo-50 text-indigo-700 px-1 rounded uppercase min-w-[3rem] inline-block text-center">{{ str_replace('_', ' ', $activity->properties['attributes']['status']) }}</span>
+                                                            @elseif(isset($activity->properties['attributes']['status']))
+                                                                Status set to: <span
+                                                                    class="font-bold border bg-indigo-50 text-indigo-700 px-1 rounded">{{ str_replace('_', ' ', $activity->properties['attributes']['status']) }}</span>
+                                                            @elseif(isset($activity->properties['attributes']['resolution']))
+                                                                Provided resolution details
+                                                            @else
+                                                                Updated case information
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     </div>
                                 @endif
 

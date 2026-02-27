@@ -17,9 +17,9 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => [
-        // 'localhost', // Keep IP only to avoid Duplicate Route Name errors
+        'localhost', // Keep IP only to avoid Duplicate Route Name errors
         // 'gandhinagar.krushifyagro.com',
-        '3.108.194.146',
+        // '3.108.194.146',
 
     ],
 

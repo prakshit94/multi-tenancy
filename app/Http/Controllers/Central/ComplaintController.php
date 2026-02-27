@@ -25,7 +25,7 @@ class ComplaintController extends Controller
     {
         // $this->authorize('complaints view'); // Assuming a permission system exists, skipping for now to prevent blockages if 'complaints view' isn't seeded
 
-        $query = Complaint::with(['order', 'customer', 'user']);
+        $query = Complaint::with(['order', 'customer', 'user', 'activities.causer']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');

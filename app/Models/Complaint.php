@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Complaint extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'reference_number',
@@ -28,6 +30,16 @@ class Complaint extends Model
     protected $casts = [
         'resolved_at' => 'datetime',
     ];
+
+    /**
+     * Activity Log config
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'priority', 'resolution'])
+            ->logOnlyDirty();
+    }
 
     /**
      * Generate a unique reference number when creating a new complaint.

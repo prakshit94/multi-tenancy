@@ -402,7 +402,7 @@
                                             </div>
                                             
                                             @php 
-                                                                                                                                                                                                                                                                                                $itemDiscounts = $order->items->sum('discount_amount');
+                                                                                                                                                                                                                                                                                                                                                $itemDiscounts = $order->items->sum('discount_amount');
                                                 $orderDiscount = $order->discount_amount - $itemDiscounts;
                                             @endphp
 
@@ -453,25 +453,28 @@
                         @if($order->complaints && $order->complaints->isNotEmpty())
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 @foreach($order->complaints as $complaint)
-                                                                                    <div class="p-5 rounded-xl border border-gray-100 bg-gray-50/50 group hover:border-red-100 hover:bg-red-50/30 transition-colors">
-                                                                                        <div class="flex items-start justify-between mb-3">
-                                                                                            <div>
-                                                                                                <span class="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md
-                                                                                                    {{ $complaint->status === 'open' ? 'bg-amber-100 text-amber-700' :
+                                                                                                            <div class="p-5 rounded-xl border border-gray-100 bg-gray-50/50 group hover:border-red-100 hover:bg-red-50/30 transition-colors">
+                                                                                                                <div class="flex items-start justify-between mb-3">
+                                                                                                                    <div>
+                                                                                                                        <span class="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md
+                                                                                                                            {{ $complaint->status === 'open' ? 'bg-amber-100 text-amber-700' :
                                     ($complaint->status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                                         ($complaint->status === 'resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-700')) }}">
-                                                                                                    {{ str_replace('_', ' ', $complaint->status) }}
-                                                                                                </span>
-                                                                                                <p class="text-xs text-gray-500 font-mono mt-2">{{ $complaint->reference_number }}</p>
-                                                                                            </div>
-                                                                                            <p class="text-[10px] text-gray-400 font-medium whitespace-nowrap">{{ $complaint->created_at->format('M d, Y') }}</p>
-                                                                                        </div>
-                                                                                        <p class="text-sm font-bold text-gray-900 leading-snug">{{ $complaint->subject }}</p>
-                                                                                        <p class="text-xs text-gray-600 mt-2 line-clamp-2 leading-relaxed">{{ $complaint->description }}</p>
-                                                                                        <div class="mt-4 pt-4 border-t border-gray-100/80 flex justify-end">
-                                                                                            <a href="{{ route('tenant.complaints.index', ['search' => $complaint->reference_number]) }}" class="text-[10px] font-bold uppercase text-indigo-600 hover:text-indigo-800 hover:underline">View Record Details &rarr;</a>
-                                                                                        </div>
-                                                                                    </div>
+                                                                                                                            {{ str_replace('_', ' ', $complaint->status) }}
+                                                                                                                        </span>
+                                                                                                                        <p class="text-xs text-gray-500 font-mono mt-2">{{ $complaint->reference_number }}</p>
+                                                                                                                    </div>
+                                                                                                                    <div class="text-right">
+                                                                                                                        <p class="text-[10px] text-gray-400 font-medium whitespace-nowrap">{{ $complaint->created_at->format('M d, Y') }}</p>
+                                                                                                                        <p class="text-[10px] text-gray-500 font-medium mt-1">by {{ $complaint->user->name ?? 'System' }}</p>
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                                <p class="text-sm font-bold text-gray-900 leading-snug">{{ $complaint->subject }}</p>
+                                                                                                                <p class="text-xs text-gray-600 mt-2 line-clamp-2 leading-relaxed">{{ $complaint->description }}</p>
+                                                                                                                <div class="mt-4 pt-4 border-t border-gray-100/80 flex justify-end">
+                                                                                                                    <a href="{{ route('tenant.complaints.index', ['search' => $complaint->reference_number]) }}" class="text-[10px] font-bold uppercase text-indigo-600 hover:text-indigo-800 hover:underline">View Record Details &rarr;</a>
+                                                                                                                </div>
+                                                                                                            </div>
                                 @endforeach
                             </div>
                         @else
