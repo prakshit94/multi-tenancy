@@ -1,0 +1,574 @@
+<aside
+    class="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border/50 bg-sidebar/95 backdrop-blur-2xl transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] md:translate-x-0 group/sidebar shadow-2xl shadow-primary/5 dark:shadow-black/50"
+    style="position: fixed;" :class="{
+        'w-72': !sidebarCollapsed,
+        'w-[4.5rem]': sidebarCollapsed,
+        '-translate-x-full': !mobileMenuOpen && window.innerWidth < 768,
+        'translate-x-0': mobileMenuOpen && window.innerWidth < 768
+    }" @click.away="mobileMenuOpen = false">
+    <!-- Logo Area -->
+    <div
+        class="h-20 flex items-center px-5 border-b border-sidebar-border/50 relative overflow-hidden shrink-0 group/logo">
+        <div
+            class="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent opacity-0 group-hover/logo:opacity-100 transition-opacity duration-700">
+        </div>
+
+        <a href="{{ url('/dashboard') }}" class="flex items-center gap-3.5 relative z-10 w-full"
+            :class="sidebarCollapsed ? 'justify-center' : ''">
+            <div
+                class="h-10 w-10 min-w-10 rounded-xl bg-gradient-to-br from-primary via-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-primary/25 shrink-0 transition-all duration-500 group-hover/logo:scale-110 group-hover/logo:rotate-3 ring-1 ring-white/10">
+                <!-- Premium Logo Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                    class="w-5 h-5 text-white drop-shadow-md">
+                    <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
+                </svg>
+            </div>
+            <div class="flex flex-col overflow-hidden transition-all duration-500 ease-out"
+                :class="sidebarCollapsed ? 'w-0 opacity-0 absolute translate-x-10' : 'w-auto opacity-100 translate-x-0'">
+                <span
+                    class="font-heading font-bold text-lg tracking-tight leading-none text-foreground group-hover/logo:text-primary transition-colors duration-300 whitespace-nowrap">
+                    {{ tenant('id') ? ucfirst(tenant('id')) : 'Central Admin' }}
+                </span>
+                <span
+                    class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.25em] mt-1 pl-0.5 whitespace-nowrap">Workspace</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar py-6 px-3 space-y-8">
+
+        <!-- SECTION: OVERVIEW -->
+        @canany(['dashboard view', 'analytics view', 'reports view'])
+            <div class="space-y-1">
+                <div class="px-3 mb-2 transition-opacity duration-300"
+                    :class="sidebarCollapsed ? 'opacity-0 h-0 hidden' : 'opacity-100'">
+                    <h3 class="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground/60">
+                        Overview
+                    </h3>
+                </div>
+
+                @can('dashboard view')
+                    <x-layout.nav-link title="Dashboard" url="/dashboard" :active="request()->is('dashboard')">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <rect width="7" height="9" x="3" y="3" rx="1" />
+                                <rect width="7" height="5" x="14" y="3" rx="1" />
+                                <rect width="7" height="9" x="14" y="12" rx="1" />
+                                <rect width="7" height="5" x="3" y="16" rx="1" />
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-link>
+                @endcan
+
+                <!-- @can('analytics view')
+                                                                                                                <x-layout.nav-link title="Analytics" url="#" :active="false">
+                                                                                                                    <x-slot name="icon">
+                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                                                                                                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                            class="size-5">
+                                                                                                                            <path d="M3 3v18h18" />
+                                                                                                                            <path d="m19 9-5 5-4-4-3 3" />
+                                                                                                                        </svg>
+                                                                                                                    </x-slot>
+                                                                                                                </x-layout.nav-link>
+                                                                                                            @endcan -->
+
+                @can('reports view')
+                    <x-layout.nav-link title="Reports" url="/reports" :active="request()->is('reports*')">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-link>
+                @endcan
+            </div>
+        @endcanany
+
+
+
+        <!-- SECTION: COMMERCE -->
+        @php
+            $catalogItems = array_filter([
+                [
+                    'title' => 'Products',
+                    'url' => tenant() ? route('tenant.products.index') : route('central.products.index'),
+                    'active' => request()->routeIs('tenant.products.*') || request()->routeIs('central.products.*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'m7.5 4.27 9 5.15\'/><path d=\'M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\'/><path d=\'m3.3 7 8.7 5 8.7-5\'/><path d=\'M12 22V12\'/></svg>',
+                    'permission' => 'products view'
+                ],
+                [
+                    'title' => 'Categories',
+                    'url' => tenant() ? route('tenant.categories.index') : route('central.categories.index'),
+                    'active' => request()->is('categories*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M3 6h18\'/><path d=\'M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\'/><rect width=\'18\' height=\'14\' x=\'3\' y=\'6\' rx=\'2\'/></svg>',
+                    'permission' => 'categories view'
+                ],
+                [
+                    'title' => 'Brands',
+                    'url' => tenant() ? route('tenant.brands.index') : route('central.brands.index'),
+                    'active' => request()->is('brands*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M6 9H4.5a2.5 2.5 0 0 1 0-5H6\'/><path d=\'M18 9h1.5a2.5 2.5 0 0 0 0-5H18\'/><path d=\'M4 22h16\'/><path d=\'M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\'/><path d=\'M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\'/><path d=\'M18 2H6v7a6 6 0 0 0 12 0V2Z\'/></svg>',
+                    'permission' => 'brands view'
+                ],
+                [
+                    'title' => 'Units',
+                    'url' => tenant() ? route('tenant.units.index') : route('central.units.index'),
+                    'active' => request()->is('units*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M3 5v14\'/><path d=\'M21 5v14\'/><path d=\'M8 12h8\'/><path d=\'m10 9-2 3 2 3\'/><path d=\'m14 9 2 3-2 3\'/></svg>',
+                    'permission' => 'products view'
+                ],
+                [
+                    'title' => 'Product Types',
+                    'url' => tenant() ? route('tenant.product_types.index') : route('central.product_types.index'),
+                    'active' => request()->is('product-types*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M20.2 7.8l-7.7 7.7-4-4-5.7 5.7\'/><path d=\'M15 7h6v6\'/></svg>',
+                    'permission' => 'products view'
+                ],
+                [
+                    'title' => 'Collections',
+                    'url' => '#',
+                    'active' => false,
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M3 6h18\'/><path d=\'M7 6v14\'/><path d=\'M17 6v14\'/><rect width=\'18\' height=\'4\' x=\'3\' y=\'2\' rx=\'1\'/></svg>',
+                    'permission' => 'collections view'
+                ],
+
+            ], fn($item) => auth()->check() && auth()->user()->can($item['permission']));
+        @endphp
+
+        @if(count($catalogItems) > 0 || (auth()->check() && auth()->user()->canAny(['orders view', 'customers view'])))
+            <div class="space-y-1">
+                <div class="px-3 mb-2 transition-opacity duration-300"
+                    :class="sidebarCollapsed ? 'opacity-0 h-0 hidden' : 'opacity-100'">
+                    <h3 class="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground/60">
+                        Commerce
+                    </h3>
+                </div>
+
+                <!-- 1. CATALOG -->
+                @if(count($catalogItems) > 0)
+                    <x-layout.nav-collapsible title="Catalog" :active="request()->is('products*') || request()->is('central/products*') || request()->is('categories*') || request()->is('brands*')"
+                        :items="$catalogItems">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <path d="m7.5 4.27 9 5.15" />
+                                <path
+                                    d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                                <path d="m3.3 7 8.7 5 8.7-5" />
+                                <path d="M12 22V12" />
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-collapsible>
+                @endif
+
+                <!-- 2. SALES -->
+                @php
+                    $salesItems = array_filter([
+                        [
+                            'title' => 'Verification',
+                            'url' => tenant() ? route('tenant.orders.verification.index') : route('central.orders.verification.index'),
+                            'active' => request()->routeIs('tenant.orders.verification.*') || request()->routeIs('central.orders.verification.*'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M22 11.08V12a10 10 0 1 1-5.93-9.14\'/><polyline points=\'22 4 12 14.01 9 11.01\'/></svg>',
+                            'permission' => 'orders verify'
+                        ],
+                        [
+                            'title' => 'Tracking',
+                            'url' => tenant() ? route('tenant.orders.tracking.index') : route('central.orders.tracking.index'),
+                            'active' => request()->routeIs('tenant.orders.tracking.*') || request()->routeIs('central.orders.tracking.*'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'2\' ry=\'2\'/><path d=\'M16 8h4l3 3v5h-7V8z\'/><circle cx=\'5.5\' cy=\'18.5\' r=\'2.5\'/><circle cx=\'18.5\' cy=\'18.5\' r=\'2.5\'/></svg>',
+                            'permission' => 'orders view'
+                        ],
+                        [
+                            'title' => 'Orders',
+                            'url' => tenant() ? route('tenant.orders.index') : route('central.orders.index'),
+                            'active' => (request()->routeIs('tenant.orders.*') || request()->routeIs('central.orders.*')) && !request()->routeIs('*.verification.*') && !request()->routeIs('*.tracking.*'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><rect width=\'16\' height=\'20\' x=\'4\' y=\'2\' rx=\'2\'/><path d=\'M9 22v-4h6v4\'/><path d=\'M8 6h.01\'/><path d=\'M16 6h.01\'/><path d=\'M12 6h.01\'/><path d=\'M12 10h.01\'/><path d=\'M12 14h.01\'/><path d=\'M16 10h.01\'/><path d=\'M16 14h.01\'/><path d=\'M8 10h.01\'/><path d=\'M8 14h.01\'/></svg>',
+                            'permission' => 'orders view'
+                        ],
+                        [
+                            'title' => 'Invoices',
+                            'url' => tenant() ? route('tenant.invoices.index') : route('central.invoices.index'),
+                            'active' => request()->routeIs('tenant.invoices.*') || request()->routeIs('central.invoices.*'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\'/><polyline points=\'14 2 14 8 20 8\'/><path d=\'M16 13H8\'/><path d=\'M16 17H8\'/><path d=\'M10 9H8\'/></svg>',
+                            'permission' => 'invoices view' /* Map to orders view */
+                        ],
+                        [
+                            'title' => 'Shipments',
+                            'url' => tenant() ? route('tenant.shipments.index') : route('central.shipments.index'),
+                            'active' => request()->routeIs('tenant.shipments.*') || request()->routeIs('central.shipments.*'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M10 17h4V5H2v12h3\'/><path d=\'M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5\'/><path d=\'M14 17h1\'/><circle cx=\'7.5\' cy=\'17.5\' r=\'2.5\'/><circle cx=\'17.5\' cy=\'17.5\' r=\'2.5\'/></svg>',
+                            'permission' => 'shipments view'
+                        ],
+                        [
+                            'title' => 'Returns',
+                            'url' => tenant() ? route('tenant.returns.index') : route('central.returns.index'),
+                            'active' => request()->routeIs('tenant.returns.*') || request()->routeIs('central.returns.*'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M9 14 2 9l7-5\'/><path d=\'M20 20v-7a4 4 0 0 0-4-4H2\'/></svg>',
+                            'permission' => 'returns view'
+                        ],
+                        [
+                            'title' => 'Complaints',
+                            'url' => tenant() ? route('tenant.complaints.index') : route('central.complaints.index'),
+                            'active' => request()->routeIs('tenant.complaints.*') || request()->routeIs('central.complaints.*'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1 3.1\'/><path d=\'m14.5 16 4.5 4.5\'/><path d=\'M12 7v6\'/><path d=\'M12 17h.01\'/></svg>',
+                            'permission' => 'orders view'
+                        ]
+                    ], fn($item) => auth()->check() && auth()->user()->can($item['permission']));
+                @endphp
+
+                @if(count($salesItems) > 0)
+                    <x-layout.nav-collapsible title="Sales" :active="request()->is('orders*') || request()->is('central/orders*') || request()->is('invoices*') || request()->is('shipments*') || request()->is('returns*') || request()->is('complaints*')" :items="$salesItems">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <circle cx="8" cy="21" r="1" />
+                                <circle cx="19" cy="21" r="1" />
+                                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-collapsible>
+                @endif
+
+                <!-- 3. FINANCE -->
+                @php
+                    $financeItems = array_filter([
+                        [
+                            'title' => 'Expenses',
+                            'url' => tenant() ? route('tenant.expenses.index') : route('central.expenses.index'),
+                            'active' => request()->routeIs('tenant.expenses.*') || request()->routeIs('central.expenses.*'),
+                            'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="size-4"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+                            'permission' => 'expenses manage'
+                        ],
+                        [
+                            'title' => 'Profit & Loss',
+                            'url' => tenant() ? route('tenant.reports.profit-loss') : route('central.reports.profit-loss'),
+                            'active' => request()->routeIs('tenant.reports.profit-loss') || request()->routeIs('central.reports.profit-loss'),
+                            'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="size-4"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>',
+                            'permission' => 'finance view'
+                        ]
+                    ], fn($item) => auth()->check() && (tenant() || $item['url'] !== '#') && auth()->user()->can($item['permission']));
+                @endphp
+
+                @if(count($financeItems) > 0)
+                    <x-layout.nav-collapsible title="Finance" :active="request()->is('expenses*') || request()->is('reports/profit-loss')" :items="$financeItems">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <rect width="20" height="14" x="2" y="5" rx="2" />
+                                <line x1="2" x2="22" y1="10" y2="10" />
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-collapsible>
+                @endif
+
+
+                @role('Super Admin')
+                <!-- 4. CUSTOMERS -->
+                @php
+                    $customerItems = array_filter([
+                        [
+                            'title' => 'All Customers',
+                            'url' => '/customers',
+                            'active' => request()->is('customers'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\'/><circle cx=\'9\' cy=\'7\' r=\'4\'/><path d=\'M22 21v-2a4 4 0 0 0-3-3.87\'/><path d=\'M16 3.13a4 4 0 0 1 0 7.75\'/></svg>',
+                            'permission' => 'customers view'
+                        ],
+                        [
+                            'title' => 'Add Customer',
+                            'url' => '/customers/create',
+                            'active' => request()->is('customers/create'),
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\'/><circle cx=\'9\' cy=\'7\' r=\'4\'/><line x1=\'19\' x2=\'19\' y1=\'8\' y2=\'14\'/><line x1=\'22\' x2=\'16\' y1=\'11\' y2=\'11\'/></svg>',
+                            'permission' => 'customers manage'
+                        ],
+                        [
+                            'title' => 'Segments',
+                            'url' => '#',
+                            'active' => false,
+                            'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M10 21.9a10 10 0 0 0 9.9-9.9\'/><path d=\'M2 12a10 10 0 0 1 7-9.4\'/><path d=\'M22 12A10 10 0 0 0 12 2v10Z\'/></svg>',
+                            'permission' => 'analytics view'
+                        ],
+                    ], fn($item) => auth()->check() && auth()->user()->can($item['permission']));
+                @endphp
+
+                @if(count($customerItems) > 0)
+                    <x-layout.nav-collapsible title="Customers" :active="request()->is('customers*')" :items="$customerItems">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-collapsible>
+                @endif
+                @endrole
+            </div>
+        @endif
+
+
+        <!-- SECTION: WAREHOUSE (NEW) -->
+        @if(auth()->check() && (auth()->user()->can('orders process') || auth()->user()->hasRole('Super Admin') || auth()->user()->can('returns inspect')))
+            <div class="space-y-1">
+                <div class="px-3 mb-2 transition-opacity duration-300"
+                    :class="sidebarCollapsed ? 'opacity-0 h-0 hidden' : 'opacity-100'">
+                    <h3 class="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground/60">
+                        Warehouse
+                    </h3>
+                </div>
+
+                @can('orders process')
+                    <x-layout.nav-link title="Processing"
+                        url="{{ tenant() ? route('tenant.processing.orders.index') : route('central.processing.orders.index') }}"
+                        :active="request()->is('processing/orders*')">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <path
+                                    d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-link>
+                @endcan
+
+                @can('returns inspect')
+                    <x-layout.nav-link title="Returns (RMA)"
+                        url="{{ tenant() ? route('tenant.processing.returns.index') : route('central.processing.returns.index') }}"
+                        :active="request()->is('processing/returns*')">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <path d="M3 6h18" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-link>
+                @endcan
+            </div>
+        @endif
+
+
+        <!-- SECTION: OPERATIONS -->
+        @php
+            $operationsItems = array_filter([
+                [
+                    'title' => 'Purchase Orders',
+                    'url' => tenant() ? route('tenant.purchase-orders.index') : route('central.purchase-orders.index'),
+                    'active' => request()->routeIs('tenant.purchase-orders.*') || request()->routeIs('central.purchase-orders.*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z\'/><path d=\'M3 6h18\'/><path d=\'M16 10a4 4 0 0 1-8 0\'/></svg>',
+                    'permission' => 'purchase-orders view'
+                ],
+                [
+                    'title' => 'Inventory',
+                    'url' => tenant() ? route('tenant.inventory.index') : route('central.inventory.index'),
+                    'active' => request()->routeIs('tenant.inventory.*') || request()->routeIs('central.inventory.*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\'/></svg>',
+                    'permission' => 'inventory manage'
+                ],
+                [
+                    'title' => 'Stock Transfers',
+                    'url' => tenant() ? route('tenant.stock-transfers.index') : route('central.stock-transfers.index'),
+                    'active' => request()->routeIs('tenant.stock-transfers.*') || request()->routeIs('central.stock-transfers.*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'m17 2 4 4-4 4\'/><path d=\'M3 11v-1a4 4 0 0 1 4-4h14\'/><path d=\'m7 22-4-4 4-4\'/><path d=\'M21 13v1a4 4 0 0 1-4 4H3\'/></svg>',
+                    'permission' => 'stock-transfers view'
+                ],
+                [
+                    'title' => 'Suppliers',
+                    'url' => tenant() ? route('tenant.suppliers.index') : route('central.suppliers.index'),
+                    'active' => request()->routeIs('tenant.suppliers.*') || request()->routeIs('central.suppliers.*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2z\'/><path d=\'M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1\'/></svg>',
+                    'permission' => 'suppliers view'
+                ],
+                [
+                    'title' => 'Warehouses',
+                    'url' => tenant() ? route('tenant.warehouses.index') : route('central.warehouses.index'),
+                    'active' => request()->routeIs('tenant.warehouses.*') || request()->routeIs('central.warehouses.*'),
+                    'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\'/><circle cx=\'12\' cy=\'10\' r=\'3\'/></svg>',
+                    'permission' => 'warehouses view'
+                ],
+            ], fn($item) => auth()->check() && auth()->user()->can($item['permission']));
+        @endphp
+
+        @if(count($operationsItems) > 0)
+            <div class="space-y-1">
+                <div class="px-3 mb-2 transition-opacity duration-300"
+                    :class="sidebarCollapsed ? 'opacity-0 h-0 hidden' : 'opacity-100'">
+                    <h3 class="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground/60">
+                        Operations
+                    </h3>
+                </div>
+
+                <!-- PROCUREMENT -->
+                <x-layout.nav-collapsible title="Procurement" :active="request()->is('purchase-orders*') || request()->is('suppliers*') || request()->is('warehouses*') || request()->is('inventory*')"
+                    :items="$operationsItems">
+                    <x-slot name="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                            class="size-5">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                            <path d="M3 6h18" />
+                            <path d="M16 10a4 4 0 0 1-8 0" />
+                        </svg>
+                    </x-slot>
+                </x-layout.nav-collapsible>
+            </div>
+        @endif
+
+        <!-- SECTION: MARKETING -->
+        @can('marketing view')
+            <div class="space-y-1">
+                <div class="px-3 mb-2 transition-opacity duration-300"
+                    :class="sidebarCollapsed ? 'opacity-0 h-0 hidden' : 'opacity-100'">
+                    <h3 class="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground/60">
+                        Marketing
+                    </h3>
+                </div>
+
+                <x-layout.nav-link title="Overview" url="#" :active="false">
+                    <x-slot name="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                            class="size-5">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            <path d="m15 5 3 3" />
+                        </svg>
+                    </x-slot>
+                </x-layout.nav-link>
+            </div>
+        @endcan
+        <!-- SECTION: ORGANIZATION -->
+        <div class="space-y-1">
+            <div class="px-3 mb-2 transition-opacity duration-300"
+                :class="sidebarCollapsed ? 'opacity-0 h-0 hidden' : 'opacity-100'">
+                <h3 class="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground/60">
+                    System
+                </h3>
+            </div>
+
+            @php
+                $accessItems = array_filter([
+                    [
+                        'title' => 'Users',
+                        'url' => '/users',
+                        'active' => request()->is('users*'),
+                        'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\'/><circle cx=\'9\' cy=\'7\' r=\'4\'/><path d=\'M22 21v-2a4 4 0 0 0-3-3.87\'/><path d=\'M16 3.13a4 4 0 0 1 0 7.75\'/></svg>',
+                        'permission' => 'users view'
+                    ],
+                    [
+                        'title' => 'Roles',
+                        'url' => '/roles',
+                        'active' => request()->is('roles*'),
+                        'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><rect width=\'18\' height=\'18\' x=\'3\' y=\'3\' rx=\'2\'/><path d=\'M9 3v18\'/></svg>',
+                        'permission' => 'roles view'
+                    ],
+                    [
+                        'title' => 'Permissions',
+                        'url' => '/permissions',
+                        'active' => request()->is('permissions*'),
+                        'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10\'/></svg>',
+                        'permission' => 'permissions view' /* Map to roles view if specific not set */
+                    ],
+                    [
+                        'title' => 'Villages (Dict)',
+                        'url' => '/villages',
+                        'active' => request()->is('villages*'),
+                        'icon' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="size-4"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+                        'permission' => 'settings view' /* Restricted to system admins */
+                    ],
+                ], fn($item) => auth()->check() && auth()->user()->can($item['permission']));
+            @endphp
+
+            @if(count($accessItems) > 0)
+                <x-layout.nav-collapsible title="Access Control" :active="request()->is('users*') || request()->is('roles*') || request()->is('permissions*')" :items="$accessItems">
+                    <x-slot name="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                            class="size-5">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                    </x-slot>
+                </x-layout.nav-collapsible>
+            @endif
+
+            @if(!tenant())
+                @can('tenants view')
+                    <x-layout.nav-link title="Tenant Workspaces" url="/tenants" :active="request()->is('tenants*')">
+                        <x-slot name="icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                class="size-5">
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                <path d="M12 11h4" />
+                                <path d="M12 16h4" />
+                                <path d="M8 11h.01" />
+                                <path d="M8 16h.01" />
+                            </svg>
+                        </x-slot>
+                    </x-layout.nav-link>
+                @endcan
+            @endif
+
+            @php
+                $settingItems = array_filter([
+                    [
+                        'title' => 'General',
+                        'url' => '/settings',
+                        'active' => request()->is('settings'),
+                        'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.72V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.17a2 2 0 0 1 1-1.74l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\'/><circle cx=\'12\' cy=\'12\' r=\'3\'/></svg>',
+                        'permission' => 'settings view'
+                    ],
+                    [
+                        'title' => 'Audit Logs',
+                        'url' => '/activity-logs',
+                        'active' => request()->is('activity-logs*'),
+                        'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\'/><polyline points=\'14 2 14 8 20 8\'/><path d=\'M12 18h.01\'/><path d=\'M12 14h.01\'/><path d=\'M12 10h.01\'/></svg>',
+                        'permission' => 'activity-logs view'
+                    ],
+                ], fn($item) => auth()->check() && auth()->user()->can($item['permission']));
+            @endphp
+
+            @if(count($settingItems) > 0)
+                <x-layout.nav-collapsible title="Settings" :active="request()->is('settings*') || request()->is('activity-logs*')" :items="$settingItems">
+                    <x-slot name="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                            class="size-5">
+                            <path
+                                d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.72V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.17a2 2 0 0 1 1-1.74l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </x-slot>
+                </x-layout.nav-collapsible>
+            @endif
+        </div>
+
+
+
+
+
+    </div>
+
+
+</aside>
