@@ -21,9 +21,9 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             ProductTypeSeeder::class,
             TaxSeeder::class, // Added Tax Classes
-                //WarehouseSeeder::class,
-                //CategorySeeder::class,
-                //DemoAgricultureSeeder::class, // Added Demo Data
+            WarehouseSeeder::class,
+            CategorySeeder::class,
+            DemoAgricultureSeeder::class, // Added Demo Data
             VillageSeeder::class,
         ]);
     }
