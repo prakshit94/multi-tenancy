@@ -18,7 +18,7 @@ return [
      */
     'central_domains' => [
         // 'localhost', // Keep IP only to avoid Duplicate Route Name errors
-        'crm.krushifyagro.com',
+        'crms.krushifyagro.com',
         // '3.108.194.146',
 
     ],
