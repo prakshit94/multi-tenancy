@@ -4,18 +4,6 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Invoice #{{ $invoice->invoice_number }}
             </h2>
-
-            <div class="flex gap-2">
-                <a href="{{ route('central.invoices.pdf', $invoice) }}"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm font-semibold">
-                    ⬇ Download PDF
-                </a>
-
-                <a href="{{ route('central.invoices.pdf', [$invoice, 'action' => 'print']) }}" target="_blank"
-                    class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm font-semibold">
-                    🖨 Print
-                </a>
-            </div>
         </div>
     </x-slot>
 

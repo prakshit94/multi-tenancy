@@ -45,7 +45,8 @@ class OrderController extends Controller
         $this->authorize('orders view');
 
         // Tenant specific: Simple pagination for now, can be improved to match Central's filtering later if needed
-        $query = Order::with(['customer', 'warehouse', 'creator', 'shipments', 'items']);
+        $query = Order::with(['customer', 'warehouse', 'creator', 'shipments', 'items'])
+            ->withSum('invoices', 'paid_amount');
 
         if (!auth()->user()->hasRole('Super Admin')) {
             $query->where('created_by', auth()->id());

@@ -195,6 +195,26 @@ class Order extends Model
     /* -------------------------------------------------------------------------- */
 
     /**
+     * Get the total paid amount dynamically (from invoices or sum column).
+     */
+    public function getPaidAmountAttribute()
+    {
+        if (isset($this->attributes['paid_amount'])) {
+            return $this->attributes['paid_amount'];
+        }
+
+        if (array_key_exists('invoices_sum_paid_amount', $this->attributes)) {
+            return (float) $this->attributes['invoices_sum_paid_amount'];
+        }
+
+        if ($this->relationLoaded('invoices')) {
+            return (float) $this->invoices->sum('paid_amount');
+        }
+
+        return (float) $this->invoices()->sum('paid_amount');
+    }
+
+    /**
      * Get latest invoice safely
      */
     public function latestInvoice(): ?Invoice

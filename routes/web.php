@@ -194,6 +194,14 @@ Route::middleware('auth')->group(function () {
     Route::resource('expenses', \App\Http\Controllers\Central\ExpenseController::class)->names('central.expenses');
     Route::get('reports/profit-loss', [\App\Http\Controllers\Central\ReportController::class, 'profitLoss'])->name('central.reports.profit-loss');
 
+    Route::get('invoices/export', [\App\Http\Controllers\Central\InvoiceController::class, 'export'])->name('central.invoices.export');
+    Route::get('invoices/download-template', [\App\Http\Controllers\Central\InvoiceController::class, 'downloadTemplate'])->name('central.invoices.download-template');
+    Route::post('invoices/bulk-upload', [\App\Http\Controllers\Central\InvoiceController::class, 'bulkUpload'])->name('central.invoices.bulk-upload');
+    Route::post('invoices/bulk-upload-process', [\App\Http\Controllers\Central\InvoiceController::class, 'bulkUploadProcess'])->name('central.invoices.bulk-upload.process');
+
+    Route::post('invoices/bulk-payment', [\App\Http\Controllers\Central\InvoiceController::class, 'bulkPayment'])
+        ->name('central.invoices.bulk-payment');
+
     Route::post('invoices/{invoice}/payment', [\App\Http\Controllers\Central\InvoiceController::class, 'addPayment'])
         ->name('central.invoices.add-payment');
 

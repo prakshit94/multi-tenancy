@@ -360,10 +360,17 @@
                                    @switch($order->status)
 
                                        @case('completed')
-                                           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm">
-                                               <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                                               Completed
-                                           </span>
+                                           @if($order->payment_status === 'paid')
+                                               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm">
+                                                   <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                   Completed
+                                               </span>
+                                           @else
+                                               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-teal-500/10 text-teal-600 border border-teal-500/20 shadow-sm">
+                                                   <span class="h-1.5 w-1.5 rounded-full bg-teal-500"></span>
+                                                   Delivered
+                                               </span>
+                                           @endif
                                            @break
 
                                        @case('shipped')
@@ -381,8 +388,8 @@
                                            @break
 
                                        @case('delivered')
-                                           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm">
-                                               <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-teal-500/10 text-teal-600 border border-teal-500/20 shadow-sm">
+                                               <span class="h-1.5 w-1.5 rounded-full bg-teal-500"></span>
                                                Delivered
                                            </span>
                                            @break

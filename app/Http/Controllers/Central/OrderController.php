@@ -39,7 +39,8 @@ class OrderController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('orders view');
-        $query = Order::with(['customer', 'warehouse', 'creator', 'shipments', 'items']);
+        $query = Order::with(['customer', 'warehouse', 'creator', 'shipments', 'items'])
+            ->withSum('invoices', 'paid_amount');
 
         if (!auth()->user()->hasRole('Super Admin')) {
             $query->where('created_by', auth()->id());

@@ -66,6 +66,12 @@ Route::middleware(['auth', 'tenant.session', 'tenant.access'])->group(function (
     Route::patch('returns/{orderReturn}/status', [\App\Http\Controllers\Tenant\OrderReturnController::class, 'updateStatus'])->name('tenant.returns.update-status');
     Route::resource('returns', \App\Http\Controllers\Tenant\OrderReturnController::class)->names('tenant.returns');
 
+    Route::get('invoices/export', [\App\Http\Controllers\Tenant\InvoiceController::class, 'export'])->name('tenant.invoices.export');
+    Route::get('invoices/download-template', [\App\Http\Controllers\Tenant\InvoiceController::class, 'downloadTemplate'])->name('tenant.invoices.download-template');
+    Route::post('invoices/bulk-upload', [\App\Http\Controllers\Tenant\InvoiceController::class, 'bulkUpload'])->name('tenant.invoices.bulk-upload');
+    Route::post('invoices/bulk-upload-process', [\App\Http\Controllers\Tenant\InvoiceController::class, 'bulkUploadProcess'])->name('tenant.invoices.bulk-upload.process');
+
+    Route::post('invoices/bulk-payment', [\App\Http\Controllers\Tenant\InvoiceController::class, 'bulkPayment'])->name('tenant.invoices.bulk-payment');
     Route::post('invoices/{invoice}/payment', [\App\Http\Controllers\Tenant\InvoiceController::class, 'addPayment'])->name('tenant.invoices.add-payment');
     Route::resource('invoices', \App\Http\Controllers\Tenant\InvoiceController::class)->only(['index', 'store', 'show'])->names('tenant.invoices');
 
