@@ -118,7 +118,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Description</label>
+                            <label class="block text-sm font-medium text-gray-700">Product Description</label>
                             <textarea name="description" rows="4"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">{{ old('description', $product->description) }}</textarea>
                         </div>

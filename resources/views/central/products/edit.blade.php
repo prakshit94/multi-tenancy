@@ -142,6 +142,14 @@
                                             @endforeach
                                         </select>
                                     </div>
+
+                                    <div class="col-span-1 md:col-span-2 shadow-sm p-4 bg-gray-50 rounded-xl border border-gray-100/50">
+                                        <label class="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wider">Product Description</label>
+                                        <textarea name="description" rows="4" 
+                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white transition-all py-2.5 px-3 resize-none"
+                                            placeholder="Write a clear, compelling description of the product...">{{ old('description', $product->description) }}</textarea>
+                                        <p class="mt-2 text-[11px] text-gray-500 italic">Formatting tip: Use clear headings and bullet points for better readability.</p>
+                                    </div>
                                 </div>
                             </div>
 

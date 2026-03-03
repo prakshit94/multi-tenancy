@@ -55,10 +55,11 @@ class ProductController extends Controller
         $this->authorize('products view');
 
         $query = (string) $request->get('query', '');
-        $products = Product::where('name', 'LIKE', "%{$query}%")
+        $products = Product::with(['category', 'brand'])
+            ->where('name', 'LIKE', "%{$query}%")
             ->orWhere('sku', 'LIKE', "%{$query}%")
             ->limit(10)
-            ->get(['id', 'name', 'sku', 'price', 'default_discount_type', 'default_discount_value']);
+            ->get();
 
         return response()->json($products);
     }

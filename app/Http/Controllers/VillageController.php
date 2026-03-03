@@ -21,6 +21,8 @@ class VillageController extends Controller
 
         if ($request->filled('pincode')) {
             $query->where('pincode', $request->pincode);
+        } elseif ($request->filled('post_office')) {
+            $query->where('post_so_name', 'like', $request->post_office . '%');
         } elseif ($request->filled('village')) {
             $query->where('village_name', 'like', $request->village . '%');
         } elseif ($request->filled('taluka')) {
@@ -51,8 +53,8 @@ class VillageController extends Controller
 
             return response()->json([
                 'found' => true,
-                'mode'  => 'single',
-                'data'  => $this->formatVillage($v),
+                'mode' => 'single',
+                'data' => $this->formatVillage($v),
             ]);
         }
 
@@ -63,18 +65,18 @@ class VillageController extends Controller
         */
         return response()->json([
             'found' => true,
-            'mode'  => 'multiple',
-            'list'  => $results->map(fn ($v) => [
+            'mode' => 'multiple',
+            'list' => $results->map(fn($v) => [
                 'label' => sprintf(
-    '%s – %s, %s, %s (%s)',
-    $v->post_so_name ?? 'Post Office',
-    $v->village_name,
-    $v->taluka_name ?? '-',
-    $v->district_name ?? '-',
-    $v->pincode
-),
+                    '%s – %s, %s, %s (%s)',
+                    $v->post_so_name ?? 'Post Office',
+                    $v->village_name,
+                    $v->taluka_name ?? '-',
+                    $v->district_name ?? '-',
+                    $v->pincode
+                ),
 
-                'data'  => $this->formatVillage($v),
+                'data' => $this->formatVillage($v),
             ])->values(),
         ]);
     }
@@ -87,11 +89,11 @@ class VillageController extends Controller
     private function formatVillage(Village $v): array
     {
         return [
-            'village'     => $v->village_name,
-            'pincode'     => $v->pincode,
-            'taluka'      => $v->taluka_name,
-            'district'    => $v->district_name,
-            'state'       => $v->state_name,
+            'village' => $v->village_name,
+            'pincode' => $v->pincode,
+            'taluka' => $v->taluka_name,
+            'district' => $v->district_name,
+            'state' => $v->state_name,
             'post_office' => $v->post_so_name,
         ];
     }

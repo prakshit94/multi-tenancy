@@ -414,16 +414,26 @@
                                                         <div x-show="item.searchResults && item.searchResults.length > 0"
                                                             class="absolute z-50 left-0 w-[150%] mt-1 bg-card border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto">
                                                             <template x-for="result in item.searchResults" :key="result.id">
-                                                                <div @click="selectProduct(index, result)"
-                                                                    class="px-4 py-3 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm border-b border-border/50 last:border-0 transition-colors">
-                                                                    <div class="font-semibold text-foreground"
-                                                                        x-text="result.name"></div>
-                                                                    <div
-                                                                        class="text-xs text-muted-foreground mt-0.5 flex justify-between">
-                                                                        <span>SKU: <span x-text="result.sku"></span></span>
-                                                                        <span class="font-mono">Rs <span
-                                                                                x-text="result.price"></span></span>
+                                                                <div class="group/result flex items-center justify-between border-b border-border/50 last:border-0 hover:bg-accent transition-colors">
+                                                                    <div @click="selectProduct(index, result)"
+                                                                        class="flex-1 px-4 py-3 cursor-pointer text-sm">
+                                                                        <div class="font-semibold text-foreground"
+                                                                            x-text="result.name"></div>
+                                                                        <div
+                                                                            class="text-xs text-muted-foreground mt-0.5 flex justify-between">
+                                                                            <span>SKU: <span x-text="result.sku"></span></span>
+                                                                            <span class="font-mono">Rs <span
+                                                                                    x-text="result.price"></span></span>
+                                                                        </div>
                                                                     </div>
+                                                                    <button type="button" @click="viewingProduct = result"
+                                                                        class="p-3 mr-1 text-muted-foreground hover:text-primary transition-colors"
+                                                                        title="View Details">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                            <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/>
+                                                                            <circle cx="12" cy="12" r="3"/>
+                                                                        </svg>
+                                                                    </button>
                                                                 </div>
                                                             </template>
                                                         </div>
@@ -455,20 +465,30 @@
                                                     <td class="px-4 py-3 text-right font-medium text-foreground/90">
                                                         Rs <span x-text="calculateItemTotal(item).toFixed(2)"></span>
                                                     </td>
-                                                    <td class="px-4 py-3 text-center">
-                                                        <button type="button" @click="removeItem(index)"
-                                                            class="text-muted-foreground/50 group-hover:text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-all">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round">
-                                                                <path d="M3 6h18" />
-                                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                                <line x1="10" x2="10" y1="11" y2="17" />
-                                                                <line x1="14" x2="14" y1="11" y2="17" />
-                                                            </svg>
-                                                        </button>
+                                                     <td class="px-4 py-3 text-center">
+                                                        <div class="flex items-center justify-center gap-1">
+                                                            <button type="button" x-show="item.product_data" @click="viewingProduct = item.product_data"
+                                                                class="text-muted-foreground/50 hover:text-primary hover:bg-primary/10 p-1.5 rounded-md transition-all"
+                                                                title="View Details">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/>
+                                                                    <circle cx="12" cy="12" r="3"/>
+                                                                </svg>
+                                                            </button>
+                                                            <button type="button" @click="removeItem(index)"
+                                                                class="text-muted-foreground/50 group-hover:text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-all">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                    stroke-width="2" stroke-linecap="round"
+                                                                    stroke-linejoin="round">
+                                                                    <path d="M3 6h18" />
+                                                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                                    <line x1="10" x2="10" y1="11" y2="17" />
+                                                                    <line x1="14" x2="14" y1="11" y2="17" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             </template>
@@ -561,7 +581,126 @@
                 </div>
             </form>
         </div>
+
+        <!-- Product Details Modal (Premium UI) -->
+        <template x-teleport="body">
+            <div x-show="viewingProduct" x-transition.opacity.duration.400ms
+                class="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-950/80 backdrop-blur-md p-4"
+                style="display: none;">
+                <div class="bg-white dark:bg-zinc-900 w-full max-w-4xl rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,0.5)] border border-white/10 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 fade-in duration-500 ease-out"
+                    @click.away="viewingProduct = null">
+                    
+                    <!-- Modal Header -->
+                    <div class="px-10 pt-10 pb-6 relative overflow-hidden">
+                        <div class="absolute -top-20 -right-20 size-60 bg-primary/20 blur-[80px] rounded-full"></div>
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <h3 class="font-black text-3xl tracking-tighter" x-text="viewingProduct?.name"></h3>
+                                <div class="flex items-center gap-3 mt-2">
+                                    <span class="px-3 py-1 rounded-full bg-secondary/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground border border-white/5" x-text="viewingProduct?.sku"></span>
+                                    <span class="px-3 py-1 rounded-full bg-primary/10 text-[10px] font-black uppercase tracking-widest text-primary border border-primary/10" x-text="viewingProduct?.category?.name || 'Uncategorized'"></span>
+                                </div>
+                            </div>
+                            <button @click="viewingProduct = null"
+                                class="text-muted-foreground hover:text-foreground p-2 hover:bg-white/10 rounded-full transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="px-10 pb-10 overflow-y-auto custom-scrollbar">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
+                            <!-- Image Section -->
+                            <div class="md:col-span-4">
+                                <div class="aspect-square rounded-[32px] overflow-hidden border border-white/10 bg-secondary/20 shadow-inner group">
+                                    <img :src="viewingProduct?.image_url" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                </div>
+                                <div class="mt-6 p-6 rounded-[32px] bg-secondary/20 border border-white/5 space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Price</span>
+                                        <span class="text-xl font-black text-primary" x-text="'Rs ' + parseFloat(viewingProduct?.price || 0).toLocaleString()"></span>
+                                    </div>
+                                    <div class="flex justify-between items-center" x-show="viewingProduct?.stock_on_hand !== null">
+                                        <span class="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Available Stock</span>
+                                        <span class="text-sm font-black" :class="viewingProduct?.stock_on_hand > 10 ? 'text-emerald-500' : 'text-amber-500'" x-text="parseFloat(viewingProduct?.stock_on_hand || 0) + ' ' + (viewingProduct?.unit_type || '')"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Details Section -->
+                            <div class="md:col-span-8 space-y-8">
+                                <!-- Description -->
+                                <div class="space-y-3">
+                                    <h4 class="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Product Story</h4>
+                                    <div class="text-sm leading-relaxed text-foreground/80 font-medium whitespace-pre-line" x-text="viewingProduct?.description || 'No description available for this product.'"></div>
+                                </div>
+
+                                <!-- Specifications -->
+                                <div class="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
+                                    <div class="space-y-1">
+                                        <span class="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Brand</span>
+                                        <p class="text-sm font-bold text-foreground" x-text="viewingProduct?.brand?.name || 'N/A'"></p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Packing Size</span>
+                                        <p class="text-sm font-bold text-foreground" x-text="viewingProduct?.packing_size || 'N/A'"></p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="text-[10px] font-black text-muted-foreground uppercase tracking-widest">HSN Code</span>
+                                        <p class="text-sm font-bold text-foreground" x-text="viewingProduct?.hsn_code || 'N/A'"></p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Type</span>
+                                        <p class="text-sm font-bold text-foreground" x-text="viewingProduct?.type || 'Standard'"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Agri Specifics -->
+                                <template x-if="viewingProduct?.technical_name || viewingProduct?.harvest_date">
+                                    <div class="p-6 rounded-[32px] bg-primary/5 border border-primary/10 space-y-4">
+                                        <h4 class="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Agricultural Specifications</h4>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div x-show="viewingProduct?.technical_name">
+                                                <span class="text-[9px] font-black text-muted-foreground uppercase">Technical Name</span>
+                                                <p class="text-xs font-bold text-foreground/90 mt-0.5" x-text="viewingProduct?.technical_name"></p>
+                                            </div>
+                                            <div x-show="viewingProduct?.application_method">
+                                                <span class="text-[9px] font-black text-muted-foreground uppercase">Application</span>
+                                                <p class="text-xs font-bold text-foreground/90 mt-0.5" x-text="viewingProduct?.application_method"></p>
+                                            </div>
+                                            <div x-show="viewingProduct?.harvest_date">
+                                                <span class="text-[9px] font-black text-muted-foreground uppercase">Harvest Date</span>
+                                                <p class="text-xs font-bold text-foreground/90 mt-0.5" x-text="formatDate(viewingProduct?.harvest_date)"></p>
+                                            </div>
+                                            <div x-show="viewingProduct?.expiry_date">
+                                                <span class="text-[9px] font-black text-muted-foreground uppercase">Expiry Date</span>
+                                                <p class="text-xs font-bold text-foreground/90 mt-0.5" x-text="formatDate(viewingProduct?.expiry_date)"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="px-10 py-8 border-t border-border/50 bg-muted/20 flex justify-end">
+                        <button @click="viewingProduct = null"
+                            class="rounded-[22px] bg-foreground text-background px-8 py-4 text-xs font-black uppercase tracking-widest shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-500">
+                            Got It
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
+</div>
 
     <script>
         function orderForm(customersData = []) {
@@ -572,12 +711,18 @@
                 shippingAddressId: '',
                 sameAsBilling: true,
                 availableAddresses: [],
+                viewingProduct: null,
 
                 items: [
-                    { product_id: '', product_query: '', quantity: 1, price: 0, discount_type: 'fixed', discount_value: 0, searchResults: [] }
+                    { product_id: '', product_query: '', quantity: 1, price: 0, discount_type: 'fixed', discount_value: 0, searchResults: [], product_data: null }
                 ],
                 orderDiscountType: 'fixed',
                 orderDiscountValue: 0,
+
+                formatDate(dateString) {
+                    if (!dateString) return 'N/A';
+                    return new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+                },
 
                 init() {
                     const urlParams = new URLSearchParams(window.location.search);
@@ -714,7 +859,7 @@
                 },
 
                 addItem() {
-                    this.items.push({ product_id: '', product_query: '', quantity: 1, price: 0, discount_type: 'fixed', discount_value: 0, searchResults: [] });
+                    this.items.push({ product_id: '', product_query: '', quantity: 1, price: 0, discount_type: 'fixed', discount_value: 0, searchResults: [], product_data: null });
                 },
                 searchProduct(index, query) {
                     if (query.length < 2) {
@@ -736,6 +881,7 @@
                     this.items[index].price = parseFloat(product.price);
                     this.items[index].discount_type = product.default_discount_type || 'fixed';
                     this.items[index].discount_value = parseFloat(product.default_discount_value || 0);
+                    this.items[index].product_data = product;
 
                     this.items[index].searchResults = [];
                 },
@@ -749,6 +895,7 @@
                         this.items[0].price = 0;
                         this.items[0].discount_value = 0;
                         this.items[0].searchResults = [];
+                        this.items[0].product_data = null;
                     }
                 }
             }

@@ -145,7 +145,7 @@
                                     </div>
 
                                     <div class="col-span-1 md:col-span-2">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Product Description</label>
                                         <textarea name="description" rows="4"
                                             class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-50 focus:bg-white transition-colors py-2.5 px-3"
                                             placeholder="Detailed product description...">{{ old('description') }}</textarea>

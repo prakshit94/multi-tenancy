@@ -129,6 +129,7 @@ class ProductController extends Controller
             // SEO & Status
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
+            'description' => 'nullable|string',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'is_taxable' => 'boolean',
@@ -265,6 +266,7 @@ class ProductController extends Controller
             // SEO & Status
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
+            'description' => 'nullable|string',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'is_taxable' => 'boolean',

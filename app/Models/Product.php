@@ -15,6 +15,8 @@ class Product extends Model
 
     protected $guarded = ['id'];
 
+    protected $appends = ['image_url'];
+
     protected $casts = [
         'is_active' => 'boolean',
         'is_taxable' => 'boolean',
@@ -40,13 +42,24 @@ class Product extends Model
             if (empty($product->slug)) {
                 $product->slug = \Illuminate\Support\Str::slug($product->name);
             }
+
+            if (empty($product->sku)) {
+                $generateSku = function () {
+                    return 'SKU-' . strtoupper(\Illuminate\Support\Str::random(8));
+                };
+
+                $product->sku = $generateSku();
+                while (static::where('sku', $product->sku)->exists()) {
+                    $product->sku = $generateSku();
+                }
+            }
         });
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'sku', 'price', 'stock_on_hand', 'brand_id'])
+            ->logOnly(['name', 'sku', 'price', 'stock_on_hand', 'brand_id', 'description'])
             ->logOnlyDirty();
     }
 
