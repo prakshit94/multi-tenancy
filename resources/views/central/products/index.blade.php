@@ -241,12 +241,14 @@
                                             $priceWithGst = $product->price + ($product->price * ($gstRate / 100));
                                         @endphp
                                         <div class="flex flex-col items-end">
-                                            <span
-                                                class="text-sm font-bold text-gray-900">₹{{ number_format($product->price, 2) }}</span>
                                             @if($gstRate > 0)
-                                                <span
-                                                    class="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded mt-0.5">₹{{ number_format($priceWithGst, 2) }}
-                                                    Incl. GST</span>
+                                                <div class="flex items-baseline">
+                                                    <span class="text-[15px] font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-teal-500 hover:to-emerald-600 transition-all duration-300">₹{{ number_format($priceWithGst, 2) }}</span>
+                                                    <span class="text-[9px] font-bold text-emerald-600/80 uppercase tracking-wider ml-1.5">Incl. GST</span>
+                                                </div>
+                                                <span class="text-[10px] font-bold text-gray-500 bg-gray-100/80 px-1.5 py-0.5 rounded mt-0.5 border border-gray-200/50">Base: ₹{{ number_format($product->price, 2) }}</span>
+                                            @else
+                                                <span class="text-sm font-bold text-gray-900">₹{{ number_format($product->price, 2) }}</span>
                                             @endif
                                             @if($product->mrp > $product->price)
                                                 <span
