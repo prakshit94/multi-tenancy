@@ -3550,6 +3550,7 @@
                         try {
                             let res = await fetch(`{{ route('central.api.search.products') }}?q=${this.productQuery}`);
                             this.productResults = await res.json();
+                            this.currentPage = 1;
                         } catch (e) { console.error(e); }
                     },
 
@@ -3706,9 +3707,9 @@
 
                     get grandTotal() {
                         return Math.max(0, (this.subTotal - this.cartDiscountTotal - this.orderDiscountAmount) + this.taxTotal);
-                    }
-                }
+               }
             }
+        }
         </script>
 
 
