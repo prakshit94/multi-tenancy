@@ -180,13 +180,25 @@
                                     <p class="text-xs font-mono text-muted-foreground mt-1"
                                         x-text="'SKU: ' + (detailedProduct?.sku || 'N/A')"></p>
                                 </div>
-                                <div class="text-right">
+                                <div class="text-right flex flex-col items-end">
+                                    <p x-show="detailedProduct?.mrp > detailedProduct?.price"
+                                        class="text-[10px] font-bold text-muted-foreground line-through mb-1">
+                                        MRP: Rs <span x-text="parseFloat(detailedProduct?.mrp || 0).toFixed(2)"></span>
+                                    </p>
                                     <p
                                         class="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">
                                         Our Price</p>
-                                    <p class="text-3xl font-black text-primary tracking-tighter">Rs <span
-                                            x-text="parseFloat(detailedProduct?.price || 0).toFixed(2)"></span></p>
-                                    <p class="text-[10px] font-bold text-muted-foreground"
+                                    <p class="text-3xl font-black text-primary tracking-tighter leading-none mb-1">Rs
+                                        <span
+                                            x-text="parseFloat(detailedProduct?.total_price_with_tax || detailedProduct?.price || 0).toFixed(2)"></span>
+                                    </p>
+                                    <p class="text-[10px] font-medium text-muted-foreground mb-1"
+                                        x-show="detailedProduct?.tax_amount > 0">
+                                        (incl. Rs <span
+                                            x-text="parseFloat(detailedProduct?.tax_amount || 0).toFixed(2)"></span>
+                                        tax)
+                                    </p>
+                                    <p class="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full"
                                         x-text="'per ' + (detailedProduct?.unit_type || 'kg')"></p>
                                 </div>
                             </div>
@@ -240,7 +252,7 @@
                             <x-ui.button @click="addToCart(detailedProduct); showProductDetailsModal = false"
                                 class="flex-[2] h-14 rounded-2xl shadow-xl shadow-primary/20">
                                 Add to Order (Rs <span
-                                    x-text="parseFloat(detailedProduct?.price || 0).toFixed(2)"></span>)
+                                    x-text="parseFloat(detailedProduct?.total_price_with_tax || detailedProduct?.price || 0).toFixed(2)"></span>)
                             </x-ui.button>
                         </template>
                     </div>
@@ -1652,17 +1664,32 @@
                                             <!-- Price -->
                                             <td class="p-4 text-right">
                                                 <div class="flex flex-col items-end">
-                                                    <span class="font-bold text-lg text-foreground font-mono">Rs
-                                                        <span x-text="parseFloat(product.price).toFixed(2)"></span>
-                                                    </span>
-                                                    <span
-                                                        class="text-[10px] text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded"
+                                                    <div
+                                                        class="text-xs text-muted-foreground group-hover:text-foreground/80 transition-colors flex items-center justify-end gap-2">
+                                                        <span x-show="product.mrp > product.price"
+                                                            class="line-through text-[10px] opacity-70">
+                                                            MRP: Rs <span
+                                                                x-text="parseFloat(product.mrp).toFixed(2)"></span>
+                                                        </span>
+                                                        <span>
+                                                            <span>Price: Rs </span><span
+                                                                x-text="parseFloat(product.price).toFixed(2)"></span>
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-[10px] text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded flex items-center gap-1 mt-0.5"
                                                         x-show="product.tax_rate > 0 || (product.tax_class && product.tax_class.rates && product.tax_class.rates.length > 0)">
                                                         <span x-text="
                                                             (product.tax_class && product.tax_class.rates && product.tax_class.rates.length > 0) 
-                                                            ? product.tax_class.rates[0].rate + '% Tax' 
-                                                            : (product.tax_rate > 0 ? parseFloat(product.tax_rate) + '% Tax' : '')
+                                                            ? product.tax_class.rates[0].rate + '% Tax:' 
+                                                            : (product.tax_rate > 0 ? parseFloat(product.tax_rate) + '% Tax:' : '')
                                                         "></span>
+                                                        <span>Rs <span
+                                                                x-text="parseFloat(product.tax_amount || 0).toFixed(2)"></span></span>
+                                                    </div>
+                                                    <span class="font-bold text-lg text-foreground font-mono mt-0.5"
+                                                        title="Total including Tax">Rs
+                                                        <span
+                                                            x-text="parseFloat(product.total_price_with_tax || product.price).toFixed(2)"></span>
                                                     </span>
                                                 </div>
                                             </td>

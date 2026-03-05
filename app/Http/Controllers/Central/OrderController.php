@@ -97,11 +97,21 @@ class OrderController extends Controller
                 $grossSellable = $product->stocks->sum(fn($stock) => max(0, $stock->quantity - $stock->reserve_quantity));
                 $pendingQty = $pendingProductQuantities->get($product->id, 0);
 
+                $taxAmount = 0.00;
+                if ($product->taxClass && $product->taxClass->rates->isNotEmpty()) {
+                    $taxAmount = $product->price * ($product->taxClass->rates->sum('rate') / 100);
+                } elseif ($product->tax_rate > 0) {
+                    $taxAmount = $product->price * ($product->tax_rate / 100);
+                }
+
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
                     'sku' => $product->sku,
-                    'price' => $product->price,
+                    'price' => (float) $product->price,
+                    'mrp' => (float) $product->mrp,
+                    'tax_amount' => (float) $taxAmount,
+                    'total_price_with_tax' => (float) ($product->price + $taxAmount),
                     'stock_on_hand' => max(0, $grossSellable - $pendingQty),
                     'unit_type' => $product->unit_type,
                     'brand' => $product->brand->name ?? 'N/A',
