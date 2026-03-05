@@ -65,17 +65,17 @@
                 @endcan
 
                 <!-- @can('analytics view')
-                                                                                                                <x-layout.nav-link title="Analytics" url="#" :active="false">
-                                                                                                                    <x-slot name="icon">
-                                                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                                                                                                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                                                                                                                            class="size-5">
-                                                                                                                            <path d="M3 3v18h18" />
-                                                                                                                            <path d="m19 9-5 5-4-4-3 3" />
-                                                                                                                        </svg>
-                                                                                                                    </x-slot>
-                                                                                                                </x-layout.nav-link>
-                                                                                                            @endcan -->
+                                                                                                                                    <x-layout.nav-link title="Analytics" url="#" :active="false">
+                                                                                                                                        <x-slot name="icon">
+                                                                                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                                                                                                                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                                                                                                                                                class="size-5">
+                                                                                                                                                <path d="M3 3v18h18" />
+                                                                                                                                                <path d="m19 9-5 5-4-4-3 3" />
+                                                                                                                                            </svg>
+                                                                                                                                        </x-slot>
+                                                                                                                                    </x-layout.nav-link>
+                                                                                                                                @endcan -->
 
                 @can('reports view')
                     <x-layout.nav-link title="Reports" url="/reports" :active="request()->is('reports*')">
@@ -126,14 +126,14 @@
                     'url' => tenant() ? route('tenant.units.index') : route('central.units.index'),
                     'active' => request()->is('units*'),
                     'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M3 5v14\'/><path d=\'M21 5v14\'/><path d=\'M8 12h8\'/><path d=\'m10 9-2 3 2 3\'/><path d=\'m14 9 2 3-2 3\'/></svg>',
-                    'permission' => 'products view'
+                    'permission' => 'units view'
                 ],
                 [
                     'title' => 'Product Types',
                     'url' => tenant() ? route('tenant.product_types.index') : route('central.product_types.index'),
                     'active' => request()->is('product-types*'),
                     'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M20.2 7.8l-7.7 7.7-4-4-5.7 5.7\'/><path d=\'M15 7h6v6\'/></svg>',
-                    'permission' => 'products view'
+                    'permission' => 'producttypes view'
                 ],
                 [
                     'title' => 'Collections',
@@ -188,7 +188,7 @@
                             'url' => tenant() ? route('tenant.orders.tracking.index') : route('central.orders.tracking.index'),
                             'active' => request()->routeIs('tenant.orders.tracking.*') || request()->routeIs('central.orders.tracking.*'),
                             'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><rect x=\'1\' y=\'3\' width=\'15\' height=\'13\' rx=\'2\' ry=\'2\'/><path d=\'M16 8h4l3 3v5h-7V8z\'/><circle cx=\'5.5\' cy=\'18.5\' r=\'2.5\'/><circle cx=\'18.5\' cy=\'18.5\' r=\'2.5\'/></svg>',
-                            'permission' => 'orders view'
+                            'permission' => 'orders tracking'
                         ],
                         [
                             'title' => 'Orders',
@@ -223,7 +223,7 @@
                             'url' => tenant() ? route('tenant.complaints.index') : route('central.complaints.index'),
                             'active' => request()->routeIs('tenant.complaints.*') || request()->routeIs('central.complaints.*'),
                             'icon' => '<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\' class=\'size-4\'><path d=\'M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1 3.1\'/><path d=\'m14.5 16 4.5 4.5\'/><path d=\'M12 7v6\'/><path d=\'M12 17h.01\'/></svg>',
-                            'permission' => 'orders view'
+                            'permission' => 'orders complaints'
                         ]
                     ], fn($item) => auth()->check() && auth()->user()->can($item['permission']));
                 @endphp

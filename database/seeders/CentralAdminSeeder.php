@@ -50,6 +50,7 @@ class CentralAdminSeeder extends Seeder
             'products delete',
             'products export',
             'products import',
+
             'categories view',
             'categories create',
             'categories edit',
@@ -62,8 +63,14 @@ class CentralAdminSeeder extends Seeder
             'brands create',
             'brands edit',
             'brands delete',
+            'units view',
+            'producttypes view',
 
             // Sales (Orders, Invoices, Shipments, Returns)
+
+            'orders verify',
+            'orders tracking',
+            'orders complaints',
             'orders view',
             'orders create',
             'orders edit',
