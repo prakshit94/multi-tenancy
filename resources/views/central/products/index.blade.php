@@ -44,18 +44,18 @@
         </div>
 
         <div id="products-table-container" x-data="{ 
-                                                        selected: [], 
-                                                        viewingProduct: null,
-                                                        products: {{ \Illuminate\Support\Js::from($products->items()) }},
-                                                        showCost: {{ auth()->user()->hasRole('Super Admin') ? 'true' : 'false' }},
-                                                        formatPrice(price) {
-                                                            return '₹' + parseFloat(price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                                        },
-                                                        formatDate(dateString) {
-                                                            if (!dateString) return 'N/A';
-                                                            return new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
-                                                        }
-                                                    }" class="relative z-10 space-y-6">
+                                                                    selected: [], 
+                                                                    viewingProduct: null,
+                                                                    products: {{ \Illuminate\Support\Js::from($products->items()) }},
+                                                                    showCost: {{ auth()->user()->hasRole('Super Admin') ? 'true' : 'false' }},
+                                                                    formatPrice(price) {
+                                                                        return '₹' + parseFloat(price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                                    },
+                                                                    formatDate(dateString) {
+                                                                        if (!dateString) return 'N/A';
+                                                                        return new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+                                                                    }
+                                                                }" class="relative z-10 space-y-6">
 
             <!-- Toolbar -->
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -198,7 +198,7 @@
                                     class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">
                                     Valuation</th>
                                 <!-- <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                                                    Taxation</th> -->
+                                                                Taxation</th> -->
                                 <th
                                     class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">
                                     Controls</th>
@@ -302,8 +302,8 @@
                                                     </div>
                                                 @endif
                                                 <!-- <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-3">
-                                                                            {{ $product->unit_type }}
-                                                                        </div> -->
+                                                                                                                {{ $product->unit_type }}
+                                                                                                            </div> -->
                                             @else
                                                 <span
                                                     class="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1.5 rounded-xl w-fit border border-gray-100/50 border-dashed">Not
@@ -329,12 +329,12 @@
                                                     <span
                                                         class="text-lg font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 transition-all duration-300 group-hover:from-indigo-600 group-hover:to-purple-600">₹{{ number_format($priceWithGst, 2) }}</span>
                                                     <!-- <span
-                                                                                                                                                                    class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 bg-gray-100 px-1 py-0.5 rounded-md">w/
-                                                                                                                                                                    GST</span> -->
+                                                                                                                                                                                                        class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 bg-gray-100 px-1 py-0.5 rounded-md">w/
+                                                                                                                                                                                                        GST</span> -->
                                                 </div>
                                                 <!-- <span
-                                                                                                                class="text-[10px] font-bold text-gray-400 border-b border-dashed border-gray-300">Net:
-                                                                                                                ₹{{ number_format($product->price, 2) }}</span> -->
+                                                                                                                                                    class="text-[10px] font-bold text-gray-400 border-b border-dashed border-gray-300">Net:
+                                                                                                                                                    ₹{{ number_format($product->price, 2) }}</span> -->
                                             @else
                                                 <span
                                                     class="text-lg font-black tracking-tighter text-gray-900">₹{{ number_format($product->price, 2) }}</span>
@@ -364,41 +364,41 @@
 
                                     <!-- Tax Details -->
                                     <!-- <td class="p-5 align-middle">
-                                                                @php
-                                                                    $rate = 0;
-                                                                    $className = 'None';
-                                                                    if ($product->taxClass) {
-                                                                        $rate = $product->taxClass->rates->first()->rate ?? 0;
-                                                                        $className = $product->taxClass->name;
-                                                                    } elseif ($product->tax_rate > 0) {
-                                                                        $rate = $product->tax_rate;
-                                                                        $className = 'Custom';
-                                                                    }
-                                                                @endphp
+                                                                                        @php
+                                                                                            $rate = 0;
+                                                                                            $className = 'None';
+                                                                                            if ($product->taxClass) {
+                                                                                                $rate = $product->taxClass->rates->first()->rate ?? 0;
+                                                                                                $className = $product->taxClass->name;
+                                                                                            } elseif ($product->tax_rate > 0) {
+                                                                                                $rate = $product->tax_rate;
+                                                                                                $className = 'Custom';
+                                                                                            }
+                                                                                        @endphp
 
-                                                                @if($rate > 0)
-                                                                    <div class="flex flex-col gap-2">
-                                                                        <span
-                                                                            class="inline-flex items-center justify-center rounded-lg bg-blue-50 px-3 py-1.5 text-[10px] font-black text-blue-700 ring-1 ring-inset ring-blue-600/10 w-fit drop-shadow-sm border-b border-blue-200">
-                                                                            {{ $className }} ({{ floatval($rate) }}%)
-                                                                        </span>
-                                                                        <div
-                                                                            class="flex items-center gap-1.5 text-[9px] font-black font-mono uppercase bg-gray-50/50 p-1 rounded-xl w-fit ring-1 ring-gray-100">
-                                                                            <div class="flex flex-col items-center bg-white rounded-lg px-2 py-1 shadow-sm">
-                                                                                <span class="text-gray-400 mb-0.5 tracking-widest text-[8px]">SGST</span>
-                                                                                <span class="text-blue-700">{{ number_format($rate / 2, 2) }}%</span>
-                                                                            </div>
-                                                                            <div class="flex flex-col items-center bg-white rounded-lg px-2 py-1 shadow-sm">
-                                                                                <span class="text-gray-400 mb-0.5 tracking-widest text-[8px]">CGST</span>
-                                                                                <span class="text-blue-700">{{ number_format($rate / 2, 2) }}%</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                @else
-                                                                    <span
-                                                                        class="text-[10px] font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 border-dashed">Exempt</span>
-                                                                @endif
-                                                            </td> -->
+                                                                                        @if($rate > 0)
+                                                                                            <div class="flex flex-col gap-2">
+                                                                                                <span
+                                                                                                    class="inline-flex items-center justify-center rounded-lg bg-blue-50 px-3 py-1.5 text-[10px] font-black text-blue-700 ring-1 ring-inset ring-blue-600/10 w-fit drop-shadow-sm border-b border-blue-200">
+                                                                                                    {{ $className }} ({{ floatval($rate) }}%)
+                                                                                                </span>
+                                                                                                <div
+                                                                                                    class="flex items-center gap-1.5 text-[9px] font-black font-mono uppercase bg-gray-50/50 p-1 rounded-xl w-fit ring-1 ring-gray-100">
+                                                                                                    <div class="flex flex-col items-center bg-white rounded-lg px-2 py-1 shadow-sm">
+                                                                                                        <span class="text-gray-400 mb-0.5 tracking-widest text-[8px]">SGST</span>
+                                                                                                        <span class="text-blue-700">{{ number_format($rate / 2, 2) }}%</span>
+                                                                                                    </div>
+                                                                                                    <div class="flex flex-col items-center bg-white rounded-lg px-2 py-1 shadow-sm">
+                                                                                                        <span class="text-gray-400 mb-0.5 tracking-widest text-[8px]">CGST</span>
+                                                                                                        <span class="text-blue-700">{{ number_format($rate / 2, 2) }}%</span>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        @else
+                                                                                            <span
+                                                                                                class="text-[10px] font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 border-dashed">Exempt</span>
+                                                                                        @endif
+                                                                                    </td> -->
 
                                     <!-- Actions -->
                                     <td class="p-5 text-right align-middle rounded-r-2xl">
@@ -557,11 +557,11 @@
                                         <div class="flex justify-between items-center"
                                             x-show="viewingProduct?.stock_on_hand !== null">
                                             <span
-                                                class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Stock
-                                                Status</span>
+                                                class="text-[10px] font-black text-gray-400 uppercase tracking-widest">InStock</span>
                                             <span class="text-sm font-black"
                                                 :class="viewingProduct?.stock_on_hand > 10 ? 'text-emerald-600' : 'text-amber-600'"
-                                                x-text="viewingProduct?.manage_stock ? parseFloat(viewingProduct?.stock_on_hand) + ' ' + (viewingProduct?.unit_type || '') : 'Not Tracked'"></span>
+                                                x-text="viewingProduct?.manage_stock ? parseFloat(viewingProduct?.stock_on_hand) : 'Not Tracked'">
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
