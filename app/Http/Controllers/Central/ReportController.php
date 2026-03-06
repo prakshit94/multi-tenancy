@@ -47,7 +47,10 @@ class ReportController extends Controller
 
         switch ($reportType) {
             case 'orders':
-                $exportClass = new OrdersExport($startDate, $endDate);
+                $exportClass = new OrdersExport([
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ]);
                 break;
             case 'inventory':
                 // InventoryExport doesn't support date filtering matching its constructor
