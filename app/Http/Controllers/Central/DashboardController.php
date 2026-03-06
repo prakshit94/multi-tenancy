@@ -24,7 +24,6 @@ class DashboardController extends Controller
         if (!$isSuperAdmin) {
             $orderQuery->where('created_by', $user->id);
             $customerQuery->where('created_by', $user->id);
-            $tenantQuery->where('id', 0);
         }
 
         // 2. Time-based filtering
@@ -84,7 +83,7 @@ class DashboardController extends Controller
         $totalSales = (float) (clone $filteredOrderQuery)->whereNotIn('status', ['cancelled', 'scheduled'])->sum('grand_total');
         $ordersCount = $filteredOrderQuery->count();
         $customersCount = $filteredCustomerQuery->count();
-        $tenantsCount = $tenantQuery->count();
+        $cancelledCount = (clone $filteredOrderQuery)->where('status', 'cancelled')->count();
 
         // Calculate comparison for change percentage (Dynamic based on period)
         $duration = $startDate->diffInDays($endDate ?? now()) + 1;
@@ -117,12 +116,12 @@ class DashboardController extends Controller
                 'icon' => 'dollar-sign'
             ],
             [
-                'title' => $isSuperAdmin ? 'Active Tenants' : 'My Records',
-                'value' => $isSuperAdmin ? number_format($tenantsCount) : number_format($ordersCount + $customersCount),
+                'title' => 'Total Cancelled Orders',
+                'value' => number_format($cancelledCount),
                 'change' => '',
-                'trend' => 'up',
-                'desc' => $isSuperAdmin ? 'Platform total' : 'Items in period',
-                'icon' => $isSuperAdmin ? 'users' : 'refresh-cw'
+                'trend' => 'down',
+                'desc' => 'In selected period',
+                'icon' => 'x-circle'
             ],
             [
                 'title' => 'Orders',
