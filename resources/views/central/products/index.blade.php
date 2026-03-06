@@ -74,7 +74,7 @@
                                 </svg>
                             </div>
                             <input type="text" name="search" value="{{ request('search') }}"
-                                placeholder="Search products, SKU..."
+                                placeholder="Search products, SKU..." autocomplete="off"
                                 class="block w-full sm:w-72 rounded-xl border-gray-200 pl-10 pr-3 py-2.5 text-sm placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 shadow-sm transition-all bg-white/80 backdrop-blur-sm hover:bg-white">
                         </div>
                     </form>
@@ -556,11 +556,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('products-table-container');
-            const loading = document.getElementById('table-loading');
+            let loading = document.getElementById('table-loading');
             let searchTimeout;
 
             async function loadContent(url, pushState = true) {
+                // Re-fetch loading element in case it was replaced
+                loading = document.getElementById('table-loading');
                 if (loading) loading.style.opacity = '1';
+                
                 try {
                     const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                     if (!res.ok) throw new Error('Network response was not ok');
@@ -568,16 +571,56 @@
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     const newContent = doc.getElementById('products-table-container');
+                    
                     if (newContent) {
+                        // Preserve search input state
+                        const currentSearch = document.querySelector('input[name="search"]');
+                        const isSearchFocused = currentSearch && document.activeElement === currentSearch;
+                        const currentVal = currentSearch ? currentSearch.value : '';
+                        let selectionStart = 0;
+                        let selectionEnd = 0;
+                        
+                        if (isSearchFocused) {
+                            selectionStart = currentSearch.selectionStart;
+                            selectionEnd = currentSearch.selectionEnd;
+                        }
+
+                        // Apply current value to new content so it doesn't revert typed characters
+                        if (currentSearch) {
+                            const newSearch = newContent.querySelector('input[name="search"]');
+                            if (newSearch) {
+                                // Must use setAttribute so it survives innerHTML serialization
+                                newSearch.setAttribute('value', currentVal);
+                            }
+                        }
+
+                        // Replace HTML
                         container.innerHTML = newContent.innerHTML;
+                        
+                        // Update browser URL
                         if (pushState) window.history.pushState({}, '', url);
+                        
+                        // Reinitialize Alpine if present
                         if (typeof Alpine !== 'undefined') Alpine.initTree(container);
+
+                        // Restore focus and cursor position
+                        if (isSearchFocused) {
+                            const replacedSearch = document.querySelector('input[name="search"]');
+                            if (replacedSearch) {
+                                // Ensure the value property is fully matched
+                                replacedSearch.value = currentVal;
+                                replacedSearch.focus();
+                                replacedSearch.setSelectionRange(selectionStart, selectionEnd);
+                            }
+                        }
                     } else {
                         window.location.href = url;
                     }
                 } catch (err) {
+                    console.error('AJAX Load Error:', err);
                     window.location.href = url;
                 } finally {
+                    loading = document.getElementById('table-loading');
                     if (loading) loading.style.opacity = '0';
                 }
             }
@@ -597,9 +640,11 @@
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(() => {
                         const form = e.target.closest('form');
-                        const url = new URL(form.action);
-                        const params = new URLSearchParams(new FormData(form));
-                        loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+                        if (form) {
+                            const url = new URL(form.action);
+                            const params = new URLSearchParams(new FormData(form));
+                            loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+                        }
                     }, 400);
                 }
             });
@@ -607,9 +652,11 @@
             container.addEventListener('change', (e) => {
                 if (e.target.id === 'per_page') {
                     const form = e.target.closest('form');
-                    const url = new URL(form.action);
-                    const params = new URLSearchParams(new FormData(form));
-                    loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+                    if (form) {
+                        const url = new URL(form.action);
+                        const params = new URLSearchParams(new FormData(form));
+                        loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+                    }
                 }
             });
         });
