@@ -3,27 +3,31 @@
 @section('content')
     <div id="products-page-wrapper"
         class="flex flex-1 flex-col space-y-8 p-6 sm:p-10 animate-in fade-in duration-700 bg-gradient-to-br from-gray-50/50 via-white to-indigo-50/30 selection:bg-indigo-100 selection:text-indigo-900 min-h-full relative overflow-hidden">
-        
+
         <!-- Decorative subtle background glow -->
-        <div class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-        <div class="absolute top-1/2 -right-20 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none">
+        </div>
+        <div class="absolute top-1/2 -right-20 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px] pointer-events-none">
+        </div>
 
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 relative z-10">
             <div class="space-y-2">
-                <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 mb-2 border border-indigo-100/50 shadow-sm">
+                <div
+                    class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 mb-2 border border-indigo-100/50 shadow-sm">
                     <span class="flex h-2 w-2 rounded-full bg-indigo-600 animate-pulse"></span>
-                    <span class="text-[10px] font-black text-indigo-700 tracking-[0.15em] uppercase">Catalog Management</span>
+                    <span class="text-[10px] font-black text-indigo-700 tracking-[0.15em] uppercase">Catalog
+                        Management</span>
                 </div>
-                <h1
-                    class="text-4xl sm:text-5xl font-black tracking-tighter text-gray-900 drop-shadow-sm">
+                <h1 class="text-4xl sm:text-5xl font-black tracking-tighter text-gray-900 drop-shadow-sm">
                     Products
                 </h1>
-                <p class="text-gray-500 font-medium text-sm sm:text-base max-w-xl leading-relaxed">Oversee your global product catalog, fine-tune pricing, and monitor real-time stock inventory.</p>
+                <!-- <p class="text-gray-500 font-medium text-sm sm:text-base max-w-xl leading-relaxed">Oversee your global product catalog, fine-tune pricing, and monitor real-time stock inventory.</p> -->
             </div>
 
             <!-- Filter Pills (Apple iOS Style Segmented Control) -->
-            <div class="flex items-center p-1.5 bg-gray-100/80 rounded-2xl border border-gray-200/60 backdrop-blur-xl shadow-sm w-max transition-all duration-300 hover:shadow-md">
+            <div
+                class="flex items-center p-1.5 bg-gray-100/80 rounded-2xl border border-gray-200/60 backdrop-blur-xl shadow-sm w-max transition-all duration-300 hover:shadow-md">
                 <a href="{{ route('central.products.index') }}"
                     class="relative px-5 py-2.5 rounded-[12px] text-sm font-bold transition-all duration-300 {{ request('status') === null ? 'bg-white text-indigo-900 shadow-md ring-1 ring-black/5 origin-center scale-100' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200/50 scale-95 hover:scale-100' }}">
                     All Items
@@ -40,52 +44,60 @@
         </div>
 
         <div id="products-table-container" x-data="{ 
-                selected: [], 
-                viewingProduct: null,
-                products: {{ \Illuminate\Support\Js::from($products->items()) }},
-                showCost: {{ auth()->user()->hasRole('Super Admin') ? 'true' : 'false' }},
-                formatPrice(price) {
-                    return '₹' + parseFloat(price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                },
-                formatDate(dateString) {
-                    if (!dateString) return 'N/A';
-                    return new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
-                }
-            }" class="relative z-10 space-y-6">
-            
+                                selected: [], 
+                                viewingProduct: null,
+                                products: {{ \Illuminate\Support\Js::from($products->items()) }},
+                                showCost: {{ auth()->user()->hasRole('Super Admin') ? 'true' : 'false' }},
+                                formatPrice(price) {
+                                    return '₹' + parseFloat(price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                },
+                                formatDate(dateString) {
+                                    if (!dateString) return 'N/A';
+                                    return new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+                                }
+                            }" class="relative z-10 space-y-6">
+
             <!-- Toolbar -->
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                     <!-- Selection Counter -->
-                    <div x-cloak x-show="selected.length > 0" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
-                        class="flex items-center">
+                    <div x-cloak x-show="selected.length > 0" x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 translate-y-2"
+                        x-transition:enter-end="opacity-100 translate-y-0" class="flex items-center">
                         <div
                             class="px-4 py-2 rounded-2xl bg-gray-900 border border-black text-white text-sm font-black shadow-xl shadow-gray-900/20 flex items-center gap-2">
-                            <span class="flex items-center justify-center bg-white/20 rounded-lg w-6 h-6 text-xs" x-text="selected.length"></span>
+                            <span class="flex items-center justify-center bg-white/20 rounded-lg w-6 h-6 text-xs"
+                                x-text="selected.length"></span>
                             <span class="tracking-widest uppercase text-[10px]">Selected</span>
                         </div>
                     </div>
 
                     <!-- Search Box -->
-                    <form id="search-form" method="GET" action="{{ url()->current() }}" class="flex-1 sm:flex-none relative group w-full sm:w-auto">
+                    <form id="search-form" method="GET" action="{{ url()->current() }}"
+                        class="flex-1 sm:flex-none relative group w-full sm:w-auto">
                         @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
                         @if(request('stock')) <input type="hidden" name="stock" value="{{ request('stock') }}"> @endif
                         @if(request('per_page')) <input type="hidden" name="per_page" value="{{ request('per_page') }}">
                         @endif
 
-                        <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-[1.25rem] blur opacity-0 group-focus-within:opacity-20 transition duration-500"></div>
+                        <div
+                            class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-[1.25rem] blur opacity-0 group-focus-within:opacity-20 transition duration-500">
+                        </div>
                         <div class="relative flex items-center">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400 group-focus-within:text-indigo-600 transition-colors duration-300"
-                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
                             <input type="text" name="search" value="{{ request('search') }}"
                                 placeholder="Search products, SKU..." autocomplete="off"
                                 class="block w-full sm:w-80 rounded-2xl border-0 py-3 pl-11 pr-12 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 bg-white/90 backdrop-blur-md transition-all duration-300 hover:ring-gray-300">
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <span class="hidden sm:inline-flex items-center justify-center px-2 py-0.5 rounded border border-gray-200 text-[10px] font-sans font-bold text-gray-400 bg-gray-50/50">⌘K</span>
+                                <span
+                                    class="hidden sm:inline-flex items-center justify-center px-2 py-0.5 rounded border border-gray-200 text-[10px] font-sans font-bold text-gray-400 bg-gray-50/50">⌘K</span>
                             </div>
                         </div>
                     </form>
@@ -94,8 +106,11 @@
                 @can('products create')
                     <a href="{{ route('central.products.create') }}"
                         class="group relative inline-flex items-center justify-center gap-2 rounded-2xl bg-gray-900 px-7 py-3 text-sm font-bold text-white shadow-xl shadow-gray-900/20 hover:bg-gray-800 hover:shadow-gray-900/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 w-full sm:w-auto overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-r from-indigo-500/30 to-purple-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-r from-indigo-500/30 to-purple-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 relative z-10" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                         <span class="relative z-10">Add Product</span>
@@ -104,32 +119,44 @@
             </div>
 
             <!-- Table Card Glassmorphism -->
-            <div class="bg-white/60 backdrop-blur-2xl rounded-[2rem] border border-white shadow-2xl shadow-indigo-100/50 overflow-hidden relative">
+            <div
+                class="bg-white/60 backdrop-blur-2xl rounded-[2rem] border border-white shadow-2xl shadow-indigo-100/50 overflow-hidden relative">
                 <!-- Loading Overlay -->
                 <div id="table-loading"
                     class="absolute inset-0 z-50 bg-white/50 backdrop-blur-sm flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
                     <div class="relative flex justify-center items-center">
                         <div class="absolute animate-ping w-12 h-12 rounded-full bg-indigo-400/30"></div>
-                        <div class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent shadow-lg relative z-10"></div>
+                        <div
+                            class="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent shadow-lg relative z-10">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Pagination/Count Header -->
-                <div class="border-b border-gray-100/50 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/40">
+                <div
+                    class="border-b border-gray-100/50 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/40">
                     <div class="text-sm font-medium text-gray-500 flex items-center gap-3">
                         <div class="p-2 bg-indigo-50 shadow-inner rounded-xl text-indigo-600 border border-indigo-100/50">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                            </svg>
                         </div>
-                        <div>Showing <span class="font-black text-gray-900">{{ $products->firstItem() ?? 0 }}</span> to <span class="font-black text-gray-900">{{ $products->lastItem() ?? 0 }}</span> of <span class="font-black text-indigo-600">{{ $products->total() }}</span> items</div>
+                        <div>Showing <span class="font-black text-gray-900">{{ $products->firstItem() ?? 0 }}</span> to
+                            <span class="font-black text-gray-900">{{ $products->lastItem() ?? 0 }}</span> of <span
+                                class="font-black text-indigo-600">{{ $products->total() }}</span> items
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <form id="per-page-form" method="GET" action="{{ url()->current() }}" class="flex items-center gap-3">
+                        <form id="per-page-form" method="GET" action="{{ url()->current() }}"
+                            class="flex items-center gap-3">
                             @foreach(request()->except(['per_page', 'page']) as $key => $value)
                                 <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                             @endforeach
 
-                            <label for="per_page" class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Rows</label>
+                            <label for="per_page"
+                                class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Rows</label>
                             <div class="relative">
                                 <select name="per_page" id="per_page"
                                     class="appearance-none block w-20 pl-4 pr-8 py-2 rounded-xl border-gray-200/80 text-sm font-bold text-gray-700 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 cursor-pointer transition-all hover:bg-gray-50">
@@ -137,8 +164,12 @@
                                     <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
                                     <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
                                 </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
                                 </div>
                             </div>
                         </form>
@@ -157,17 +188,26 @@
                                             @click="selected = $event.target.checked ? [{{ $products->pluck('id')->join(',') }}] : []">
                                     </div>
                                 </th>
-                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Product Identity</th>
-                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Classification</th>
-                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Inventory</th>
-                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Valuation</th>
-                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Taxation</th>
-                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Controls</th>
+                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                    Product Identity</th>
+                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                    Classification</th>
+                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                    Inventory</th>
+                                <th
+                                    class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">
+                                    Valuation</th>
+                                <th class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                    Taxation</th>
+                                <th
+                                    class="px-5 py-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">
+                                    Controls</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($products as $product)
-                                <tr class="group bg-white hover:bg-indigo-50/40 transition-all duration-300 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_20px_-8px_rgba(79,70,229,0.15)] ring-1 ring-gray-900/5 hover:ring-indigo-500/20 rounded-2xl">
+                                <tr
+                                    class="group bg-white hover:bg-indigo-50/40 transition-all duration-300 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_20px_-8px_rgba(79,70,229,0.15)] ring-1 ring-gray-900/5 hover:ring-indigo-500/20 rounded-2xl">
                                     <td class="p-5 align-middle rounded-l-2xl">
                                         <div class="flex items-center justify-center">
                                             <input type="checkbox" value="{{ $product->id }}" x-model="selected"
@@ -178,20 +218,30 @@
                                     <!-- Product Info -->
                                     <td class="p-5">
                                         <div class="flex items-center gap-5">
-                                            <div class="relative h-16 w-16 flex-shrink-0 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden group-hover:shadow-md transition-all duration-300">
+                                            <div
+                                                class="relative h-16 w-16 flex-shrink-0 rounded-2xl bg-white shadow-sm ring-1 ring-black/5 overflow-hidden group-hover:shadow-md transition-all duration-300">
                                                 <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
                                                     class="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500">
                                             </div>
                                             <div class="space-y-1.5 max-w-[200px]">
-                                                <div class="text-sm font-black text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2" title="{{ $product->name }}">
+                                                <div class="text-sm font-black text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2"
+                                                    title="{{ $product->name }}">
                                                     {{ $product->name }}
                                                 </div>
                                                 <div class="flex items-center gap-2 flex-wrap">
-                                                    <span class="text-[10px] font-bold text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">{{ $product->sku }}</span>
-                                                    <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-0.5 text-[9px] font-black text-gray-500 uppercase tracking-[0.1em] border border-gray-100">{{ $product->type }}</span>
+                                                    <span
+                                                        class="text-[10px] font-bold text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">{{ $product->sku }}</span>
+                                                    <span
+                                                        class="inline-flex items-center rounded-md bg-gray-50 px-2 py-0.5 text-[9px] font-black text-gray-500 uppercase tracking-[0.1em] border border-gray-100">{{ $product->type }}</span>
                                                     @if($product->is_featured)
-                                                        <span class="inline-flex items-center rounded-md bg-gradient-to-r from-amber-100 to-yellow-100 px-2 py-0.5 text-[9px] font-black text-amber-700 uppercase tracking-[0.1em] border border-amber-200/50 shadow-sm">
-                                                            <svg class="w-2.5 h-2.5 mr-0.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                                        <span
+                                                            class="inline-flex items-center rounded-md bg-gradient-to-r from-amber-100 to-yellow-100 px-2 py-0.5 text-[9px] font-black text-amber-700 uppercase tracking-[0.1em] border border-amber-200/50 shadow-sm">
+                                                            <svg class="w-2.5 h-2.5 mr-0.5 text-amber-500" fill="currentColor"
+                                                                viewBox="0 0 20 20">
+                                                                <path
+                                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+                                                                </path>
+                                                            </svg>
                                                             Star
                                                         </span>
                                                     @endif
@@ -203,10 +253,17 @@
                                     <!-- Category -->
                                     <td class="p-5 align-middle">
                                         <div class="flex flex-col gap-2">
-                                            <span class="text-xs font-bold text-gray-900 bg-gray-50/80 w-fit px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">{{ $product->category->name ?? 'Uncategorized' }}</span>
+                                            <span
+                                                class="text-xs font-bold text-gray-900 bg-gray-50/80 w-fit px-3 py-1.5 rounded-xl border border-gray-100 shadow-sm">{{ $product->category->name ?? 'Uncategorized' }}</span>
                                             @if($product->brand)
-                                                <span class="text-[10px] font-black text-gray-400 flex items-center gap-1 uppercase tracking-widest pl-1">
-                                                    <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m3-4h1m-1 4h1m-5 8h8"></path></svg>
+                                                <span
+                                                    class="text-[10px] font-black text-gray-400 flex items-center gap-1 uppercase tracking-widest pl-1">
+                                                    <svg class="w-3 h-3 text-gray-300" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m3-4h1m-1 4h1m-5 8h8">
+                                                        </path>
+                                                    </svg>
                                                     {{ $product->brand->name }}
                                                 </span>
                                             @endif
@@ -218,30 +275,39 @@
                                         <div class="flex flex-col gap-2">
                                             @if($product->manage_stock)
                                                 @if($product->stock_on_hand <= 0)
-                                                    <div class="inline-flex items-center gap-2 rounded-full bg-red-50/80 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/10 w-fit shadow-sm">
+                                                    <div
+                                                        class="inline-flex items-center gap-2 rounded-full bg-red-50/80 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/10 w-fit shadow-sm">
                                                         <div class="relative flex h-2 w-2">
-                                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                            <span
+                                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                                             <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                                                         </div>
                                                         Out of Stock
                                                     </div>
                                                 @elseif($product->stock_on_hand <= $product->reorder_level)
-                                                    <div class="inline-flex items-center gap-2 rounded-full bg-amber-50/80 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/10 w-fit shadow-sm">
+                                                    <div
+                                                        class="inline-flex items-center gap-2 rounded-full bg-amber-50/80 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/10 w-fit shadow-sm">
                                                         <div class="relative flex h-2 w-2">
-                                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                            <span
+                                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                                                             <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                                                         </div>
                                                         Low: {{ floatval($product->stock_on_hand) }}
                                                     </div>
                                                 @else
-                                                    <div class="inline-flex items-center gap-2 rounded-full bg-emerald-50/80 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/10 w-fit shadow-sm">
+                                                    <div
+                                                        class="inline-flex items-center gap-2 rounded-full bg-emerald-50/80 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/10 w-fit shadow-sm">
                                                         <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                                                         Safe: {{ floatval($product->stock_on_hand) }}
                                                     </div>
                                                 @endif
-                                                <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-3">{{ $product->unit_type }}</div>
+                                                <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-3">
+                                                    {{ $product->unit_type }}
+                                                </div>
                                             @else
-                                                <span class="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1.5 rounded-xl w-fit border border-gray-100/50 border-dashed">Not Tracked</span>
+                                                <span
+                                                    class="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1.5 rounded-xl w-fit border border-gray-100/50 border-dashed">Not
+                                                    Tracked</span>
                                             @endif
                                         </div>
                                     </td>
@@ -260,25 +326,36 @@
                                         <div class="flex flex-col items-end gap-1.5">
                                             @if($gstRate > 0)
                                                 <div class="flex items-baseline justify-end group cursor-default">
-                                                    <span class="text-lg font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 transition-all duration-300 group-hover:from-indigo-600 group-hover:to-purple-600">₹{{ number_format($priceWithGst, 2) }}</span>
-                                                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 bg-gray-100 px-1 py-0.5 rounded-md">w/ GST</span>
+                                                    <span
+                                                        class="text-lg font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 transition-all duration-300 group-hover:from-indigo-600 group-hover:to-purple-600">₹{{ number_format($priceWithGst, 2) }}</span>
+                                                    <!-- <span
+                                                                                            class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1 bg-gray-100 px-1 py-0.5 rounded-md">w/
+                                                                                            GST</span> -->
                                                 </div>
-                                                <span class="text-[10px] font-bold text-gray-400 border-b border-dashed border-gray-300">Net: ₹{{ number_format($product->price, 2) }}</span>
+                                                <span
+                                                    class="text-[10px] font-bold text-gray-400 border-b border-dashed border-gray-300">Net:
+                                                    ₹{{ number_format($product->price, 2) }}</span>
                                             @else
-                                                <span class="text-lg font-black tracking-tighter text-gray-900">₹{{ number_format($product->price, 2) }}</span>
+                                                <span
+                                                    class="text-lg font-black tracking-tighter text-gray-900">₹{{ number_format($product->price, 2) }}</span>
                                             @endif
-                                            
+
                                             <div class="flex items-center gap-2 mt-0.5">
                                                 @if($product->mrp > $product->price)
-                                                    <span class="text-[10px] font-bold text-gray-400 line-through decoration-gray-300">MRP ₹{{ number_format($product->mrp, 2) }}</span>
-                                                    <span class="text-[9px] font-black text-emerald-700 bg-emerald-100 ring-1 ring-emerald-500/20 px-1.5 py-0.5 rounded-md shadow-sm">-{{ round((($product->mrp - $product->price) / $product->mrp) * 100) }}% off</span>
+                                                    <span
+                                                        class="text-[10px] font-bold text-gray-400 line-through decoration-gray-300">MRP
+                                                        ₹{{ number_format($product->mrp, 2) }}</span>
+                                                    <span
+                                                        class="text-[9px] font-black text-emerald-700 bg-emerald-100 ring-1 ring-emerald-500/20 px-1.5 py-0.5 rounded-md shadow-sm">-{{ round((($product->mrp - $product->price) / $product->mrp) * 100) }}%
+                                                        off</span>
                                                 @endif
                                             </div>
-                                            
+
                                             @hasrole('Super Admin')
                                             @if($product->cost_price > 0)
-                                                <span class="text-[9px] font-bold font-mono text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-lg mt-1 ring-1 ring-inset ring-indigo-500/10">
-                                                    Buy: ₹{{ number_format($product->cost_price, 2) }}
+                                                <span
+                                                    class="text-[9px] font-bold font-mono text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-lg mt-1 ring-1 ring-inset ring-indigo-500/10">
+                                                    Cost: ₹{{ number_format($product->cost_price, 2) }}
                                                 </span>
                                             @endif
                                             @endhasrole
@@ -301,10 +378,12 @@
 
                                         @if($rate > 0)
                                             <div class="flex flex-col gap-2">
-                                                <span class="inline-flex items-center justify-center rounded-lg bg-blue-50 px-3 py-1.5 text-[10px] font-black text-blue-700 ring-1 ring-inset ring-blue-600/10 w-fit drop-shadow-sm border-b border-blue-200">
+                                                <span
+                                                    class="inline-flex items-center justify-center rounded-lg bg-blue-50 px-3 py-1.5 text-[10px] font-black text-blue-700 ring-1 ring-inset ring-blue-600/10 w-fit drop-shadow-sm border-b border-blue-200">
                                                     {{ $className }} ({{ floatval($rate) }}%)
                                                 </span>
-                                                <div class="flex items-center gap-1.5 text-[9px] font-black font-mono uppercase bg-gray-50/50 p-1 rounded-xl w-fit ring-1 ring-gray-100">
+                                                <div
+                                                    class="flex items-center gap-1.5 text-[9px] font-black font-mono uppercase bg-gray-50/50 p-1 rounded-xl w-fit ring-1 ring-gray-100">
                                                     <div class="flex flex-col items-center bg-white rounded-lg px-2 py-1 shadow-sm">
                                                         <span class="text-gray-400 mb-0.5 tracking-widest text-[8px]">SGST</span>
                                                         <span class="text-blue-700">{{ number_format($rate / 2, 2) }}%</span>
@@ -316,31 +395,48 @@
                                                 </div>
                                             </div>
                                         @else
-                                            <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 border-dashed">Exempt</span>
+                                            <span
+                                                class="text-[10px] font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 border-dashed">Exempt</span>
                                         @endif
                                     </td>
 
                                     <!-- Actions -->
                                     <td class="p-5 text-right align-middle rounded-r-2xl">
-                                        <div class="flex items-center justify-end gap-2 opacity-100 sm:opacity-40 sm:group-hover:opacity-100 transition-opacity duration-300">
+                                        <div
+                                            class="flex items-center justify-end gap-2 opacity-100 sm:opacity-40 sm:group-hover:opacity-100 transition-opacity duration-300">
                                             @can('products edit')
                                                 <a href="{{ route('central.products.edit', $product) }}"
-                                                    class="flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 bg-gray-50 border border-gray-200/60 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-1 transition-all duration-300 ease-out" title="Edit Product">
-                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                    class="flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 bg-gray-50 border border-gray-200/60 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-1 transition-all duration-300 ease-out"
+                                                    title="Edit Product">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                    </svg>
                                                 </a>
                                             @endcan
                                             <button @click="viewingProduct = products.find(p => p.id == {{ $product->id }})"
-                                                class="flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 bg-gray-50 border border-gray-200/60 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-500/30 hover:-translate-y-1 transition-all duration-300 ease-out" title="View Specifics">
-                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                class="flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 bg-gray-50 border border-gray-200/60 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-lg hover:shadow-emerald-500/30 hover:-translate-y-1 transition-all duration-300 ease-out"
+                                                title="View Specifics">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
                                             </button>
                                             @can('products delete')
                                                 <form action="{{ route('central.products.destroy', $product) }}" method="POST"
-                                                    onsubmit="return confirm('Are you sure you want to completely remove this product? This action is irreversible.');" class="inline-block">
+                                                    onsubmit="return confirm('Are you sure you want to completely remove this product? This action is irreversible.');"
+                                                    class="inline-block">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
-                                                        class="flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 bg-gray-50 border border-gray-200/60 hover:bg-rose-500 hover:text-white hover:border-rose-500 hover:shadow-lg hover:shadow-rose-500/30 hover:-translate-y-1 transition-all duration-300 ease-out" title="Permanently Delete">
-                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                        class="flex items-center justify-center w-9 h-9 rounded-xl text-gray-500 bg-gray-50 border border-gray-200/60 hover:bg-rose-500 hover:text-white hover:border-rose-500 hover:shadow-lg hover:shadow-rose-500/30 hover:-translate-y-1 transition-all duration-300 ease-out"
+                                                        title="Permanently Delete">
+                                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
                                                     </button>
                                                 </form>
                                             @endcan
@@ -349,20 +445,28 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="p-20 text-center text-gray-500 bg-white/50 backdrop-blur-md rounded-[2rem] border border-dashed border-gray-300/60 shadow-inner">
+                                    <td colspan="7"
+                                        class="p-20 text-center text-gray-500 bg-white/50 backdrop-blur-md rounded-[2rem] border border-dashed border-gray-300/60 shadow-inner">
                                         <div class="flex flex-col items-center justify-center space-y-6">
-                                            <div class="p-6 rounded-full bg-indigo-50 border border-indigo-100 shadow-inner relative">
+                                            <div
+                                                class="p-6 rounded-full bg-indigo-50 border border-indigo-100 shadow-inner relative">
                                                 <div class="absolute inset-0 rounded-full animate-ping bg-indigo-200/50"></div>
-                                                <svg class="h-16 w-16 text-indigo-400 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                                <svg class="h-16 w-16 text-indigo-400 relative z-10" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                                 </svg>
                                             </div>
                                             <div class="space-y-2">
-                                                <p class="text-2xl font-black text-gray-900 tracking-tight">No products discovered</p>
-                                                <p class="text-sm font-medium text-gray-500 max-w-sm mx-auto leading-relaxed">Expand your global catalog by creating a new product entry. Information added instantly syncs.</p>
+                                                <p class="text-2xl font-black text-gray-900 tracking-tight">No products
+                                                    discovered</p>
+                                                <p class="text-sm font-medium text-gray-500 max-w-sm mx-auto leading-relaxed">
+                                                    Expand your global catalog by creating a new product entry. Information
+                                                    added instantly syncs.</p>
                                             </div>
                                             @can('products create')
-                                                <a href="{{ route('central.products.create') }}" class="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 hover:shadow-indigo-300/50 transition-all duration-300 ease-out">
+                                                <a href="{{ route('central.products.create') }}"
+                                                    class="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 hover:shadow-indigo-300/50 transition-all duration-300 ease-out">
                                                     Create Your First Product
                                                 </a>
                                             @endcan
@@ -563,7 +667,7 @@
                 // Re-fetch loading element in case it was replaced
                 loading = document.getElementById('table-loading');
                 if (loading) loading.style.opacity = '1';
-                
+
                 try {
                     const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                     if (!res.ok) throw new Error('Network response was not ok');
@@ -571,7 +675,7 @@
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     const newContent = doc.getElementById('products-table-container');
-                    
+
                     if (newContent) {
                         // Preserve search input state
                         const currentSearch = document.querySelector('input[name="search"]');
@@ -579,7 +683,7 @@
                         const currentVal = currentSearch ? currentSearch.value : '';
                         let selectionStart = 0;
                         let selectionEnd = 0;
-                        
+
                         if (isSearchFocused) {
                             selectionStart = currentSearch.selectionStart;
                             selectionEnd = currentSearch.selectionEnd;
@@ -596,10 +700,10 @@
 
                         // Replace HTML
                         container.innerHTML = newContent.innerHTML;
-                        
+
                         // Update browser URL
                         if (pushState) window.history.pushState({}, '', url);
-                        
+
                         // Reinitialize Alpine if present
                         if (typeof Alpine !== 'undefined') Alpine.initTree(container);
 
