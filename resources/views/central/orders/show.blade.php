@@ -86,7 +86,7 @@
 
                     {{-- 1. Confirm --}}
                     @php 
-                                                                                                                                                                                                                                                                        $isPending = in_array($order->status, ['pending', 'draft', 'scheduled']);
+                                                                                                                                                                                                                                                                                                $isPending = in_array($order->status, ['pending', 'draft', 'scheduled']);
                         $isConfirmedOrLater = in_array($order->status, ['confirmed', 'processing', 'ready_to_ship', 'shipped', 'in_transit', 'delivered', 'completed', 'returned']);
                     @endphp
                     @if($isPending)
@@ -521,9 +521,12 @@
                             <span class="truncate">{{ $order->customer->email }}</span>
                         </a>
 
-                        <div class="flex items-center gap-3 text-sm">
+                        <div class="flex items-center gap-3 text-sm group/phone cursor-pointer hover:text-indigo-600 transition-colors"
+                            title="Click to copy"
+                            x-data="{ copied: false }"
+                            @click="let t = '{{ $order->customer->mobile ?? '' }}'; if(t && t !== '') { if(navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t); } else { let el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } copied = true; setTimeout(() => copied = false, 2000); }">
                             <div
-                                class="h-8 w-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground border border-border">
+                                class="h-8 w-8 rounded-lg bg-background flex items-center justify-center text-muted-foreground border border-border group-hover/phone:border-indigo-200 group-hover/phone:text-indigo-500 transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round">
@@ -531,7 +534,7 @@
                                         d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                 </svg>
                             </div>
-                            <span>{{ $order->customer->mobile ?? 'N/A' }}</span>
+                            <span x-text="copied ? 'Copied!' : '{{ $order->customer->mobile ?? 'N/A' }}'"></span>
                         </div>
                     </div>
                 </div>
@@ -594,9 +597,12 @@
                                 @if($order->shippingAddress->contact_phone)
                                     <div class="pt-2 mt-1 border-t border-gray-100">
                                          <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold block mb-0.5">Phone</span>
-                                        <p class="text-indigo-600 font-medium flex items-center gap-1 text-xs">
+                                        <p class="text-indigo-600 font-medium flex items-center gap-1 text-xs cursor-pointer hover:text-indigo-800 transition-colors"
+                                            title="Click to copy"
+                                            x-data="{ copied: false }"
+                                            @click="let t = '{{ $order->shippingAddress->contact_phone }}'; if(t && t !== '') { if(navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t); } else { let el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } copied = true; setTimeout(() => copied = false, 2000); }">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                                            {{ $order->shippingAddress->contact_phone }}
+                                            <span x-text="copied ? 'Copied!' : '{{ $order->shippingAddress->contact_phone }}'"></span>
                                         </p>
                                     </div>
                                 @endif
@@ -665,9 +671,12 @@
                                 @if($order->billingAddress->contact_phone)
                                     <div class="pt-2 mt-1 border-t border-gray-100">
                                          <span class="text-[10px] uppercase tracking-wider text-gray-400 font-bold block mb-0.5">Phone</span>
-                                        <p class="text-indigo-600 font-medium flex items-center gap-1 text-xs">
+                                        <p class="text-indigo-600 font-medium flex items-center gap-1 text-xs cursor-pointer hover:text-indigo-800 transition-colors"
+                                            title="Click to copy"
+                                            x-data="{ copied: false }"
+                                            @click="let t = '{{ $order->billingAddress->contact_phone }}'; if(t && t !== '') { if(navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t); } else { let el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } copied = true; setTimeout(() => copied = false, 2000); }">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                                            {{ $order->billingAddress->contact_phone }}
+                                            <span x-text="copied ? 'Copied!' : '{{ $order->billingAddress->contact_phone }}'"></span>
                                         </p>
                                     </div>
                                 @endif
@@ -720,28 +729,28 @@
                     @if($order->complaints && $order->complaints->isNotEmpty())
                         <div class="space-y-4">
                             @foreach($order->complaints as $complaint)
-                                                                                                                <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50 group hover:border-red-100 hover:bg-red-50/30 transition-colors">
-                                                                                                                    <div class="flex items-start justify-between mb-2">
-                                                                                                                        <div>
-                                                                                                                            <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md
-                                                                                                                                {{ $complaint->status === 'open' ? 'bg-amber-100 text-amber-700' :
+                                                                                                                                    <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50 group hover:border-red-100 hover:bg-red-50/30 transition-colors">
+                                                                                                                                        <div class="flex items-start justify-between mb-2">
+                                                                                                                                            <div>
+                                                                                                                                                <span class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md
+                                                                                                                                                    {{ $complaint->status === 'open' ? 'bg-amber-100 text-amber-700' :
                                 ($complaint->status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                                     ($complaint->status === 'resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-700')) }}">
-                                                                                                                                {{ str_replace('_', ' ', $complaint->status) }}
-                                                                                                                            </span>
-                                                                                                                            <p class="text-xs text-gray-500 font-mono mt-1.5">{{ $complaint->reference_number }}</p>
-                                                                                                                        </div>
-                                                                                                                        <div class="text-right">
-                                                                                                                            <p class="text-[10px] text-gray-400 font-medium">{{ $complaint->created_at->format('M d, Y') }}</p>
-                                                                                                                            <p class="text-[10px] text-gray-500 font-medium mt-1">by {{ $complaint->user->name ?? 'System' }}</p>
-                                                                                                                        </div>
-                                                                                                                    </div>
-                                                                                                                    <p class="text-sm font-bold text-gray-900 leading-snug">{{ $complaint->subject }}</p>
-                                                                                                                    <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ $complaint->description }}</p>
-                                                                                                                    <div class="mt-3 pt-3 border-t border-gray-100/80 flex justify-end">
-                                                                                                                        <a href="{{ route('central.complaints.index', ['search' => $complaint->reference_number]) }}" class="text-[10px] font-bold uppercase text-primary hover:text-indigo-700 hover:underline">View Details Record &rarr;</a>
-                                                                                                                    </div>
-                                                                                                                </div>
+                                                                                                                                                    {{ str_replace('_', ' ', $complaint->status) }}
+                                                                                                                                                </span>
+                                                                                                                                                <p class="text-xs text-gray-500 font-mono mt-1.5">{{ $complaint->reference_number }}</p>
+                                                                                                                                            </div>
+                                                                                                                                            <div class="text-right">
+                                                                                                                                                <p class="text-[10px] text-gray-400 font-medium">{{ $complaint->created_at->format('M d, Y') }}</p>
+                                                                                                                                                <p class="text-[10px] text-gray-500 font-medium mt-1">by {{ $complaint->user->name ?? 'System' }}</p>
+                                                                                                                                            </div>
+                                                                                                                                        </div>
+                                                                                                                                        <p class="text-sm font-bold text-gray-900 leading-snug">{{ $complaint->subject }}</p>
+                                                                                                                                        <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ $complaint->description }}</p>
+                                                                                                                                        <div class="mt-3 pt-3 border-t border-gray-100/80 flex justify-end">
+                                                                                                                                            <a href="{{ route('central.complaints.index', ['search' => $complaint->reference_number]) }}" class="text-[10px] font-bold uppercase text-primary hover:text-indigo-700 hover:underline">View Details Record &rarr;</a>
+                                                                                                                                        </div>
+                                                                                                                                    </div>
                             @endforeach
                         </div>
                     @else
