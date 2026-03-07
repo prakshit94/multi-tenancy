@@ -304,7 +304,23 @@
 
                         <!-- Team Activity (Refined) -->
                         @can('users view')
-                            <div x-data="{ searchQuery: '' }"
+                            <div x-data="{ 
+                                    searchQuery: '',
+                                    sortDir: 'desc',
+                                    sortItems() {
+                                        let container = this.$refs.userList;
+                                        if (!container) return;
+                                        let items = Array.from(container.children).filter(el => el.hasAttribute('data-revenue'));
+                                        if(items.length === 0) return;
+                                        items.sort((a, b) => {
+                                            let revA = parseFloat(a.getAttribute('data-revenue'));
+                                            let revB = parseFloat(b.getAttribute('data-revenue'));
+                                            return this.sortDir === 'desc' ? revB - revA : revA - revB;
+                                        });
+                                        items.forEach(item => container.appendChild(item));
+                                    }
+                                }"
+                                x-init="$nextTick(() => sortItems())"
                                 class="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-sm overflow-hidden h-full">
                                 <div class="p-4 px-6 border-b border-border/40 bg-muted/20 space-y-3">
                                     <div class="flex justify-between items-center">
@@ -318,12 +334,20 @@
                                             Team Activity
                                         </h3>
                                         <div class="flex items-center gap-2">
+                                            <button @click="sortDir = sortDir === 'desc' ? 'asc' : 'desc'; sortItems()"
+                                                class="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-wider flex items-center gap-1"
+                                                title="Sort by Revenue">
+                                                <span x-text="sortDir === 'desc' ? 'High to Low' : 'Low to High'" class="text-foreground"></span>
+                                                <svg x-show="sortDir === 'desc'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                                <svg x-show="sortDir === 'asc'" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                            </button>
+                                            <span class="text-border/40">|</span>
                                             @can('users export')
                                                 <a href="{{ route('central.team.export') }}"
                                                     class="text-[10px] font-bold text-primary hover:underline uppercase tracking-wider"
                                                     title="Export CSV">Export</a>
+                                                <span class="text-border/40">|</span>
                                             @endcan
-                                            <span class="text-border/40">|</span>
                                             <span class="text-[10px] font-bold text-muted-foreground">LIVE</span>
                                         </div>
                                     </div>
@@ -338,11 +362,11 @@
                                             class="w-full bg-background/50 border border-border/50 rounded-xl py-2 pl-9 pr-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted-foreground/70">
                                     </div>
                                 </div>
-                                <div class="divide-y divide-border/40 max-h-[500px] overflow-y-auto custom-scrollbar">
+                                <div x-ref="userList" class="divide-y divide-border/40 max-h-[500px] overflow-y-auto custom-scrollbar">
                                     @foreach($onlineUsers ?? [] as $onlineUser)
                                         @php $isOnline = $onlineUser->isOnline(); @endphp
                                         @if($isOnline) <!-- Only Show Online Users -->
-                                            <div x-show="!searchQuery || '{{ strtolower($onlineUser->name) }}'.includes(searchQuery.toLowerCase())"
+                                            <div data-revenue="{{ $onlineUser->total_revenue ?? 0 }}" x-show="!searchQuery || '{{ strtolower($onlineUser->name) }}'.includes(searchQuery.toLowerCase())"
                                                 class="flex items-center justify-between p-3 px-4 hover:bg-primary/5 transition-colors">
                                                 <div class="flex items-center gap-3">
                                                     <div class="relative">
