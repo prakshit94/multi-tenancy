@@ -1173,7 +1173,7 @@
                                                                         <h4 class="text-lg font-black text-foreground cursor-pointer hover:text-indigo-500 transition-colors"
                                                                             title="Click to copy"
                                                                             x-text="order.order_number"
-                                                                            @click="navigator.clipboard.writeText(order.order_number); window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'success', message: 'Order ID copied to clipboard' } }));">
+                                                                            @click="window.copyToClipboardFallback(order.order_number); window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'success', message: 'Order ID copied to clipboard' } }));">
                                                                         </h4>
                                                                         <span
                                                                             class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-secondary text-foreground"
@@ -1252,7 +1252,7 @@
                                                                                 title="Click to copy"
                                                                                 x-text="shipment.tracking_number || 'N/A'"
                                                                                 @click="if(shipment.tracking_number) {
-                                                                                    navigator.clipboard.writeText(shipment.tracking_number);
+                                                                                    window.copyToClipboardFallback(shipment.tracking_number);
                                                                                     window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'success', message: 'Tracking ID copied to clipboard' } }));
                                                                                 }"></p>
                                                                         </div>
@@ -3707,11 +3707,33 @@
 
                     get grandTotal() {
                         return Math.max(0, (this.subTotal - this.cartDiscountTotal - this.orderDiscountAmount) + this.taxTotal);
-               }
+                    }
+                }
             }
-        }
         </script>
 
 
     </div>
+    <script>
+        window.copyToClipboardFallback = function (text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+                return;
+            }
+            let textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(textArea);
+        };
+    </script>
 </x-app-layout>
