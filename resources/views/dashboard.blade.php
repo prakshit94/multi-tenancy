@@ -97,11 +97,11 @@
                 @endcan
 
                 <!-- @can('reports export')
-                        <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-95 transition-all duration-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                            Download Report
-                        </button>
-                    @endcan -->
+                            <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-95 transition-all duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                Download Report
+                            </button>
+                        @endcan -->
             </div>
         </div>
 
@@ -161,9 +161,9 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                                 stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="10"/>
-                                                <line x1="15" y1="9" x2="9" y2="15"/>
-                                                <line x1="9" y1="9" x2="15" y2="15"/>
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="15" y1="9" x2="9" y2="15" />
+                                                <line x1="9" y1="9" x2="15" y2="15" />
                                             </svg>
                                         @else
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -255,7 +255,8 @@
                                                 <div>
                                                     <p
                                                         class="text-sm font-black text-foreground group-hover:text-primary transition-colors leading-tight">
-                                                        {{ $order->customer->name ?? 'Guest' }}</p>
+                                                        {{ $order->customer->name ?? 'Guest' }}
+                                                    </p>
                                                     <p
                                                         class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
                                                         Ref: #{{ $order->order_number }}</p>
@@ -277,7 +278,8 @@
                                             </div>
                                             <div class="text-right space-y-1">
                                                 <p class="text-sm font-black text-foreground tracking-tight">Rs
-                                                    {{ number_format($order->grand_total, 2) }}</p>
+                                                    {{ number_format($order->grand_total, 2) }}
+                                                </p>
                                                 @php
                                                     $statusMap = [
                                                         'completed' => 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
@@ -303,24 +305,23 @@
                     <div class="col-span-1 lg:col-span-2 space-y-6">
 
                         <!-- Team Activity (Refined) -->
-                        @can('users view')
+                        @can('dashboard view')
                             <div x-data="{ 
-                                    searchQuery: '',
-                                    sortDir: 'desc',
-                                    sortItems() {
-                                        let container = this.$refs.userList;
-                                        if (!container) return;
-                                        let items = Array.from(container.children).filter(el => el.hasAttribute('data-revenue'));
-                                        if(items.length === 0) return;
-                                        items.sort((a, b) => {
-                                            let revA = parseFloat(a.getAttribute('data-revenue'));
-                                            let revB = parseFloat(b.getAttribute('data-revenue'));
-                                            return this.sortDir === 'desc' ? revB - revA : revA - revB;
-                                        });
-                                        items.forEach(item => container.appendChild(item));
-                                    }
-                                }"
-                                x-init="$nextTick(() => sortItems())"
+                                            searchQuery: '',
+                                            sortDir: 'desc',
+                                            sortItems() {
+                                                let container = this.$refs.userList;
+                                                if (!container) return;
+                                                let items = Array.from(container.children).filter(el => el.hasAttribute('data-revenue'));
+                                                if(items.length === 0) return;
+                                                items.sort((a, b) => {
+                                                    let revA = parseFloat(a.getAttribute('data-revenue'));
+                                                    let revB = parseFloat(b.getAttribute('data-revenue'));
+                                                    return this.sortDir === 'desc' ? revB - revA : revA - revB;
+                                                });
+                                                items.forEach(item => container.appendChild(item));
+                                            }
+                                        }" x-init="$nextTick(() => sortItems())"
                                 class="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-sm overflow-hidden h-full">
                                 <div class="p-4 px-6 border-b border-border/40 bg-muted/20 space-y-3">
                                     <div class="flex justify-between items-center">
@@ -337,9 +338,19 @@
                                             <button @click="sortDir = sortDir === 'desc' ? 'asc' : 'desc'; sortItems()"
                                                 class="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-wider flex items-center gap-1"
                                                 title="Sort by Revenue">
-                                                <span x-text="sortDir === 'desc' ? 'High to Low' : 'Low to High'" class="text-foreground"></span>
-                                                <svg x-show="sortDir === 'desc'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                                                <svg x-show="sortDir === 'asc'" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                                                <span x-text="sortDir === 'desc' ? 'High to Low' : 'Low to High'"
+                                                    class="text-foreground"></span>
+                                                <svg x-show="sortDir === 'desc'" xmlns="http://www.w3.org/2000/svg" width="12"
+                                                    height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="m6 9 6 6 6-6" />
+                                                </svg>
+                                                <svg x-show="sortDir === 'asc'" style="display: none;"
+                                                    xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="m18 15-6-6-6 6" />
+                                                </svg>
                                             </button>
                                             <span class="text-border/40">|</span>
                                             @can('users export')
@@ -362,49 +373,58 @@
                                             class="w-full bg-background/50 border border-border/50 rounded-xl py-2 pl-9 pr-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all placeholder:text-muted-foreground/70">
                                     </div>
                                 </div>
-                                <div x-ref="userList" class="divide-y divide-border/40 max-h-[500px] overflow-y-auto custom-scrollbar">
-                                    @foreach($onlineUsers ?? [] as $onlineUser)
-                                        @php $isOnline = $onlineUser->isOnline(); @endphp
-                                        @if($isOnline) <!-- Only Show Online Users -->
-                                            <div data-revenue="{{ $onlineUser->total_revenue ?? 0 }}" x-show="!searchQuery || '{{ strtolower($onlineUser->name) }}'.includes(searchQuery.toLowerCase())"
-                                                class="flex items-center justify-between p-3 px-4 hover:bg-primary/5 transition-colors">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="relative">
-                                                        <div
-                                                            class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                                                            {{ substr($onlineUser->name, 0, 2) }}
-                                                        </div>
-                                                        <span
-                                                            class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-emerald-500 animate-pulse"></span>
+                                <div x-ref="userList"
+                                    class="divide-y divide-border/40 max-h-[500px] overflow-y-auto custom-scrollbar">
+                                    @php
+                                        $displayUsers = collect($onlineUsers ?? [])->filter(function ($u) {
+                                            return $u && $u->isOnline();
+                                        });
+                                        if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
+                                            $displayUsers = $displayUsers->sortByDesc(function ($u) {
+                                                return $u->total_revenue ?? 0;
+                                            })->take(5);
+                                        }
+                                    @endphp
+                                    @foreach($displayUsers as $onlineUser)
+                                        <div data-revenue="{{ $onlineUser->total_revenue ?? 0 }}"
+                                            x-show="!searchQuery || '{{ strtolower($onlineUser->name) }}'.includes(searchQuery.toLowerCase())"
+                                            class="flex items-center justify-between p-3 px-4 hover:bg-primary/5 transition-colors">
+                                            <div class="flex items-center gap-3">
+                                                <div class="relative">
+                                                    <div
+                                                        class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                                        {{ substr($onlineUser->name, 0, 2) }}
                                                     </div>
-                                                    <div>
-                                                        <div class="text-xs font-bold text-foreground">{{ $onlineUser->name }}</div>
-                                                        <div class="text-[10px] text-muted-foreground flex items-center gap-1">
-                                                            <svg class="w-3 h-3 text-muted-foreground/70" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            </svg>
-                                                            {{ $onlineUser->location ?? 'Unknown' }}
-                                                        </div>
-                                                    </div>
+                                                    <span
+                                                        class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-emerald-500 animate-pulse"></span>
                                                 </div>
-                                                <div class="flex flex-col items-end gap-0.5">
-                                                    <div class="text-[10px] font-black text-foreground">
-                                                        Rs {{ number_format($onlineUser->total_revenue ?? 0, 2) }}
-                                                    </div>
-                                                    <div class="flex gap-1">
-                                                        <span class="text-[9px] font-bold text-muted-foreground">
-                                                            {{ $onlineUser->orders_count }} Orders
-                                                        </span>
+                                                <div>
+                                                    <div class="text-xs font-bold text-foreground">{{ $onlineUser->name }}</div>
+                                                    <div class="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                        <svg class="w-3 h-3 text-muted-foreground/70" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        </svg>
+                                                        {{ $onlineUser->location ?? 'Unknown' }}
                                                     </div>
                                                 </div>
                                             </div>
-                                        @endif
+                                            <div class="flex flex-col items-end gap-0.5">
+                                                <div class="text-[10px] font-black text-foreground">
+                                                    Rs {{ number_format($onlineUser->total_revenue ?? 0, 2) }}
+                                                </div>
+                                                <div class="flex gap-1">
+                                                    <span class="text-[9px] font-bold text-muted-foreground">
+                                                        {{ $onlineUser->orders_count }} Orders
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     @endforeach
-                                    @if(collect($onlineUsers)->where(fn($u) => $u->isOnline())->isEmpty())
+                                    @if($displayUsers->isEmpty())
                                         <div class="p-8 text-center text-muted-foreground">
                                             <p class="text-xs">No users online</p>
                                         </div>
@@ -552,7 +572,8 @@
                                         </div>
                                         <div>
                                             <h4 class="text-sm font-black text-foreground">
-                                                {{ $order->customer->name ?? 'Guest Entity' }}</h4>
+                                                {{ $order->customer->name ?? 'Guest Entity' }}
+                                            </h4>
                                             <p class="text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
                                                 #{{ $order->order_number }}</p>
                                             <div class="mt-2 space-y-0.5">
@@ -572,7 +593,8 @@
                                     <div class="text-right">
                                         <p class="text-sm font-black text-foreground">Rs {{ number_format($order->grand_total, 2) }}</p>
                                         <p class="text-[10px] font-bold text-muted-foreground">
-                                            {{ $order->created_at->format('M d, H:i') }}</p>
+                                            {{ $order->created_at->format('M d, H:i') }}
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center bg-muted/30 rounded-2xl p-3">

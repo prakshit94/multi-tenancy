@@ -178,9 +178,10 @@ class DashboardController extends Controller
             ], 'grand_total');
 
         // RESTRICTION: Non-Super Admins can ONLY see themselves in "Team Activity"
-        if (!$isSuperAdmin) {
-            $onlineUsersQuery->where('id', $user->id);
-        }
+        // Update: We now want them to see the Top 5 revenue generators, so we do not restrict the base query.
+        // if (!$isSuperAdmin) {
+        //    $onlineUsersQuery->where('id', $user->id);
+        // }
 
         $onlineUsers = $onlineUsersQuery
             ->where('last_seen_at', '>', now()->subMinutes(5))
