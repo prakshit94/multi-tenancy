@@ -411,12 +411,11 @@ class OrderProcessingController extends Controller
             // Load relations for invoices
             $invoices->load(['order.customer', 'order.billingAddress', 'order.shippingAddress', 'order.items']);
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('central.invoices.bulk_invoice', compact('invoices'));
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('central.invoices.bulk_invoice', compact('invoices'))->setPaper('a5', 'portrait');
             return $pdf->download('bulk-invoices-' . now()->format('YmdHis') . '.pdf');
 
         } elseif ($validated['type'] === 'cod') {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('central.receipts.bulk_cod', compact('orders'))
-                ->setPaper([0, 0, 226, 600]); // Consistent with single COD receipt size
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('central.receipts.bulk_cod', compact('orders'))->setPaper('a5', 'portrait');
             return $pdf->download('bulk-cod-' . now()->format('YmdHis') . '.pdf');
         }
     }

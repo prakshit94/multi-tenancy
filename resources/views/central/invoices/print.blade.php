@@ -7,15 +7,15 @@
 
     <style>
         @page {
-            size: A4;
-            margin: 25px;
+            size: a5;
+            margin: 12px 15px;
         }
 
         body {
             font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
-            font-size: 10.8px;
+            font-size: 9.5px;
             color: #111;
-            line-height: 1.35;
+            line-height: 1.25;
         }
 
         .text-right {
@@ -32,11 +32,11 @@
 
         .title {
             text-align: center;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
-            padding: 6px;
+            padding: 4px;
             border: 2px solid #000;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             letter-spacing: 1px;
         }
 
@@ -70,7 +70,7 @@
         }
 
         .company-name {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: bold;
         }
 
@@ -92,7 +92,7 @@
         }
 
         .grand-total {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             background: #efefef;
         }

@@ -6,15 +6,15 @@
     <title>Bulk COD Receipts</title>
     <style>
         @page {
-            margin: 12px;
-            size: A4;
+            margin: 10px;
+            size: a5;
         }
 
         body {
             font-family: Arial, sans-serif;
-            font-size: 11px;
+            font-size: 10px;
             color: #000;
-            line-height: 1.4;
+            line-height: 1.3;
         }
 
         .page-break {
@@ -23,7 +23,7 @@
 
         .label-container {
             border: 2px solid #000;
-            padding: 12px;
+            padding: 8px;
             max-width: 500px;
             /* Optional: adjust based on need */
             margin: 0 auto;
@@ -41,12 +41,12 @@
 
         .box {
             border: 1px solid #000;
-            padding: 8px;
-            margin-top: 8px;
+            padding: 6px;
+            margin-top: 6px;
         }
 
         .title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             text-align: center;
             letter-spacing: 0.5px;
@@ -54,7 +54,7 @@
         }
 
         .big {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: bold;
         }
 
@@ -106,7 +106,7 @@
                         Pincode: {{ optional($order->shippingAddress)->pincode ?? '-' }}
                     </div>
                     <div class="col right big">
-                        COD Amount: Rs. {{ number_format($order->grand_total, 2) }}
+                        COD Amount: Rs. {{ number_format($order->grand_total, 0) }}
                     </div>
                 </div>
 
@@ -117,7 +117,7 @@
 
                 <div class="center muted" style="margin-top:4px;">
                     Payment Office : Rajkot H.O. <br>
-                    Register No / E-Biller ID : {{ $order->order_number }}<br>
+                    Register No / E-Biller ID : 1211658094<br>
                     Order Date: {{ $order->created_at->format('d-m-Y H:i') }}
                 </div>
 
@@ -161,10 +161,7 @@
                         Indian Post rules.”</em>
                 </div>
 
-                <div style="margin-top: 20px;" class="center">
-                    ___________________________<br>
-                    <span class="muted">Receiver Signature</span>
-                </div>
+
 
             </div>
         </div>

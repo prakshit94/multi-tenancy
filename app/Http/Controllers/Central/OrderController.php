@@ -687,7 +687,7 @@ class OrderController extends Controller
         try {
             $this->authorize('orders view');
             $order->load(['items.product', 'customer']);
-            $pdf = Pdf::loadView('central.receipts.cod', compact('order'))->setPaper([0, 0, 226, 600]); // 80mm width for thermal
+            $pdf = Pdf::loadView('central.receipts.cod', compact('order'))->setPaper('a5', 'portrait');
             return $pdf->download("receipt-{$order->order_number}.pdf");
         } catch (\Exception $e) {
             \Log::error('PDF Generation Error (Receipt): ' . $e->getMessage());
@@ -778,11 +778,10 @@ class OrderController extends Controller
             // Load relations for invoices
             $invoices->load(['order.customer', 'order.billingAddress', 'order.shippingAddress', 'order.items']);
 
-            $pdf = Pdf::loadView('central.invoices.bulk_invoice', compact('invoices'));
+            $pdf = Pdf::loadView('central.invoices.bulk_invoice', compact('invoices'))->setPaper('a5', 'portrait');
             return $pdf->download('bulk-invoices-' . now()->format('YmdHis') . '.pdf');
         } elseif ($validated['type'] === 'cod') {
-            $pdf = Pdf::loadView('central.receipts.bulk_cod', compact('orders'))
-                ->setPaper([0, 0, 226, 600]); // Consistent with single COD receipt size
+            $pdf = Pdf::loadView('central.receipts.bulk_cod', compact('orders'))->setPaper('a5', 'portrait');
             return $pdf->download('bulk-cod-' . now()->format('YmdHis') . '.pdf');
         }
 

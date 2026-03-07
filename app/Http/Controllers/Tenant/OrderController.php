@@ -589,7 +589,7 @@ class OrderController extends Controller
             // Use Tenant view for Invoice Print
             $view = view()->exists('tenant.invoices.print') ? 'tenant.invoices.print' : 'central.invoices.print';
 
-            $pdf = Pdf::loadView($view, compact('order'));
+            $pdf = Pdf::loadView($view, compact('order'))->setPaper('a5', 'portrait');
             return $pdf->download("invoice-{$order->order_number}.pdf");
         } catch (\Exception $e) {
             \Log::error('PDF Generation Error (Invoice): ' . $e->getMessage());
@@ -606,7 +606,7 @@ class OrderController extends Controller
             // Use Tenant view or fallback to Central
             $view = view()->exists('tenant.receipts.cod') ? 'tenant.receipts.cod' : 'central.receipts.cod';
 
-            $pdf = Pdf::loadView($view, compact('order'))->setPaper([0, 0, 226, 600]);
+            $pdf = Pdf::loadView($view, compact('order'))->setPaper('a5', 'portrait');
             return $pdf->download("receipt-{$order->order_number}.pdf");
         } catch (\Exception $e) {
             \Log::error('PDF Generation Error (Receipt): ' . $e->getMessage());

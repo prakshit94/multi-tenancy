@@ -138,7 +138,7 @@ class InvoiceController extends Controller
             'order.warehouse',
         ]);
 
-        $pdf = Pdf::loadView('central.invoices.print', compact('invoice'));
+        $pdf = Pdf::loadView('central.invoices.print', compact('invoice'))->setPaper('a5', 'portrait');
 
         if ($request->query('action') === 'print') {
             return $pdf->stream("invoice-{$invoice->invoice_number}.pdf");
