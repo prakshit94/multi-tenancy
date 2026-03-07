@@ -38,16 +38,6 @@ class OrderProcessingController extends Controller
         $query = Order::with(['customer', 'items', 'warehouse', 'shipments', 'invoices'])
             ->latest();
 
-        // Default: Show active processing orders if no status is selected
-        if (!$request->has('status')) {
-            $query->whereIn('status', ['confirmed', 'processing', 'ready_to_ship']);
-        }
-        // If status is provided
-        elseif ($request->input('status') !== 'all') {
-            $query->where('status', $request->input('status'));
-        }
-        // If status is 'all', we show everything (already defaults to latest so no extra filter needed)
-
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -85,13 +75,32 @@ class OrderProcessingController extends Controller
             }
         }
 
+        $countsQuery = clone $query;
+        $counts = $countsQuery->select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+
+        $activeCount = ($counts['confirmed'] ?? 0) + ($counts['processing'] ?? 0);
+        $counts['active'] = $activeCount;
+        $counts['all'] = array_sum(array_diff_key($counts, ['active' => 0, 'all' => 0]));
+
+        // Default: Show active processing orders if no status is selected
+        if (!$request->has('status')) {
+            $query->whereIn('status', ['confirmed', 'processing']);
+        }
+        // If status is provided
+        elseif ($request->input('status') !== 'all') {
+            $query->where('status', $request->input('status'));
+        }
+
         $orders = $query->paginate(15)->withQueryString();
 
         if ($request->ajax()) {
-            return view('tenant.processing.orders.partials.orders-list', compact('orders'));
+            return view('tenant.processing.orders.partials.orders-content', compact('orders', 'counts'));
         }
 
-        return view('tenant.processing.orders.index', compact('orders'));
+        return view('tenant.processing.orders.index', compact('orders', 'counts'));
     }
 
     /**
@@ -109,6 +118,20 @@ class OrderProcessingController extends Controller
                 'shipping_status' => 'pending',
                 'updated_by' => auth()->id(),
             ]);
+
+            // Generate Invoice and COD on Confirmed to Processing transition
+            if ($order->invoices()->doesntExist()) {
+                Invoice::create([
+                    'order_id' => $order->id,
+                    'customer_id' => $order->customer_id,
+                    'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT),
+                    'issue_date' => now(),
+                    'due_date' => now(),
+                    'total_amount' => $order->grand_total,
+                    'paid_amount' => 0,
+                    'status' => 'unpaid',
+                ]);
+            }
 
             // Eager load relationships for the modal
             $order->refresh()->load(['customer', 'items.product', 'shippingAddress']);
@@ -146,23 +169,9 @@ class OrderProcessingController extends Controller
                     'shipping_status' => 'pending',
                     'updated_by' => auth()->id(),
                 ]);
-
-                // Ensure Invoice Exists
-                if ($order->invoices()->doesntExist()) {
-                    Invoice::create([
-                        'order_id' => $order->id,
-                        'customer_id' => $order->customer_id,
-                        'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT),
-                        'issue_date' => now(),
-                        'due_date' => now(),
-                        'total_amount' => $order->grand_total,
-                        'paid_amount' => 0, // Assuming COD or paid later, or update if prepaid
-                        'status' => 'unpaid',
-                    ]);
-                }
             });
 
-            return back()->with('success', 'Order marked as Ready to Parcel. Invoice generated.');
+            return back()->with('success', 'Order marked as Ready to Parcel.');
         } catch (Exception $e) {
             return back()->with('error', 'Error updating order: ' . $e->getMessage());
         }
@@ -468,8 +477,8 @@ class OrderProcessingController extends Controller
                     'updated_by' => auth()->id(),
                 ]);
 
-                // If updated to ready_to_ship, ensure invoice exists
-                if ($validated['status'] === 'ready_to_ship' && $order->invoices()->doesntExist()) {
+                // If updated to processing, ensure invoice exists
+                if ($validated['status'] === 'processing' && $order->invoices()->doesntExist()) {
                     Invoice::create([
                         'order_id' => $order->id,
                         'customer_id' => $order->customer_id,

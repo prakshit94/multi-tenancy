@@ -503,17 +503,6 @@ class OrderController extends Controller
                         'shipping_status' => 'pending',
                         'updated_by' => auth()->id(),
                     ]);
-                    break;
-
-                case 'ready_to_ship':
-                    if ($order->status !== 'processing') {
-                        throw new Exception('Order must be Processing before Ready to Ship.');
-                    }
-                    $order->update([
-                        'status' => 'ready_to_ship',
-                        'shipping_status' => 'pending',
-                        'updated_by' => auth()->id(),
-                    ]);
 
                     if ($order->invoices()->doesntExist()) {
                         Invoice::create([
@@ -527,6 +516,17 @@ class OrderController extends Controller
                             'status' => 'unpaid',
                         ]);
                     }
+                    break;
+
+                case 'ready_to_ship':
+                    if ($order->status !== 'processing') {
+                        throw new Exception('Order must be Processing before Ready to Ship.');
+                    }
+                    $order->update([
+                        'status' => 'ready_to_ship',
+                        'shipping_status' => 'pending',
+                        'updated_by' => auth()->id(),
+                    ]);
                     break;
 
                 case 'ship':

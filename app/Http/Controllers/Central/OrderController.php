@@ -367,6 +367,19 @@ class OrderController extends Controller
                         'shipping_status' => 'pending',
                         'updated_by' => auth()->id(),
                     ]);
+
+                    if ($order->invoices()->doesntExist()) {
+                        Invoice::create([
+                            'order_id' => $order->id,
+                            'customer_id' => $order->customer_id,
+                            'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT),
+                            'issue_date' => now(),
+                            'due_date' => now(),
+                            'total_amount' => $order->grand_total,
+                            'paid_amount' => 0,
+                            'status' => 'unpaid',
+                        ]);
+                    }
                     break;
 
                 /**
@@ -384,18 +397,6 @@ class OrderController extends Controller
                         'updated_by' => auth()->id(),
                     ]);
 
-                    if ($order->invoices()->doesntExist()) {
-                        Invoice::create([
-                            'order_id' => $order->id,
-                            'customer_id' => $order->customer_id,
-                            'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT),
-                            'issue_date' => now(),
-                            'due_date' => now(),
-                            'total_amount' => $order->grand_total,
-                            'paid_amount' => 0,
-                            'status' => 'unpaid',
-                        ]);
-                    }
                     break;
 
                 /**

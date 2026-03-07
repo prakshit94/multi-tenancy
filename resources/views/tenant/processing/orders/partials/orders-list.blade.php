@@ -3,9 +3,20 @@
 </div>
 <div class="grid grid-cols-1 gap-6">
     @forelse($orders as $order)
-        <div class="group relative rounded-2xl border border-border/40 bg-white/70 backdrop-blur-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-primary/20 transition-all duration-300 overflow-hidden relative">
+            <!-- Status Accent Line -->
+            <div class="absolute left-0 top-0 bottom-0 w-1 
+                {{ $order->status === 'placed' ? 'bg-gray-300' :
+                   ($order->status === 'confirmed' ? 'bg-blue-500' :
+                   ($order->status === 'processing' ? 'bg-purple-500' :
+                   ($order->status === 'ready_to_ship' ? 'bg-emerald-500' :
+                   ($order->status === 'shipped' ? 'bg-indigo-500' :
+                   ($order->status === 'delivered' ? 'bg-green-500' :
+                   ($order->status === 'cancelled' ? 'bg-red-500' : 'bg-gray-300')))))) }}">
+            </div>
+
             {{-- Card Header --}}
-            <div class="p-5 md:p-6 border-b border-border/40 bg-gradient-to-r from-gray-50/50 to-transparent">
+            <div class="p-5 md:p-6 border-b border-gray-100 bg-white">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div class="flex items-center gap-4">
                         {{-- Checkbox --}}
@@ -14,8 +25,31 @@
                         </div>
                         <div>
                             <div class="flex items-center gap-3">
-                                <div class="relative" x-data="{ copied: false }">
-                                    <button @click="navigator.clipboard.writeText('{{ $order->order_number }}'); copied = true; setTimeout(() => copied = false, 2000)" class="text-lg font-bold text-gray-900 tracking-tight hover:text-blue-600 transition-colors flex items-center gap-2 group/copy" title="Click to copy">
+                                <div class="relative" x-data="{ 
+                                    copied: false,
+                                    copyText(text) {
+                                        if (navigator.clipboard && window.isSecureContext) {
+                                            navigator.clipboard.writeText(text);
+                                        } else {
+                                            const textArea = document.createElement('textarea');
+                                            textArea.value = text;
+                                            textArea.style.position = 'absolute';
+                                            textArea.style.left = '-999999px';
+                                            document.body.prepend(textArea);
+                                            textArea.select();
+                                            try {
+                                                document.execCommand('copy');
+                                            } catch (error) {
+                                                console.error(error);
+                                            } finally {
+                                                textArea.remove();
+                                            }
+                                        }
+                                        this.copied = true;
+                                        setTimeout(() => this.copied = false, 2000);
+                                    }
+                                }">
+                                    <button @click="copyText('{{ $order->order_number }}')" class="text-lg font-bold text-gray-900 tracking-tight hover:text-blue-600 transition-colors flex items-center gap-2 group/copy" title="Click to copy">
                                         {{ $order->order_number }}
                                         <svg x-show="!copied" class="w-3.5 h-3.5 text-gray-400 group-hover/copy:text-blue-500 opacity-0 group-hover/copy:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                                         <svg x-show="copied" x-transition class="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -144,7 +178,7 @@
                     </div>
 
                     <div class="flex items-center gap-3 self-end lg:self-center">
-                        @if(!$order->hasInvoice() && $order->status === 'ready_to_ship')
+                        @if(!$order->hasInvoice() && in_array($order->status, ['processing', 'ready_to_ship']))
                             <span class="hidden md:inline-flex px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-100 items-center gap-1.5 animate-pulse">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                 Pending Invoice
@@ -159,13 +193,23 @@
                         @endif
 
                         @if($order->status === 'processing')
-                            <form action="{{ route('tenant.processing.orders.ready', $order) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md shadow-purple-200 hover:shadow-lg hover:shadow-purple-300 transform hover:-translate-y-0.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                                    Ready to Ship
-                                </button>
-                            </form>
+                            <div class="flex items-center gap-2">
+                                <div class="flex bg-gray-100 rounded-lg p-0.5">
+                                    <a href="{{ $order->invoices->isNotEmpty() ? route('tenant.orders.invoice', $order) : '#' }}" target="{{ $order->invoices->isNotEmpty() ? '_blank' : '_self' }}" class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print Invoice">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    </a>
+                                    <a href="{{ route('tenant.orders.receipt', $order) }}" target="_blank" class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print COD Receipt">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                    </a>
+                                </div>
+                                <form action="{{ route('tenant.processing.orders.ready', $order) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md shadow-purple-200 hover:shadow-lg hover:shadow-purple-300 transform hover:-translate-y-0.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                        Ready to Ship
+                                    </button>
+                                </form>
+                            </div>
                         @endif
 
                         @if($order->status === 'ready_to_ship')
