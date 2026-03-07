@@ -165,7 +165,12 @@ class DashboardController extends Controller
 
         // Admin/User Activity Tracking
         $onlineUsersQuery = \App\Models\User::query()
-            ->withCount(['orders', 'customers'])
+            ->withCount([
+                'orders' => function ($query) {
+                    $query->whereDate('created_at', now()->toDateString());
+                },
+                'customers'
+            ])
             ->withSum('orders as total_revenue', 'grand_total');
 
         // RESTRICTION: Non-Super Admins can ONLY see themselves in "Team Activity"
@@ -188,7 +193,12 @@ class DashboardController extends Controller
         $isSuperAdmin = $user->hasRole('Super Admin');
 
         $query = \App\Models\User::query()
-            ->withCount(['orders', 'customers'])
+            ->withCount([
+                'orders' => function ($query) {
+                    $query->whereDate('created_at', now()->toDateString());
+                },
+                'customers'
+            ])
             ->withSum('orders as total_revenue', 'grand_total');
 
         if (!$isSuperAdmin) {
