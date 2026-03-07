@@ -443,7 +443,10 @@
                                                         </div>
                                                         <div
                                                             class="flex items-center gap-3 mt-1 text-sm text-muted-foreground font-medium">
-                                                            <span class="flex items-center gap-1.5">
+                                                            <span
+                                                                class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors"
+                                                                title="Click to copy" x-data="{ copied: false }"
+                                                                @click.stop="let t = cust.mobile; if(navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t); } else { let el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } copied = true; setTimeout(() => copied = false, 2000)">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14"
                                                                     height="14" viewBox="0 0 24 24" fill="none"
                                                                     stroke="currentColor" stroke-width="2"
@@ -451,7 +454,8 @@
                                                                     <path
                                                                         d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                                                                 </svg>
-                                                                <span x-text="cust.mobile"></span>
+                                                                <span x-text="copied ? 'Copied!' : cust.mobile"
+                                                                    :class="copied ? 'text-primary font-bold' : ''"></span>
                                                             </span>
                                                             <span class="w-1 h-1 rounded-full bg-border"></span>
                                                             <span class="font-mono opacity-70"
@@ -580,13 +584,16 @@
                                             <div
                                                 class="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground font-medium pt-1">
                                                 <span
-                                                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background/50 border border-border/50">
+                                                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background/50 border border-border/50 cursor-pointer hover:bg-primary/5 transition-colors"
+                                                    title="Click to copy" x-data="{ copied: false }"
+                                                    @click.stop="let t = selectedCustomer.mobile; if(navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t); } else { let el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } copied = true; setTimeout(() => copied = false, 2000)">
                                                     <svg class="size-4 text-primary" fill="none" viewBox="0 0 24 24"
                                                         stroke="currentColor" stroke-width="2">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                                     </svg>
-                                                    <span x-text="selectedCustomer.mobile"></span>
+                                                    <span x-text="copied ? 'Copied!' : selectedCustomer.mobile"
+                                                        :class="copied ? 'text-primary font-bold' : ''"></span>
                                                 </span>
                                                 <span
                                                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background/50 border border-border/50"
@@ -874,8 +881,14 @@
                                                             <p
                                                                 class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
                                                                 Mobile Number</p>
-                                                            <p class="text-base font-mono font-medium text-foreground tracking-wide"
-                                                                x-text="selectedCustomer.mobile || '-'"></p>
+                                                            <p class="text-base font-mono font-medium tracking-wide flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
+                                                                title="Click to copy"
+                                                                x-data="{ copied: false }"
+                                                                @click.stop="if(selectedCustomer.mobile) { let t = selectedCustomer.mobile; if(navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t); } else { let el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } copied = true; setTimeout(() => copied = false, 2000); }">
+                                                                <span x-text="copied ? 'Copied!' : (selectedCustomer.mobile || '-')"
+                                                                    :class="copied ? 'text-primary font-bold' : 'text-foreground'"></span>
+                                                                <svg x-show="selectedCustomer.mobile && !copied" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                            </p>
                                                         </div>
                                                         <div>
                                                             <p
