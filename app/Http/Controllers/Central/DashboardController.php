@@ -183,9 +183,8 @@ class DashboardController extends Controller
         }
 
         $onlineUsers = $onlineUsersQuery
-            ->orderByRaw('CASE WHEN last_seen_at > ? THEN 1 ELSE 0 END DESC', [now()->subMinutes(5)])
+            ->where('last_seen_at', '>', now()->subMinutes(5))
             ->orderBy('last_seen_at', 'desc')
-            ->take(10)
             ->get();
 
         return view('dashboard', compact('stats', 'recentOrders', 'chartData', 'orderHistory', 'period', 'onlineUsers'));
