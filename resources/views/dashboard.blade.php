@@ -376,31 +376,56 @@
                                 <div x-ref="userList"
                                     class="divide-y divide-border/40 max-h-[500px] overflow-y-auto custom-scrollbar">
                                     @php
-                                        $displayUsers = collect($onlineUsers ?? [])->filter(function ($u) {
+                                        $allOnline = collect($onlineUsers ?? [])->filter(function ($u) {
                                             return $u && $u->isOnline();
-                                        });
+                                        })->sortByDesc(function ($u) {
+                                            return $u->total_revenue ?? 0;
+                                        })->values();
+
+                                        $displayUsers = $allOnline;
+
                                         if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
-                                            $displayUsers = $displayUsers->sortByDesc(function ($u) {
-                                                return $u->total_revenue ?? 0;
-                                            })->take(5);
+                                            $top5 = $allOnline->take(5);
+                                            $currentUser = $allOnline->firstWhere('id', auth()->id());
+                                            
+                                            // Ensure current user is included if online but not in top 5
+                                            if ($currentUser && !$top5->contains('id', auth()->id())) {
+                                                $displayUsers = $top5->push($currentUser);
+                                            } else {
+                                                $displayUsers = $top5;
+                                            }
                                         }
                                     @endphp
-                                    @foreach($displayUsers as $onlineUser)
+                                    @foreach($displayUsers as $index => $onlineUser)
                                         <div data-revenue="{{ $onlineUser->total_revenue ?? 0 }}"
                                             x-show="!searchQuery || '{{ strtolower($onlineUser->name) }}'.includes(searchQuery.toLowerCase())"
                                             class="flex items-center justify-between p-3 px-4 hover:bg-primary/5 transition-colors">
                                             <div class="flex items-center gap-3">
-                                                <div class="relative">
-                                                    <div
-                                                        class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                                                        {{ substr($onlineUser->name, 0, 2) }}
+                                                <div class="relative flex items-center gap-2">
+                                                    @php
+                                                        // Find actual rank based on overall sorted list
+                                                        $actualRank = $allOnline->search(fn($u) => $u->id === $onlineUser->id) + 1;
+                                                    @endphp
+                                                    <div class="w-6 text-center text-xs font-bold text-muted-foreground/60 flex-shrink-0">
+                                                        #{{ $actualRank }}
                                                     </div>
-                                                    <span
-                                                        class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-emerald-500 animate-pulse"></span>
+                                                    <div class="relative">
+                                                        <div
+                                                            class="w-8 h-8 rounded-full {{ $onlineUser->id === auth()->id() ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary' }} flex items-center justify-center font-bold text-xs">
+                                                            {{ substr($onlineUser->name, 0, 2) }}
+                                                        </div>
+                                                        <span
+                                                            class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-emerald-500 animate-pulse"></span>
+                                                    </div>
                                                 </div>
                                                 <div>
-                                                    <div class="text-xs font-bold text-foreground">{{ $onlineUser->name }}</div>
-                                                    <div class="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                    <div class="text-xs font-bold text-foreground">
+                                                        {{ $onlineUser->name }}
+                                                        @if($onlineUser->id === auth()->id())
+                                                            <span class="text-[9px] uppercase tracking-widest text-primary ml-1">(You)</span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
                                                         <svg class="w-3 h-3 text-muted-foreground/70" fill="none"
                                                             viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
