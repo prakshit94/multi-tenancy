@@ -173,7 +173,8 @@ class DashboardController extends Controller
             ])
             ->withSum([
                 'orders as total_revenue' => function ($query) {
-                    $query->whereDate('created_at', now()->toDateString());
+                    $query->whereDate('created_at', now()->toDateString())
+                        ->whereNotIn('status', ['scheduled', 'cancelled']);
                 }
             ], 'grand_total');
 
@@ -205,7 +206,8 @@ class DashboardController extends Controller
             ])
             ->withSum([
                 'orders as total_revenue' => function ($query) {
-                    $query->whereDate('created_at', now()->toDateString());
+                    $query->whereDate('created_at', now()->toDateString())
+                        ->whereNotIn('status', ['scheduled', 'cancelled']);
                 }
             ], 'grand_total');
 
