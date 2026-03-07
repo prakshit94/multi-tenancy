@@ -13,16 +13,18 @@
         body {
             font-family: Arial, sans-serif;
             font-size: 10px;
-            color: #000;
+            color: #334155;
             line-height: 1.3;
         }
 
         .label-container {
-            border: 2px solid #000;
+            border: 2px solid #166534;
+            border-radius: 6px;
             padding: 8px;
             max-width: 500px;
             /* Optional: adjust based on need */
             margin: 0 auto;
+            background-color: #f0fdf4;
         }
 
         .row {
@@ -36,7 +38,9 @@
         }
 
         .box {
-            border: 1px solid #000;
+            border: 1px solid #86efac;
+            background-color: #ffffff;
+            border-radius: 4px;
             padding: 6px;
             margin-top: 6px;
         }
@@ -47,11 +51,13 @@
             text-align: center;
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            color: #166534;
         }
 
         .big {
             font-size: 13px;
             font-weight: bold;
+            color: #15803d;
         }
 
         .center {
@@ -68,7 +74,7 @@
         }
 
         .divider {
-            border-top: 1px dashed #000;
+            border-top: 1px dashed #166534;
             margin: 8px 0;
         }
 
@@ -80,13 +86,14 @@
 
         .items-table th,
         .items-table td {
-            border: 1px solid #000;
+            border: 1px solid #86efac;
             padding: 4px;
             text-align: left;
         }
 
         .items-table th {
-            background: #f2f2f2;
+            background: #dcfce7;
+            color: #166534;
         }
     </style>
 </head>
@@ -95,12 +102,14 @@
 
     <div class="label-container">
 
-        <div class="row">
-            <div class="col big">
-                Pincode: {{ optional($order->shippingAddress)->pincode ?? '-' }}
-            </div>
-            <div class="col right big">
-                COD Amount: Rs. {{ number_format($order->grand_total, 0) }}
+        <div class="box">
+            <div class="row">
+                <div class="col big">
+                    Pincode: {{ optional($order->shippingAddress)->pincode ?? '-' }}
+                </div>
+                <div class="col right big">
+                    COD Amount: Rs. {{ number_format($order->grand_total, 0) }}
+                </div>
             </div>
         </div>
 
@@ -118,7 +127,7 @@
         <div class="divider"></div>
 
         <div class="box">
-            <div style="font-weight: bold; text-decoration: underline; margin-bottom: 4px;">To (Consignee),</div>
+            <div style="font-weight: bold; text-decoration: underline; margin-bottom: 4px;">To,</div>
             <strong>Name:</strong> {{ $order->customer->name }}<br>
             <strong>Address:</strong> {{ $order->shippingAddress->address_line1 }}<br>
             @if($order->shippingAddress->village) <strong>Village:</strong> {{ $order->shippingAddress->village }},

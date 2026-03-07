@@ -14,7 +14,7 @@
         body {
             font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
             font-size: 9.5px;
-            color: #111;
+            color: #334155;
             line-height: 1.25;
         }
 
@@ -35,7 +35,10 @@
             font-size: 14px;
             font-weight: bold;
             padding: 4px;
-            border: 2px solid #000;
+            border: 2px solid #1e40af;
+            background-color: #eff6ff;
+            color: #1e40af;
+            border-radius: 4px;
             margin-bottom: 6px;
             letter-spacing: 1px;
         }
@@ -44,17 +47,19 @@
             width: 100%;
             border-collapse: collapse;
             page-break-inside: avoid;
+            border: 1px solid #cbd5e1;
         }
 
         th,
         td {
-            border: 1px solid #000;
+            border: 1px solid #cbd5e1;
             padding: 5px;
             vertical-align: top;
         }
 
         th {
-            background: #f1f1f1;
+            background: #e2e8f0;
+            color: #1e293b;
             font-weight: bold;
         }
 
@@ -72,6 +77,7 @@
         .company-name {
             font-size: 13px;
             font-weight: bold;
+            color: #1e40af;
         }
 
         .muted {
@@ -80,7 +86,9 @@
 
         .items th {
             text-align: center;
-            background: #eaeaea;
+            background: #1e40af;
+            color: #ffffff;
+            border-color: #1e40af;
         }
 
         .items td {
@@ -94,7 +102,8 @@
         .grand-total {
             font-size: 12px;
             font-weight: bold;
-            background: #efefef;
+            background: #f1f5f9;
+            color: #0f172a;
         }
 
         .terms {
