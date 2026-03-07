@@ -97,11 +97,11 @@
                 @endcan
 
                 <!-- @can('reports export')
-                            <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-95 transition-all duration-200">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                Download Report
-                            </button>
-                        @endcan -->
+                                <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-95 transition-all duration-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                    Download Report
+                                </button>
+                            @endcan -->
             </div>
         </div>
 
@@ -307,21 +307,21 @@
                         <!-- Team Activity (Refined) -->
                         @can('dashboard view')
                             <div x-data="{ 
-                                            searchQuery: '',
-                                            sortDir: 'desc',
-                                            sortItems() {
-                                                let container = this.$refs.userList;
-                                                if (!container) return;
-                                                let items = Array.from(container.children).filter(el => el.hasAttribute('data-revenue'));
-                                                if(items.length === 0) return;
-                                                items.sort((a, b) => {
-                                                    let revA = parseFloat(a.getAttribute('data-revenue'));
-                                                    let revB = parseFloat(b.getAttribute('data-revenue'));
-                                                    return this.sortDir === 'desc' ? revB - revA : revA - revB;
-                                                });
-                                                items.forEach(item => container.appendChild(item));
-                                            }
-                                        }" x-init="$nextTick(() => sortItems())"
+                                                    searchQuery: '',
+                                                    sortDir: 'desc',
+                                                    sortItems() {
+                                                        let container = this.$refs.userList;
+                                                        if (!container) return;
+                                                        let items = Array.from(container.children).filter(el => el.hasAttribute('data-revenue'));
+                                                        if(items.length === 0) return;
+                                                        items.sort((a, b) => {
+                                                            let revA = parseFloat(a.getAttribute('data-revenue'));
+                                                            let revB = parseFloat(b.getAttribute('data-revenue'));
+                                                            return this.sortDir === 'desc' ? revB - revA : revA - revB;
+                                                        });
+                                                        items.forEach(item => container.appendChild(item));
+                                                    }
+                                                }" x-init="$nextTick(() => sortItems())"
                                 class="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-sm overflow-hidden h-full">
                                 <div class="p-4 px-6 border-b border-border/40 bg-muted/20 space-y-3">
                                     <div class="flex justify-between items-center">
@@ -387,7 +387,7 @@
                                         if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
                                             $top5 = $allOnline->take(5);
                                             $currentUser = $allOnline->firstWhere('id', auth()->id());
-                                            
+
                                             // Ensure current user is included if online but not in top 5
                                             if ($currentUser && !$top5->contains('id', auth()->id())) {
                                                 $displayUsers = $top5->push($currentUser);
@@ -406,244 +406,245 @@
                                                         // Find actual rank based on overall sorted list
                                                         $actualRank = $allOnline->search(fn($u) => $u->id === $onlineUser->id) + 1;
                                                     @endphp
-                                                    <div class="w-6 text-center text-xs font-bold text-muted-foreground/60 flex-shrink-0">
-                                                        #{{ $actualRank }}
-                                                    </div>
-                                                    <div class="relative">
-                                                        <div
-                                                            class="w-8 h-8 rounded-full {{ $onlineUser->id === auth()->id() ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary' }} flex items-center justify-center font-bold text-xs">
-                                                            {{ substr($onlineUser->name, 0, 2) }}
-                                                        </div>
-                                                        <span
-                                                            class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-emerald-500 animate-pulse"></span>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div class="text-xs font-bold text-foreground">
-                                                        {{ $onlineUser->name }}
-                                                        @if($onlineUser->id === auth()->id())
-                                                            <span class="text-[9px] uppercase tracking-widest text-primary ml-1">(You)</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                                                        <svg class="w-3 h-3 text-muted-foreground/70" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                        {{ $onlineUser->location ?? 'Unknown' }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="flex flex-col items-end gap-0.5">
-                                                <div class="text-[10px] font-black text-foreground">
-                                                    Rs {{ number_format($onlineUser->total_revenue ?? 0, 2) }}
-                                                </div>
-                                                <div class="flex gap-1">
-                                                    <span class="text-[9px] font-bold text-muted-foreground">
-                                                        {{ $onlineUser->orders_count }} Orders
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                    @if($displayUsers->isEmpty())
-                                        <div class="p-8 text-center text-muted-foreground">
-                                            <p class="text-xs">No users online</p>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endcan
-
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Tab Content: Order History -->
-            @can('orders view')
-                    <div x-show="activeTab === 'orders'" x-cloak x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
-                        class="space-y-6">
-                        <!-- Table View (Hidden on mobile) -->
-                        <!-- Table View (Hidden on mobile) -->
-                        <div
-                            class="hidden md:block rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden">
-                            <div class="p-6 border-b border-border/40 flex items-center justify-between bg-muted/20">
-                                <div>
-                                    <h3 class="text-xl font-bold font-heading tracking-tight text-foreground">Order History</h3>
-                                    <p class="text-sm text-muted-foreground font-medium">Recent transactions and order status</p>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <span
-                                        class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 py-1.5 bg-secondary/50 rounded-xl border border-border/30">
-                                        Total Orders: {{ count($orderHistory) }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr class="border-b border-border/40 bg-muted/10">
-                                            <th
-                                                class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                                                Order ID</th>
-                                            <th
-                                                class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                                                Customer</th>
-                                            <th
-                                                class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                                                Date</th>
-                                            <th
-                                                class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                                                Items</th>
-                                            <th
-                                                class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 text-right">
-                                                Amount</th>
-                                            <th
-                                                class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 text-center">
-                                                Status</th>
-                                            <th
-                                                class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                                                Created By</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-border/40">
-                                        @foreach($orderHistory as $order)
-                                                        <tr class="group hover:bg-primary/[0.03] transition-all cursor-pointer"
-                                                            @click="window.location.href='{{ tenant('id') ? route('tenant.orders.show', $order) : route('central.orders.show', $order) }}'">
-                                                            <td class="px-6 py-5">
-                                                                <span
-                                                                    class="font-mono text-sm font-black text-foreground group-hover:text-primary transition-colors tracking-tighter">#{{ $order->order_number }}</span>
-                                                            </td>
-                                                            <td class="px-6 py-5">
-                                                                <div class="flex items-center gap-4">
+                                                    <div
+                                                        class="flex-shrink-0 w-6 h-6 rounded-md bg-muted/40 border border-border/40 flex items-center justify-center text-[10px] font-black text-foreground shadow-sm">
+                                                                    {{ $actualRank }}
+                                                                </div>
+                                                                <div class="relative">
                                                                     <div
-                                                                        class="size-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary flex items-center justify-center font-black text-xs border border-primary/10 group-hover:scale-110 transition-transform">
-                                                                        {{ substr($order->customer->name ?? 'G', 0, 1) }}
+                                                                        class="w-8 h-8 rounded-full {{ $onlineUser->id === auth()->id() ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary' }} flex items-center justify-center font-bold text-xs">
+                                                                        {{ substr($onlineUser->name, 0, 2) }}
                                                                     </div>
                                                                     <span
-                                                                        class="text-sm font-black text-foreground group-hover:translate-x-1 transition-transform">{{ $order->customer->name ?? 'Guest Entity' }}</span>
+                                                                        class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-emerald-500 animate-pulse"></span>
                                                                 </div>
-                                                            </td>
-                                                            <td class="px-6 py-5">
-                                            </div>
-                                            </td>
-                                            <td class="px-6 py-5">
-                                                <div class="flex flex-col gap-1 max-w-[200px]">
-                                                    @foreach($order->items->take(3) as $item)
-                                                        <div class="flex items-center gap-1.5 text-[10px] text-muted-foreground truncate"
-                                                            title="{{ $item->product->name ?? 'Unknown' }}">
-                                                            <span class="font-bold text-foreground">{{ $item->quantity }}x</span>
-                                                            <span>{{ Str::limit($item->product->name ?? 'Unknown', 20) }}</span>
+                                                            </div>
+                                                            <div>
+                                                                <div class="text-xs font-bold text-foreground">
+                                                                    {{ $onlineUser->name }}
+                                                                    @if($onlineUser->id === auth()->id())
+                                                                        <span class="text-[9px] uppercase tracking-widest text-primary ml-1">(You)</span>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                                    <svg class="w-3 h-3 text-muted-foreground/70" fill="none"
+                                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    </svg>
+                                                                    {{ $onlineUser->location ?? 'Unknown' }}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    @endforeach
-                                                    @if($order->items->count() > 3)
-                                                        <span
-                                                            class="text-[9px] font-bold text-muted-foreground/70 uppercase tracking-wider">+{{ $order->items->count() - 3 }}
-                                                            more</span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-5 text-right">
-                                                <span
-                                                    class="font-mono text-sm font-black text-foreground group-hover:text-primary transition-colors">Rs
-                                                    {{ number_format($order->grand_total, 2) }}</span>
-                                            </td>
-                                            <td class="px-6 py-5 text-center">
-                                                @php
-                                                    $statusClass = [
-                                                        'completed' => 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-                                                        'processing' => 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-                                                        'cancelled' => 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-                                                        'pending' => 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-                                                        'shipped' => 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
-                                                    ][$order->status] ?? 'bg-muted text-muted-foreground border-border';
-                                                @endphp
-                                                <span
-                                                    class="inline-flex items-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border {{ $statusClass }}">
-                                                    {{ $order->status }}
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-5">
-                                                <div class="flex items-center gap-2">
-                                                    <div class="size-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                    <span
-                                                        class="text-[10px] font-black uppercase tracking-tight text-muted-foreground group-hover:text-foreground transition-colors">
-                                                        {{ $order->creator->name ?? 'SYSTEM_SECURE' }}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            </tr>
-                                        @endforeach
-                            </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Mobile Card View (Shown only on small screens) -->
-                    <div class="md:hidden space-y-4">
-                        @foreach($orderHistory as $order)
-                            <div @click="window.location.href='{{ tenant('id') ? route('tenant.orders.show', $order) : route('central.orders.show', $order) }}'"
-                                class="group relative overflow-hidden rounded-3xl border border-border/50 bg-card p-5 shadow-sm active:scale-95 transition-all">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="size-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-sm border border-primary/20">
-                                            {{ substr($order->customer->name ?? 'G', 0, 1) }}
-                                        </div>
-                                        <div>
-                                            <h4 class="text-sm font-black text-foreground">
-                                                {{ $order->customer->name ?? 'Guest Entity' }}
-                                            </h4>
-                                            <p class="text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
-                                                #{{ $order->order_number }}</p>
-                                            <div class="mt-2 space-y-0.5">
-                                                @foreach($order->items->take(2) as $item)
-                                                    <div class="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                                        <span class="font-bold text-foreground">{{ $item->quantity }}x</span>
-                                                        <span class="truncate max-w-[150px]">{{ $item->product->name ?? 'Unknown' }}</span>
+                                                        <div class="flex flex-col items-end gap-0.5">
+                                                            <div class="text-[10px] font-black text-foreground">
+                                                                Rs {{ number_format($onlineUser->total_revenue ?? 0, 2) }}
+                                                            </div>
+                                                            <div class="flex gap-1">
+                                                                <span class="text-[9px] font-bold text-muted-foreground">
+                                                                    {{ $onlineUser->orders_count }} Orders
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                @endforeach
-                                                @if($order->items->count() > 2)
-                                                    <div class="text-[9px] font-bold text-muted-foreground/70">
-                                                        +{{ $order->items->count() - 2 }} more</div>
-                                                @endif
-                                            </div>
+                                    @endforeach
+                                            @if($displayUsers->isEmpty())
+                                                <div class="p-8 text-center text-muted-foreground">
+                                                    <p class="text-xs">No users online</p>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
-                                    <div class="text-right">
-                                        <p class="text-sm font-black text-foreground">Rs {{ number_format($order->grand_total, 2) }}</p>
-                                        <p class="text-[10px] font-bold text-muted-foreground">
-                                            {{ $order->created_at->format('M d, H:i') }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-center bg-muted/30 rounded-2xl p-3">
-                                    @php
-                                        $statusClass = [
-                                            'completed' => 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-                                            'processing' => 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-                                            'cancelled' => 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-                                            'pending' => 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-                                            'shipped' => 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
-                                        ][$order->status] ?? 'bg-muted text-muted-foreground border-border';
-                                    @endphp
-                                    <span
-                                        class="inline-flex items-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border {{ $statusClass }}">
-                                        {{ $order->status }}
-                                    </span>
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-muted-foreground">BY:
-                                        {{ $order->creator->name ?? 'SYSTEM' }}</span>
-                                </div>
-                            </div>
-                        @endforeach
+                        @endcan
+
+                        </div>
+
                     </div>
                 </div>
-            @endcan
-    </div>
-    </div>
+
+                <!-- Tab Content: Order History -->
+                @can('orders view')
+                        <div x-show="activeTab === 'orders'" x-cloak x-transition:enter="transition ease-out duration-300"
+                            x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+                            class="space-y-6">
+                            <!-- Table View (Hidden on mobile) -->
+                            <!-- Table View (Hidden on mobile) -->
+                            <div
+                                class="hidden md:block rounded-3xl border border-border/50 bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden">
+                                <div class="p-6 border-b border-border/40 flex items-center justify-between bg-muted/20">
+                                    <div>
+                                        <h3 class="text-xl font-bold font-heading tracking-tight text-foreground">Order History</h3>
+                                        <p class="text-sm text-muted-foreground font-medium">Recent transactions and order status</p>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 py-1.5 bg-secondary/50 rounded-xl border border-border/30">
+                                            Total Orders: {{ count($orderHistory) }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-border/40 bg-muted/10">
+                                                <th
+                                                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                                                    Order ID</th>
+                                                <th
+                                                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                                                    Customer</th>
+                                                <th
+                                                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                                                    Date</th>
+                                                <th
+                                                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                                                    Items</th>
+                                                <th
+                                                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 text-right">
+                                                    Amount</th>
+                                                <th
+                                                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 text-center">
+                                                    Status</th>
+                                                <th
+                                                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                                                    Created By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-border/40">
+                                            @foreach($orderHistory as $order)
+                                                            <tr class="group hover:bg-primary/[0.03] transition-all cursor-pointer"
+                                                                @click="window.location.href='{{ tenant('id') ? route('tenant.orders.show', $order) : route('central.orders.show', $order) }}'">
+                                                                <td class="px-6 py-5">
+                                                                    <span
+                                                                        class="font-mono text-sm font-black text-foreground group-hover:text-primary transition-colors tracking-tighter">#{{ $order->order_number }}</span>
+                                                                </td>
+                                                                <td class="px-6 py-5">
+                                                                    <div class="flex items-center gap-4">
+                                                                        <div
+                                                                            class="size-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary flex items-center justify-center font-black text-xs border border-primary/10 group-hover:scale-110 transition-transform">
+                                                                            {{ substr($order->customer->name ?? 'G', 0, 1) }}
+                                                                        </div>
+                                                                        <span
+                                                                            class="text-sm font-black text-foreground group-hover:translate-x-1 transition-transform">{{ $order->customer->name ?? 'Guest Entity' }}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="px-6 py-5">
+                                                </div>
+                                                </td>
+                                                <td class="px-6 py-5">
+                                                    <div class="flex flex-col gap-1 max-w-[200px]">
+                                                        @foreach($order->items->take(3) as $item)
+                                                            <div class="flex items-center gap-1.5 text-[10px] text-muted-foreground truncate"
+                                                                title="{{ $item->product->name ?? 'Unknown' }}">
+                                                                <span class="font-bold text-foreground">{{ $item->quantity }}x</span>
+                                                                <span>{{ Str::limit($item->product->name ?? 'Unknown', 20) }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                        @if($order->items->count() > 3)
+                                                            <span
+                                                                class="text-[9px] font-bold text-muted-foreground/70 uppercase tracking-wider">+{{ $order->items->count() - 3 }}
+                                                                more</span>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-5 text-right">
+                                                    <span
+                                                        class="font-mono text-sm font-black text-foreground group-hover:text-primary transition-colors">Rs
+                                                        {{ number_format($order->grand_total, 2) }}</span>
+                                                </td>
+                                                <td class="px-6 py-5 text-center">
+                                                    @php
+                                                        $statusClass = [
+                                                            'completed' => 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                                                            'processing' => 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                                                            'cancelled' => 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+                                                            'pending' => 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                                                            'shipped' => 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
+                                                        ][$order->status] ?? 'bg-muted text-muted-foreground border-border';
+                                                    @endphp
+                                                    <span
+                                                        class="inline-flex items-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border {{ $statusClass }}">
+                                                        {{ $order->status }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-5">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="size-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                        <span
+                                                            class="text-[10px] font-black uppercase tracking-tight text-muted-foreground group-hover:text-foreground transition-colors">
+                                                            {{ $order->creator->name ?? 'SYSTEM_SECURE' }}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                </tr>
+                                            @endforeach
+                                </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Card View (Shown only on small screens) -->
+                        <div class="md:hidden space-y-4">
+                            @foreach($orderHistory as $order)
+                                <div @click="window.location.href='{{ tenant('id') ? route('tenant.orders.show', $order) : route('central.orders.show', $order) }}'"
+                                    class="group relative overflow-hidden rounded-3xl border border-border/50 bg-card p-5 shadow-sm active:scale-95 transition-all">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="size-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-sm border border-primary/20">
+                                                {{ substr($order->customer->name ?? 'G', 0, 1) }}
+                                            </div>
+                                            <div>
+                                                <h4 class="text-sm font-black text-foreground">
+                                                    {{ $order->customer->name ?? 'Guest Entity' }}
+                                                </h4>
+                                                <p class="text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
+                                                    #{{ $order->order_number }}</p>
+                                                <div class="mt-2 space-y-0.5">
+                                                    @foreach($order->items->take(2) as $item)
+                                                        <div class="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                                            <span class="font-bold text-foreground">{{ $item->quantity }}x</span>
+                                                            <span class="truncate max-w-[150px]">{{ $item->product->name ?? 'Unknown' }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                    @if($order->items->count() > 2)
+                                                        <div class="text-[9px] font-bold text-muted-foreground/70">
+                                                            +{{ $order->items->count() - 2 }} more</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm font-black text-foreground">Rs {{ number_format($order->grand_total, 2) }}</p>
+                                            <p class="text-[10px] font-bold text-muted-foreground">
+                                                {{ $order->created_at->format('M d, H:i') }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center bg-muted/30 rounded-2xl p-3">
+                                        @php
+                                            $statusClass = [
+                                                'completed' => 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                                                'processing' => 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+                                                'cancelled' => 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+                                                'pending' => 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                                                'shipped' => 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
+                                            ][$order->status] ?? 'bg-muted text-muted-foreground border-border';
+                                        @endphp
+                                        <span
+                                            class="inline-flex items-center px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border {{ $statusClass }}">
+                                            {{ $order->status }}
+                                        </span>
+                                        <span class="text-[9px] font-black uppercase tracking-widest text-muted-foreground">BY:
+                                            {{ $order->creator->name ?? 'SYSTEM' }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endcan
+        </div>
+        </div>
 @endsection
