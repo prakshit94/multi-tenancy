@@ -171,7 +171,11 @@ class DashboardController extends Controller
                 },
                 'customers'
             ])
-            ->withSum('orders as total_revenue', 'grand_total');
+            ->withSum([
+                'orders as total_revenue' => function ($query) {
+                    $query->whereDate('created_at', now()->toDateString());
+                }
+            ], 'grand_total');
 
         // RESTRICTION: Non-Super Admins can ONLY see themselves in "Team Activity"
         if (!$isSuperAdmin) {
@@ -199,7 +203,11 @@ class DashboardController extends Controller
                 },
                 'customers'
             ])
-            ->withSum('orders as total_revenue', 'grand_total');
+            ->withSum([
+                'orders as total_revenue' => function ($query) {
+                    $query->whereDate('created_at', now()->toDateString());
+                }
+            ], 'grand_total');
 
         if (!$isSuperAdmin) {
             $query->where('id', $user->id);
