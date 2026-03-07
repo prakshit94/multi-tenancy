@@ -76,7 +76,7 @@ class OrderProcessingController extends Controller
         }
 
         $countsQuery = clone $query;
-        $counts = $countsQuery->select('status', DB::raw('count(*) as total'))
+        $counts = $countsQuery->reorder()->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status')
             ->toArray();
