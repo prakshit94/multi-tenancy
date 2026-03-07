@@ -133,21 +133,20 @@ class OrderProcessingController extends Controller
      * Mark order as Ready to Ship (Processing -> Ready to Ship)
      * Also generates invoice.
      */
-    public function readyToShip(Order $order): RedirectResponse
+    public function readyToShip(Request $request, Order $order): RedirectResponse
     {
+        $validated = $request->validate([
+            'courier' => 'required|string|max:255',
+            'tracking_number' => 'required|string|max:255',
+        ]);
+
         try {
-            DB::transaction(function () use ($order) {
+            DB::transaction(function () use ($order, $validated) {
                 if ($order->status !== 'processing') {
                     throw new Exception('Order must be Processing before Ready to Ship.');
                 }
 
-                $order->update([
-                    'status' => 'ready_to_ship',
-                    'shipping_status' => 'pending',
-                    'updated_by' => auth()->id(),
-                ]);
-
-                // Ensure Invoice Exists
+                // Ensure Invoice Exists first before shipment
                 if ($order->invoices()->doesntExist()) {
                     Invoice::create([
                         'order_id' => $order->id,
@@ -160,9 +159,23 @@ class OrderProcessingController extends Controller
                         'status' => 'unpaid',
                     ]);
                 }
+
+                // Do the heavy lifting (stock deduction, shipment creation)
+                $this->orderService->shipOrder(
+                    $order,
+                    $validated['tracking_number'],
+                    $validated['courier']
+                );
+
+                // Override status back to ready_to_ship & pending as requested
+                // since shipOrder sets it to shipped.
+                $order->update([
+                    'status' => 'ready_to_ship',
+                    'shipping_status' => 'pending',
+                ]);
             });
 
-            return back()->with('success', 'Order marked as Ready to Parcel. Invoice generated.');
+            return back()->with('success', 'Order marked as Ready to Parcel. Shipment created and Invoice generated.');
         } catch (Exception $e) {
             return back()->with('error', 'Error updating order: ' . $e->getMessage());
         }
@@ -261,18 +274,16 @@ class OrderProcessingController extends Controller
      */
     public function dispatch(Request $request, Order $order): RedirectResponse
     {
-        $validated = $request->validate([
-            'courier' => 'required|string|max:255',
-            'tracking_number' => 'required|string|max:255',
-        ]);
-
         try {
-            // Use existing service to handle stock deduction and shipment creation
-            $this->orderService->shipOrder(
-                $order,
-                $validated['tracking_number'],
-                $validated['courier']
-            );
+            if ($order->status !== 'ready_to_ship') {
+                throw new Exception('Order must be Ready to Ship before Dispatching.');
+            }
+
+            $order->update([
+                'status' => 'shipped',
+                'shipping_status' => 'shipped',
+                'updated_by' => auth()->id(),
+            ]);
 
             return back()->with('success', 'Order Dispatched (Shipped) successfully.');
 

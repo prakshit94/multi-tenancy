@@ -159,13 +159,10 @@
                         @endif
 
                         @if($order->status === 'processing')
-                            <form action="{{ route('central.processing.orders.ready', $order) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md shadow-purple-200 hover:shadow-lg hover:shadow-purple-300 transform hover:-translate-y-0.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                                    Ready to Ship
-                                </button>
-                            </form>
+                            <button type="button" @click="$dispatch('open-dispatch-modal', { orderId: '{{ $order->id }}', orderNumber: '{{ $order->order_number }}', actionUrl: '{{ route('central.processing.orders.ready', $order) }}', mode: 'ready' })" class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md shadow-purple-200 hover:shadow-lg hover:shadow-purple-300 transform hover:-translate-y-0.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                Ready to Ship
+                            </button>
                         @endif
 
                         @if($order->status === 'ready_to_ship')
@@ -178,10 +175,13 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                     </a>
                                 </div>
-                                <button type="button" @click="$dispatch('open-dispatch-modal', { orderId: '{{ $order->id }}', orderNumber: '{{ $order->order_number }}', actionUrl: '{{ route('central.processing.orders.dispatch', $order) }}' })" class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md shadow-emerald-200 hover:shadow-lg hover:shadow-emerald-300 transform hover:-translate-y-0.5">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Dispatch
-                                </button>
+                                <form action="{{ route('central.processing.orders.dispatch', $order) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md shadow-emerald-200 hover:shadow-lg hover:shadow-emerald-300 transform hover:-translate-y-0.5" onclick="return confirm('Dispatch order and mark as shipped?')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                        Dispatch
+                                    </button>
+                                </form>
                             </div>
                         @endif
                     </div>
