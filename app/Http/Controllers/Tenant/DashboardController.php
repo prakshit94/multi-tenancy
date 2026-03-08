@@ -24,8 +24,8 @@ class DashboardController extends Controller
                 break;
 
             case 'yesterday':
-                $startDate = now()->subDay()->startOfDay();
-                $endDate = now()->subDay()->endOfDay();
+                $startDate = today()->subDay()->startOfDay();
+                $endDate = today()->subDay()->endOfDay();
                 break;
 
             case 'week':
@@ -52,10 +52,10 @@ class DashboardController extends Controller
 
         // KPI logic (date-aware)
         $totalSales = Order::whereNotIn('status', ['cancelled', 'scheduled'])
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$startDate, $endDate])
             ->sum('grand_total');
 
-        $ordersCount = Order::whereBetween('created_at', [$startDate, $endDate])->count();
+        $ordersCount = Order::whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$startDate, $endDate])->count();
         $customersCount = Customer::whereBetween('created_at', [$startDate, $endDate])->count();
         $productsCount = Product::whereBetween('created_at', [$startDate, $endDate])->count();
 
@@ -65,7 +65,7 @@ class DashboardController extends Controller
         $compareEndDate = (clone $endDate)->subDays($duration);
 
         $prevSales = Order::whereNotIn('status', ['cancelled', 'scheduled'])
-            ->whereBetween('created_at', [$compareStartDate, $compareEndDate])
+            ->whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$compareStartDate, $compareEndDate])
             ->sum('grand_total');
 
         $salesChange = $prevSales > 0
@@ -117,17 +117,17 @@ class DashboardController extends Controller
             ],
         ];
 
-        // Recent Orders (date-aware)
-        $recentOrders = Order::with('customer')
-            ->whereBetween('created_at', [$startDate, $endDate])
+        // Recent Orders (Filtered by selected period)
+        $recentOrders = Order::with(['customer', 'creator'])
+            ->whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$startDate, $endDate])
             ->latest()
             ->take(5)
             ->get();
 
         // Chart Data (date-aware)
         $chartDataRaw = Order::whereNotIn('status', ['cancelled', 'scheduled'])
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(grand_total) as total'))
+            ->whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$startDate, $endDate])
+            ->select(DB::raw('DATE(COALESCE(placed_at, created_at)) as date'), DB::raw('SUM(grand_total) as total'))
             ->groupBy('date')
             ->orderBy('date')
             ->get()
@@ -151,7 +151,8 @@ class DashboardController extends Controller
         }
 
         // ✅ REQUIRED ADDITION (ORDER HISTORY) - NOW FILTERED
-        $orderHistory = Order::whereBetween('created_at', [$startDate, $endDate])
+        $orderHistory = Order::with(['customer', 'items.product', 'creator'])
+            ->whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$startDate, $endDate])
             ->latest()
             ->get();
 
@@ -161,6 +162,6 @@ class DashboardController extends Controller
             'chartData',
             'orderHistory',
             'period'
-        ));
+        ))->with('activeTab', $request->query('active_tab', 'overview'));
     }
 }
