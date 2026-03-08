@@ -101,36 +101,124 @@
                         class="grid grid-cols-1 md:grid-cols-12 gap-6 overflow-y-auto custom-scrollbar flex-1 p-6 md:p-8 pt-6">
                         <!-- Order Details Column -->
                         <div class="md:col-span-7 space-y-6">
-                            <!-- Customer Info Card -->
+                            <!-- Premium Customer Info Card -->
                             <div
-                                class="flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300">
-                                <div class="p-3 bg-primary/10 rounded-full text-primary shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
+                                class="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br from-card to-muted/20 border border-border/60 shadow-sm hover:shadow-md transition-all duration-300">
+                                <!-- Background Decoration -->
+                                <div
+                                    class="absolute -top-4 -right-4 p-8 opacity-[0.02] pointer-events-none transform rotate-12">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24"
+                                        fill="currentColor">
                                         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                                         <circle cx="12" cy="7" r="4" />
                                     </svg>
                                 </div>
-                                <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-                                    <div class="col-span-2">
-                                        <span
-                                            class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1">Customer
-                                            Name</span>
-                                        <span class="font-semibold text-base text-foreground"
-                                            x-text="activeOrder?.customer?.name || ((activeOrder?.customer?.first_name || '') + ' ' + (activeOrder?.customer?.last_name || '')).trim() || 'Guest User'"></span>
+
+                                <div class="flex flex-col sm:flex-row items-start gap-5 relative z-10 w-full">
+                                    <div
+                                        class="p-4 bg-primary/10 rounded-2xl text-primary shrink-0 shadow-inner ring-1 ring-primary/20">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                            <circle cx="12" cy="7" r="4" />
+                                        </svg>
                                     </div>
-                                    <div>
-                                        <span
-                                            class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1">Mobile</span>
-                                        <span class="font-medium font-mono text-sm"
-                                            x-text="activeOrder?.customer?.mobile || activeOrder?.customer?.phone || '-'"></span>
-                                    </div>
-                                    <div>
-                                        <span
-                                            class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1">Email</span>
-                                        <span class="font-medium text-sm text-foreground/80 truncate block"
-                                            x-text="activeOrder?.customer?.email || '-'"></span>
+                                    <div class="w-full">
+                                        <!-- Header line: Name and Code -->
+                                        <div class="flex flex-col mb-5">
+                                            <span
+                                                class="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-bold block mb-1">Customer
+                                                Details</span>
+                                            <div class="flex flex-wrap items-center gap-2.5">
+                                                <span class="font-bold text-lg text-foreground tracking-tight"
+                                                    x-text="activeOrder?.customer?.name || [activeOrder?.customer?.first_name, activeOrder?.customer?.middle_name, activeOrder?.customer?.last_name].filter(Boolean).join(' ').trim() || 'Guest User'"></span>
+                                                <template x-if="activeOrder?.customer?.customer_code">
+                                                    <span
+                                                        class="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-mono font-bold border border-primary/25 shadow-sm"
+                                                        x-text="activeOrder.customer.customer_code"></span>
+                                                </template>
+                                            </div>
+                                            <template x-if="activeOrder?.customer?.company_name">
+                                                <div class="flex items-center gap-1.5 mt-1.5 text-muted-foreground">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+                                                        <path d="M9 22v-4h6v4" />
+                                                        <path d="M8 6h.01" />
+                                                        <path d="M16 6h.01" />
+                                                        <path d="M12 6h.01" />
+                                                        <path d="M12 10h.01" />
+                                                        <path d="M12 14h.01" />
+                                                        <path d="M16 10h.01" />
+                                                        <path d="M16 14h.01" />
+                                                        <path d="M8 10h.01" />
+                                                        <path d="M8 14h.01" />
+                                                    </svg>
+                                                    <span class="text-xs font-medium"
+                                                        x-text="activeOrder.customer.company_name"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Contact Grid -->
+                                        <div
+                                            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 pt-4 border-t border-border/50">
+                                            <div>
+                                                <span
+                                                    class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-bold block mb-1">Primary
+                                                    Mobile</span>
+                                                <div class="flex items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="text-primary/80">
+                                                        <path
+                                                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                    </svg>
+                                                    <span class="font-medium font-mono text-sm text-foreground"
+                                                        x-text="activeOrder?.customer?.mobile || activeOrder?.customer?.phone || '-'"></span>
+                                                </div>
+                                            </div>
+
+                                            <template
+                                                x-if="activeOrder?.customer?.phone_number_2 || activeOrder?.customer?.relative_phone">
+                                                <div>
+                                                    <span
+                                                        class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-bold block mb-1">Alt
+                                                        / Relative Phone</span>
+                                                    <div class="flex items-center gap-2">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                            class="text-muted-foreground">
+                                                            <path
+                                                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                        </svg>
+                                                        <span class="font-medium font-mono text-sm text-foreground"
+                                                            x-text="activeOrder?.customer?.phone_number_2 || activeOrder?.customer?.relative_phone"></span>
+                                                    </div>
+                                                </div>
+                                            </template>
+
+                                            <div class="col-span-1 sm:col-span-2 lg:col-span-1">
+                                                <span
+                                                    class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-bold block mb-1">Email
+                                                    Address</span>
+                                                <div class="flex items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="text-muted-foreground">
+                                                        <rect width="20" height="16" x="2" y="4" rx="2" />
+                                                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                                                    </svg>
+                                                    <span class="font-medium text-sm text-foreground/90 truncate block"
+                                                        x-text="activeOrder?.customer?.email || '-'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -169,6 +257,12 @@
                                                     class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-semibold block mb-0.5">Village</span>
                                                 <span class="font-medium text-foreground"
                                                     x-text="activeOrder.billing_address.village || '-'"></span>
+                                            </div>
+                                            <div>
+                                                <span
+                                                    class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-semibold block mb-0.5">BO</span>
+                                                <span class="font-medium text-foreground"
+                                                    x-text="activeOrder.billing_address.post_office || '-'"></span>
                                             </div>
                                             <div>
                                                 <span
@@ -262,6 +356,12 @@
                                                     class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-semibold block mb-0.5">Village</span>
                                                 <span class="font-medium text-foreground"
                                                     x-text="activeOrder.shipping_address.village || '-'"></span>
+                                            </div>
+                                            <div>
+                                                <span
+                                                    class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-semibold block mb-0.5">BO</span>
+                                                <span class="font-medium text-foreground"
+                                                    x-text="activeOrder.shipping_address.post_office || '-'"></span>
                                             </div>
                                             <div>
                                                 <span
@@ -421,9 +521,9 @@
                                 <div
                                     class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 bg-muted/10 rounded-xl border border-border/50">
                                     <div class="h-16 w-16 rounded-full flex items-center justify-center" :class="{
-                                                                    'bg-emerald-100 text-emerald-600': activeOrder?.verification_status === 'verified' || activeOrder?.status === 'confirmed',
-                                                                    'bg-red-100 text-red-600': activeOrder?.verification_status === 'rejected' || activeOrder?.status === 'cancelled'
-                                                                }">
+                                                                            'bg-emerald-100 text-emerald-600': activeOrder?.verification_status === 'verified' || activeOrder?.status === 'confirmed',
+                                                                            'bg-red-100 text-red-600': activeOrder?.verification_status === 'rejected' || activeOrder?.status === 'cancelled'
+                                                                        }">
                                         <svg x-show="activeOrder?.verification_status === 'verified' || activeOrder?.status === 'confirmed'"
                                             xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
                                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -578,11 +678,11 @@
                                                     <!-- Timeline Dot -->
                                                     <div class="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-background flex items-center justify-center"
                                                         :class="{
-                                                                        'bg-emerald-500': verification.status === 'verified',
-                                                                        'bg-destructive': verification.status === 'rejected',
-                                                                        'bg-amber-500': verification.status === 'pending_followup',
-                                                                        'bg-primary': !['verified', 'rejected', 'pending_followup'].includes(verification.status)
-                                                                    }">
+                                                                                'bg-emerald-500': verification.status === 'verified',
+                                                                                'bg-destructive': verification.status === 'rejected',
+                                                                                'bg-amber-500': verification.status === 'pending_followup',
+                                                                                'bg-primary': !['verified', 'rejected', 'pending_followup'].includes(verification.status)
+                                                                            }">
                                                     </div>
 
                                                     <!-- Content -->
@@ -592,11 +692,11 @@
                                                             <div class="flex flex-col">
                                                                 <span class="text-xs font-semibold uppercase tracking-wider"
                                                                     :class="{
-                                                                                    'text-emerald-600 dark:text-emerald-400': verification.status === 'verified',
-                                                                                    'text-destructive dark:text-destructive': verification.status === 'rejected',
-                                                                                    'text-amber-600 dark:text-amber-400': verification.status === 'pending_followup',
-                                                                                    'text-foreground': !['verified', 'rejected', 'pending_followup'].includes(verification.status)
-                                                                                }"
+                                                                                            'text-emerald-600 dark:text-emerald-400': verification.status === 'verified',
+                                                                                            'text-destructive dark:text-destructive': verification.status === 'rejected',
+                                                                                            'text-amber-600 dark:text-amber-400': verification.status === 'pending_followup',
+                                                                                            'text-foreground': !['verified', 'rejected', 'pending_followup'].includes(verification.status)
+                                                                                        }"
                                                                     x-text="verification.status.replace('_', ' ')"></span>
                                                                 <span
                                                                     class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">

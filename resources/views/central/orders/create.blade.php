@@ -613,11 +613,11 @@
                                             class="flex flex-col gap-3 shrink-0 w-full md:w-auto p-4 bg-white/40 dark:bg-black/20 rounded-[28px] border border-white/20 backdrop-blur-md">
                                             <button x-show="canManageCustomers" @click="editCustomerDetails()"
                                                 class="flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl bg-white dark:bg-zinc-800 hover:bg-primary/5 border border-transparent hover:border-primary/20 font-bold text-xs uppercase tracking-wider transition-all shadow-sm">
-                                                Edit Profile
+                                                Edit Customer Profile
                                             </button>
                                             <button x-show="canManageCustomers" @click="openAddressModal('billing')"
                                                 class="flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl bg-white dark:bg-zinc-800 hover:bg-primary/5 border border-transparent hover:border-primary/20 font-bold text-xs uppercase tracking-wider transition-all shadow-sm">
-                                                Manage Addresses
+                                                Add New Address
                                             </button>
                                         </div>
                                     </div>
@@ -882,12 +882,20 @@
                                                                 class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
                                                                 Mobile Number</p>
                                                             <p class="text-base font-mono font-medium tracking-wide flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
-                                                                title="Click to copy"
-                                                                x-data="{ copied: false }"
+                                                                title="Click to copy" x-data="{ copied: false }"
                                                                 @click.stop="if(selectedCustomer.mobile) { let t = selectedCustomer.mobile; if(navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t); } else { let el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); } copied = true; setTimeout(() => copied = false, 2000); }">
-                                                                <span x-text="copied ? 'Copied!' : (selectedCustomer.mobile || '-')"
+                                                                <span
+                                                                    x-text="copied ? 'Copied!' : (selectedCustomer.mobile || '-')"
                                                                     :class="copied ? 'text-primary font-bold' : 'text-foreground'"></span>
-                                                                <svg x-show="selectedCustomer.mobile && !copied" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                                <svg x-show="selectedCustomer.mobile && !copied"
+                                                                    xmlns="http://www.w3.org/2000/svg" width="14"
+                                                                    height="14" viewBox="0 0 24 24" fill="none"
+                                                                    stroke="currentColor" stroke-width="2"
+                                                                    stroke-linecap="round" stroke-linejoin="round"
+                                                                    class="opacity-50">
+                                                                    <path
+                                                                        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                                </svg>
                                                             </p>
                                                         </div>
                                                         <div>
