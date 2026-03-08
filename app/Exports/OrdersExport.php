@@ -3,11 +3,14 @@
 namespace App\Exports;
 
 use App\Models\Order;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use Illuminate\Contracts\View\View;
+use Maatwebsite\Excel\Concerns\FromView;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class OrdersExport implements FromCollection, WithHeadings, WithMapping
+class OrdersExport implements FromView, ShouldAutoSize, WithEvents
 {
     protected $filters;
 
@@ -17,9 +20,9 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
     }
 
     /**
-     * @return \Illuminate\Support\Collection
+     * @return View
      */
-    public function collection()
+    public function view(): View
     {
         $query = Order::with(['customer', 'items', 'billingAddress', 'shippingAddress', 'creator', 'updater', 'shipments'])->latest();
 
@@ -65,69 +68,34 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping
             $query->whereIn('id', $this->filters['ids']);
         }
 
-        return $query->get();
+        return view('exports.orders', [
+            'orders' => $query->get()
+        ]);
     }
 
-    public function headings(): array
+    public function styles(Worksheet $sheet)
     {
         return [
-            'order_number',
-            'courier',
-            'tracking_number',
-            // Context Columns
-            'Status',
-            'Placed At',
-            'Customer Name',
-            'Customer Email',
-            'Customer Mobile',
-            'Payment Status',
-            'Total Items',
-            'Grand Total',
-            // Billing Address
-            'Billing Line 1',
-            'Billing Line 2',
-            'Billing City',
-            'Billing State',
-            'Billing Pincode',
-            // Shipping Address
-            'Shipping Line 1',
-            'Shipping Line 2',
-            'Shipping City',
-            'Shipping State',
-            'Shipping Pincode',
+            1 => ['font' => ['bold' => true]], // Bold headings
         ];
     }
 
-    public function map($order): array
+    public function registerEvents(): array
     {
-        // Handle multiple shipments if present
-        $couriers = $order->shipments->pluck('carrier')->filter()->unique()->implode(', ');
-        $trackingNumbers = $order->shipments->pluck('tracking_number')->filter()->unique()->implode(', ');
-
         return [
-            $order->order_number,
-            $couriers,
-            $trackingNumbers,
-            ucfirst($order->status),
-            $order->created_at->format('Y-m-d H:i:s'),
-            $order->customer?->name ?? 'N/A',
-            $order->customer?->email ?? 'N/A',
-            $order->customer?->mobile ?? 'N/A',
-            ucfirst($order->payment_status),
-            $order->items->count(),
-            $order->grand_total,
-            // Billing
-            $order->billingAddress?->address_line1 ?? '',
-            $order->billingAddress?->address_line2 ?? '',
-            $order->billingAddress?->city ?? $order->billingAddress?->district ?? '',
-            $order->billingAddress?->state ?? '',
-            $order->billingAddress?->pincode ?? '',
-            // Shipping
-            $order->shippingAddress?->address_line1 ?? '',
-            $order->shippingAddress?->address_line2 ?? '',
-            $order->shippingAddress?->city ?? $order->shippingAddress?->district ?? '',
-            $order->shippingAddress?->state ?? '',
-            $order->shippingAddress?->pincode ?? '',
+            AfterSheet::class => function (AfterSheet $event) {
+                // Formatting applied explicitly for PDF via PhpSpreadsheet
+                $sheet = $event->sheet->getDelegate();
+
+                $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+                $sheet->getPageSetup()->setFitToWidth(1);
+                $sheet->getPageSetup()->setFitToHeight(0);
+
+                $sheet->getPageMargins()->setTop(0.5);
+                $sheet->getPageMargins()->setRight(0.2);
+                $sheet->getPageMargins()->setLeft(0.2);
+                $sheet->getPageMargins()->setBottom(0.5);
+            },
         ];
     }
 }

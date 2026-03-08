@@ -1,3 +1,9 @@
+@php
+    $hideSidebar = $hideSidebar ?? false;
+    $hideHeaderSearch = $hideHeaderSearch ?? false;
+    $hideDashboardLink = $hideDashboardLink ?? false;
+    $pageTitle = $pageTitle ?? '';
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ 
           sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
@@ -110,16 +116,19 @@
     <x-ui.toaster />
 
     <!-- Sidebar Component (Fixed Position, Independent of Content Flow) -->
-    <x-layout.app-sidebar />
+    @if(!$hideSidebar)
+        <x-layout.app-sidebar />
+    @endif
 
     <!-- Main Content Wrapper -->
     <!-- We use a static padding class (pl-0 md:pl-72) as a default to prevent layout shift before JS loads. -->
     <!-- Then we use Alpine to tighten it if collapsed. -->
-    <div class="relative min-h-svh flex flex-col transition-all duration-300 ease-in-out md:pl-72"
-        :class="sidebarCollapsed ? 'md:!pl-[4.5rem]' : ''">
+    <div class="relative min-h-svh flex flex-col transition-all duration-300 ease-in-out {{ $hideSidebar ? '' : 'md:pl-72' }}"
+        :class="sidebarCollapsed ? '{{ $hideSidebar ? '' : 'md:!pl-[4.5rem]' }}' : ''">
 
         <!-- Header (Sticky) -->
-        <x-layout.header />
+        <x-layout.header :hide-search="$hideHeaderSearch" :hide-dashboard-link="$hideDashboardLink"
+            :hide-sidebar-toggle="$hideSidebar" :page-title="$pageTitle" />
 
         <!-- Page Content -->
         <main class="flex-1 w-full max-w-full relative overflow-hidden">

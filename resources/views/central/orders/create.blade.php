@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout :hide-sidebar="true" :hide-header-search="true" :hide-dashboard-link="true" page-title="Order">
     <div x-data="orderWizard(@js($products), @js($preSelectedCustomer), @js(auth()->user()->hasRole('Super Admin')), @js(auth()->user()->can('customers manage')))"
         class="flex flex-col min-h-screen bg-muted/5">
 
@@ -3736,6 +3736,18 @@
 
     </div>
     <script>
+        window.addEventListener('beforeunload', function (e) {
+            let orderWizard = document.querySelector('[x-data^="orderWizard"]');
+            if (orderWizard && orderWizard.__x) {
+                let component = orderWizard.__x.$data;
+                if (component.selectedCustomer && !component.order.id) {
+                    e.preventDefault();
+                    e.returnValue = 'Please Tag & Close Profile before leaving.';
+                    return e.returnValue;
+                }
+            }
+        });
+
         window.copyToClipboardFallback = function (text) {
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(text);
