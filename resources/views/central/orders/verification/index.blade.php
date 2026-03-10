@@ -18,31 +18,37 @@
                 class="flex items-center p-1 bg-muted/60 rounded-xl border border-border/40 backdrop-blur-sm self-start sm:self-auto overflow-x-auto max-w-full no-scrollbar shadow-inner">
 
 
-                <a href="{{ route('central.orders.verification.index', ['status' => 'unverified']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['status' => 'unverified']) }}"
                     class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status', 'unverified') === 'unverified' ? 'bg-background text-amber-600 shadow-sm ring-1 ring-amber-500/10' : 'text-muted-foreground/80 hover:text-amber-600 hover:bg-background/40' }}">
                     Unverified
                 </a>
                 <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
-                <a href="{{ route('central.orders.verification.index', ['status' => 'pending_followup']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['status' => 'pending_followup']) }}"
                     class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'pending_followup' ? 'bg-background text-blue-600 shadow-sm ring-1 ring-blue-500/10' : 'text-muted-foreground/80 hover:text-blue-600 hover:bg-background/40' }}">
                     Pending Follow-up
                 </a>
                 <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
-                <a href="{{ route('central.orders.verification.index', ['status' => 'verified']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['status' => 'scheduled']) }}"
+                    class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'scheduled' ? 'bg-background text-purple-600 shadow-sm ring-1 ring-purple-500/10' : 'text-muted-foreground/80 hover:text-purple-600 hover:bg-background/40' }}">
+                    Scheduled
+                </a>
+                <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
+
+                <a href="{{ request()->fullUrlWithQuery(['status' => 'verified']) }}"
                     class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'verified' ? 'bg-background text-emerald-600 shadow-sm ring-1 ring-emerald-500/10' : 'text-muted-foreground/80 hover:text-emerald-600 hover:bg-background/40' }}">
                     Verified
                 </a>
                 <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
-                <a href="{{ route('central.orders.verification.index', ['status' => 'cancelled']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['status' => 'cancelled']) }}"
                     class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'cancelled' ? 'bg-background text-destructive shadow-sm ring-1 ring-destructive/10' : 'text-muted-foreground/80 hover:text-destructive hover:bg-background/40' }}">
                     Cancelled
                 </a>
                 <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
-                <a href="{{ route('central.orders.verification.index', ['status' => 'all']) }}"
+                <a href="{{ request()->fullUrlWithQuery(['status' => 'all']) }}"
                     class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'all' ? 'bg-background text-primary shadow-sm ring-1 ring-primary/10' : 'text-muted-foreground/80 hover:text-primary hover:bg-background/40' }}">
                     All Orders
                 </a>
@@ -521,9 +527,9 @@
                                 <div
                                     class="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 bg-muted/10 rounded-xl border border-border/50">
                                     <div class="h-16 w-16 rounded-full flex items-center justify-center" :class="{
-                                                                            'bg-emerald-100 text-emerald-600': activeOrder?.verification_status === 'verified' || activeOrder?.status === 'confirmed',
-                                                                            'bg-red-100 text-red-600': activeOrder?.verification_status === 'rejected' || activeOrder?.status === 'cancelled'
-                                                                        }">
+                                                                                    'bg-emerald-100 text-emerald-600': activeOrder?.verification_status === 'verified' || activeOrder?.status === 'confirmed',
+                                                                                    'bg-red-100 text-red-600': activeOrder?.verification_status === 'rejected' || activeOrder?.status === 'cancelled'
+                                                                                }">
                                         <svg x-show="activeOrder?.verification_status === 'verified' || activeOrder?.status === 'confirmed'"
                                             xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
                                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -678,11 +684,11 @@
                                                     <!-- Timeline Dot -->
                                                     <div class="absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-background flex items-center justify-center"
                                                         :class="{
-                                                                                'bg-emerald-500': verification.status === 'verified',
-                                                                                'bg-destructive': verification.status === 'rejected',
-                                                                                'bg-amber-500': verification.status === 'pending_followup',
-                                                                                'bg-primary': !['verified', 'rejected', 'pending_followup'].includes(verification.status)
-                                                                            }">
+                                                                                        'bg-emerald-500': verification.status === 'verified',
+                                                                                        'bg-destructive': verification.status === 'rejected',
+                                                                                        'bg-amber-500': verification.status === 'pending_followup',
+                                                                                        'bg-primary': !['verified', 'rejected', 'pending_followup'].includes(verification.status)
+                                                                                    }">
                                                     </div>
 
                                                     <!-- Content -->
@@ -692,11 +698,11 @@
                                                             <div class="flex flex-col">
                                                                 <span class="text-xs font-semibold uppercase tracking-wider"
                                                                     :class="{
-                                                                                            'text-emerald-600 dark:text-emerald-400': verification.status === 'verified',
-                                                                                            'text-destructive dark:text-destructive': verification.status === 'rejected',
-                                                                                            'text-amber-600 dark:text-amber-400': verification.status === 'pending_followup',
-                                                                                            'text-foreground': !['verified', 'rejected', 'pending_followup'].includes(verification.status)
-                                                                                        }"
+                                                                                                    'text-emerald-600 dark:text-emerald-400': verification.status === 'verified',
+                                                                                                    'text-destructive dark:text-destructive': verification.status === 'rejected',
+                                                                                                    'text-amber-600 dark:text-amber-400': verification.status === 'pending_followup',
+                                                                                                    'text-foreground': !['verified', 'rejected', 'pending_followup'].includes(verification.status)
+                                                                                                }"
                                                                     x-text="verification.status.replace('_', ' ')"></span>
                                                                 <span
                                                                     class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
@@ -771,9 +777,16 @@
             <div
                 class="flex flex-wrap items-center justify-between gap-4 p-2 pl-3 bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] mb-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
                 <div class="flex items-center gap-3">
+
+                    <!-- Search Form -->
                     <form id="search-form" method="GET" action="{{ url()->current() }}"
                         class="relative transition-all duration-300 group-focus-within:w-64 w-56">
                         <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
+                        @foreach(request()->only(['date_from', 'date_to', 'state', 'per_page', 'sort_direction']) as $key => $value)
+                            @if($value)
+                                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                            @endif
+                        @endforeach
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -786,7 +799,7 @@
                             placeholder="Search (Order #, Name, Mobile...)"
                             class="block w-full rounded-xl border-border/50 py-2 pl-9 pr-8 text-foreground bg-background/50 placeholder:text-muted-foreground/70 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm leading-6 transition-all shadow-sm outline-none">
                         @if(request('search'))
-                            <a href="{{ url()->current() }}?status={{ request('status', 'unverified') }}"
+                            <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}"
                                 class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-muted-foreground hover:text-foreground">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -795,6 +808,83 @@
                                 </svg>
                             </a>
                         @endif
+                    </form>
+
+
+                    <form id="advanced-filter-form" method="GET" action="{{ url()->current() }}"
+                        class="flex flex-wrap gap-2 items-center">
+
+                        <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
+                        @if (request('search'))
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                        @endif
+                        @if (request('per_page'))
+                            <input type="hidden" name="per_page" value="{{ request('per_page') }}">
+                        @endif
+                        @if (request('sort_direction'))
+                            <input type="hidden" name="sort_direction" value="{{ request('sort_direction') }}">
+                        @endif
+
+                        <!-- Date From -->
+                        <div class="flex flex-col">
+                            <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">From</span>
+                            <input type="date" name="date_from" value="{{ request('date_from') }}"
+                                class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30">
+                        </div>
+
+                        <!-- Date To -->
+                        <div class="flex flex-col">
+                            <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">To</span>
+                            <input type="date" name="date_to" value="{{ request('date_to') }}"
+                                class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30">
+                        </div>
+
+                        <!-- State -->
+                        <div class="flex flex-col">
+                            <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">State</span>
+                            <select name="state"
+                                class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer appearance-none">
+                                <option value="">All States</option>
+                                @foreach ($states as $state)
+                                    <option value="{{ $state }}" @selected(request('state') == $state)>
+                                        {{ $state }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <button type="submit"
+                            class="bg-primary text-white hover:bg-primary/90 px-4 py-1 rounded-lg text-xs font-bold shadow-sm transition-all mt-3">
+                            Filter
+                        </button>
+
+                        @if (request()->anyFilled(['date_from', 'date_to', 'state']))
+                            <a href="{{ request()->fullUrlWithQuery(['date_from' => null, 'date_to' => null, 'state' => null]) }}"
+                                class="text-[10px] font-bold text-destructive hover:underline mt-3 ml-1">
+                                Clear
+                            </a>
+                        @endif
+
+                        <div class="h-6 w-px bg-border/40 mx-2 mt-3"></div>
+
+                        <!-- Sort Toggle -->
+                        <div class="flex flex-col">
+                            <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">Sort</span>
+                            <a href="{{ request()->fullUrlWithQuery(['sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc']) }}"
+                                class="ajax-link inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/50 bg-background/50 text-[10px] font-bold hover:bg-background transition-all shadow-sm group">
+                                @if(request('sort_direction') === 'asc')
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                        <path d="m3 8 4-4 4 4"/><path d="M7 4v16"/><path d="M11 12h4"/><path d="M11 16h7"/><path d="M11 20h10"/>
+                                    </svg>
+                                    Oldest First
+                                @else
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                        <path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 12h4"/><path d="M11 8h7"/><path d="M11 4h10"/>
+                                    </svg>
+                                    Newest First
+                                @endif
+                            </a>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -819,8 +909,11 @@
                         <form id="per-page-form" method="GET" action="{{ url()->current() }}"
                             class="flex items-center gap-2">
                             <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
-                            @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}">
-                            @endif
+                            @foreach(request()->only(['search', 'date_from', 'date_to', 'state']) as $key => $value)
+                                @if($value)
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endif
+                            @endforeach
                             <label for="per_page"
                                 class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">Show</label>
                             <div class="relative">
@@ -1039,7 +1132,7 @@
             window.addEventListener('popstate', () => loadContent(window.location.href, false));
 
             container.addEventListener('click', (e) => {
-                const link = e.target.closest('a.page-link') || e.target.closest('nav[role="navigation"] a') || e.target.closest('.pagination a');
+                const link = e.target.closest('a.page-link') || e.target.closest('nav[role="navigation"] a') || e.target.closest('.pagination a') || e.target.closest('a.ajax-link');
                 if (link && container.contains(link) && link.href) {
                     e.preventDefault();
                     loadContent(link.href);
@@ -1061,7 +1154,7 @@
 
             // Event Delegation for Form Submits (Search & Pagination)
             container.addEventListener('submit', (e) => {
-                if (e.target.id === 'per-page-form' || e.target.id === 'search-form') {
+                if (e.target.id === 'per-page-form' || e.target.id === 'search-form' || e.target.id === 'advanced-filter-form') {
                     e.preventDefault();
                     const form = e.target;
                     const url = new URL(form.action);

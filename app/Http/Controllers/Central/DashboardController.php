@@ -71,13 +71,19 @@ class DashboardController extends Controller
         $filteredOrderQuery = (clone $orderQuery);
         $filteredCustomerQuery = (clone $customerQuery);
 
-        if ($startDate) {
-            $filteredOrderQuery->where('created_at', '>=', $startDate);
-            $filteredCustomerQuery->where('created_at', '>=', $startDate);
-        }
-        if ($endDate) {
-            $filteredOrderQuery->where('created_at', '<=', $endDate);
-            $filteredCustomerQuery->where('created_at', '<=', $endDate);
+        if (in_array($period, ['today', 'yesterday'])) {
+            $targetDate = $period === 'today' ? now() : now()->subDay();
+            $filteredOrderQuery->whereDate('created_at', $targetDate);
+            $filteredCustomerQuery->whereDate('created_at', $targetDate);
+        } else {
+            if ($startDate) {
+                $filteredOrderQuery->where('created_at', '>=', $startDate);
+                $filteredCustomerQuery->where('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $filteredOrderQuery->where('created_at', '<=', $endDate);
+                $filteredCustomerQuery->where('created_at', '<=', $endDate);
+            }
         }
 
         $totalSales = (float) (clone $filteredOrderQuery)->whereNotIn('status', ['cancelled', 'scheduled'])->sum('grand_total');
@@ -90,7 +96,13 @@ class DashboardController extends Controller
         $compareStartDate = (clone $startDate)->subDays($duration);
         $compareEndDate = $endDate ? (clone $endDate)->subDays($duration) : (clone $startDate)->subSecond();
 
-        $prevOrderQuery = (clone $orderQuery)->whereBetween('created_at', [$compareStartDate, $compareEndDate]);
+        if (in_array($period, ['today', 'yesterday'])) {
+            $compareTargetDate = $period === 'today' ? now()->subDay() : now()->subDays(2);
+            $prevOrderQuery = (clone $orderQuery)->whereDate('created_at', $compareTargetDate);
+        } else {
+            $prevOrderQuery = (clone $orderQuery)->whereBetween('created_at', [$compareStartDate, $compareEndDate]);
+        }
+
         $prevSales = (float) (clone $prevOrderQuery)->whereNotIn('status', ['cancelled', 'scheduled'])->sum('grand_total');
 
         $salesChange = $prevSales > 0
@@ -145,8 +157,14 @@ class DashboardController extends Controller
 
         // Prepare chart data (based on duration)
         $chartDataDuration = $startDate->diffInDays($endDate ?? now()) + 1;
-        $chartDataRaw = (clone $orderQuery)
-            ->whereBetween('created_at', [$startDate, $endDate ?? now()])
+        if (in_array($period, ['today', 'yesterday'])) {
+            $chartTargetDate = $period === 'today' ? now() : now()->subDay();
+            $chartQuery = (clone $orderQuery)->whereDate('created_at', $chartTargetDate);
+        } else {
+            $chartQuery = (clone $orderQuery)->whereBetween('created_at', [$startDate, $endDate ?? now()]);
+        }
+
+        $chartDataRaw = $chartQuery
             ->whereNotIn('status', ['cancelled', 'scheduled'])
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(grand_total) as total'))
             ->groupBy('date')

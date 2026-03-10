@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderVerification;
 use App\Services\OrderService;
+use App\Models\Village;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -23,61 +24,119 @@ class OrderVerificationController extends Controller
     {
         $this->authorize('orders view');
 
-        // Default to 'unverified' if no status is provided
+        $states = Village::distinct()->pluck('state_name')->filter()->sort()->values();
+
         $status = $request->input('status', 'unverified');
 
-        $query = Order::with(['customer', 'items', 'verifications.user', 'billingAddress', 'shippingAddress'])
-            ->latest();
+        $sortDirection = $request->input('sort_direction', 'desc');
 
-        // Apply Status Filter
-        if ($status === 'unverified') {
-            $query->where(function ($q) {
-                $q->where(function ($sub) {
-                    $sub->where('verification_status', 'unverified')
-                        ->orWhereNull('verification_status');
-                })->where('status', 'pending');
-            });
-        } elseif ($status === 'pending_followup') {
-            $query->where('verification_status', 'pending_followup');
-        } elseif ($status === 'verified') {
-            $query->where(function ($q) {
-                $q->where('verification_status', 'verified')
-                    ->orWhere(function ($sub) {
-                        $sub->where(function ($s) {
-                            $s->where('verification_status', 'unverified')
-                                ->orWhereNull('verification_status');
-                        })->where('status', '!=', 'pending')
-                            ->where('status', '!=', 'cancelled');
-                    });
-            });
-        } elseif ($status === 'cancelled') {
-            $query->where('status', 'cancelled');
-        } elseif ($status === 'all') {
-            // No filter applied for 'all'
+        $query = Order::with([
+            'customer',
+            'items',
+            'verifications.user',
+            'billingAddress',
+            'shippingAddress'
+        ])->orderBy('placed_at', $sortDirection);
+
+        /*
+        |--------------------------------------------------------------------------
+        | STATUS FILTER (existing logic)
+        |--------------------------------------------------------------------------
+        */
+
+        if ($status === 'scheduled') {
+            $query->where('is_future_order', true);
+        } else {
+            $query->where('is_future_order', false);
+
+            if ($status === 'unverified') {
+                $query->where(function ($q) {
+                    $q->where(function ($sub) {
+                        $sub->where('verification_status', 'unverified')
+                            ->orWhereNull('verification_status');
+                    })->where('status', 'pending');
+                });
+            } elseif ($status === 'pending_followup') {
+                $query->where('verification_status', 'pending_followup');
+            } elseif ($status === 'verified') {
+                $query->where('verification_status', 'verified')
+                    ->where('status', 'confirmed');
+            } elseif ($status === 'cancelled') {
+                $query->where('status', 'cancelled');
+            }
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SEARCH
+        |--------------------------------------------------------------------------
+        */
 
         if ($request->filled('search')) {
-            $search = $request->input('search');
+
+            $search = $request->search;
+
             $query->where(function ($q) use ($search) {
+
                 $q->where('order_number', 'like', "%{$search}%")
                     ->orWhere('grand_total', 'like', "%{$search}%")
+
                     ->orWhereHas('customer', function ($c) use ($search) {
+
                         $c->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%")
                             ->orWhere('mobile', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%");
+
                     })
+
                     ->orWhereHas('items', function ($i) use ($search) {
+
                         $i->where('product_name', 'like', "%{$search}%")
                             ->orWhere('sku', 'like', "%{$search}%");
+
+                    });
+
+            });
+
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | DATE FILTER
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | STATE FILTER
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('state')) {
+            $state = trim($request->state);
+            $query->where(function ($q) use ($state) {
+                $q->whereHas('shippingAddress', function ($sub) use ($state) {
+                    $sub->where('state', 'like', "%{$state}%");
+                })
+                    ->orWhereHas('billingAddress', function ($sub) use ($state) {
+                        $sub->where('state', 'like', "%{$state}%");
                     });
             });
         }
 
-        $orders = $query->paginate($request->get('per_page', 10))->withQueryString();
+        $orders = $query->paginate($request->get('per_page', 10))
+            ->withQueryString();
 
-        return view('central.orders.verification.index', compact('orders'));
+        return view('central.orders.verification.index', compact('orders', 'states'));
     }
 
     public function store(Request $request, Order $order)
