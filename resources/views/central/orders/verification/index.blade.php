@@ -57,14 +57,31 @@
         
         <!-- District Insights -->
         @if($districtCounts->count() > 0)
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center gap-2 px-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">District Insights</span>
+            <div class="flex flex-col gap-2" x-data="{ showDistricts: true }">
+                <div class="flex items-center justify-between px-1">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">District Insights</span>
+                    </div>
+                    <button @click="showDistricts = !showDistricts" 
+                            class="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                        <span x-text="showDistricts ? 'Hide' : 'Show Full List'"></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                             class="transition-transform duration-300" :class="showDistricts ? 'rotate-180' : ''">
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                    </button>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 pb-2">
+                <div x-show="showDistricts" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-2"
+                     class="flex flex-wrap items-center gap-2 pb-2">
                     @foreach($districtCounts as $stat)
                         <a href="{{ request()->fullUrlWithQuery(['district' => $stat->district]) }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] group whitespace-nowrap {{ request('district') == $stat->district ? 'ring-2 ring-primary/20 border-primary/50 bg-primary/5' : '' }}">
