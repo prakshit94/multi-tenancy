@@ -133,7 +133,7 @@ class OrderVerificationController extends Controller
             ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
             ->select('customer_addresses.district', DB::raw('count(orders.id) as total'))
             ->groupBy('customer_addresses.district')
-            ->orderByDesc('total')
+            ->reorder('total', 'desc')
             ->get();
 
         /*
