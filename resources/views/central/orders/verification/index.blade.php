@@ -57,7 +57,7 @@
         
         <!-- District Insights -->
         @if($districtCounts->count() > 0)
-            <div class="flex flex-col gap-2" x-data="{ showDistricts: true }">
+            <div class="flex flex-col gap-2" x-data="{ showDistricts: false }">
                 <div class="flex items-center justify-between px-1">
                     <div class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
