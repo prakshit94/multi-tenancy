@@ -38,6 +38,15 @@
                                                                 // Check if this specific order can move to target
                                                                 return targetIndex > currentIndex;
                                                             });
+                                                        },
+                                                        async loadData(urlStr) {
+                                                            try {
+                                                                const response = await fetch(urlStr, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                                                                if (response.ok) { 
+                                                                    document.getElementById('orders-content').innerHTML = await response.text(); 
+                                                                    window.history.pushState({}, '', urlStr);
+                                                                }
+                                                            } catch (error) { console.error('Request Failed:', error); }
                                                         }
                                                     }"
         class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">

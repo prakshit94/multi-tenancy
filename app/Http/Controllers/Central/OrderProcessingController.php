@@ -10,6 +10,7 @@ use App\Models\OrderReturn;
 use App\Models\InventoryStock;
 use App\Models\InventoryMovement;
 use App\Models\Invoice;
+use App\Models\Village;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -75,6 +76,43 @@ class OrderProcessingController extends Controller
             }
         }
 
+        // Regional Filtering
+        if ($request->filled('district')) {
+            $district = trim($request->district);
+            $query->where(function ($q) use ($district) {
+                $q->whereHas('shippingAddress', function ($sub) use ($district) {
+                    $sub->where('district', 'like', "%{$district}%");
+                })
+                    ->orWhereHas('billingAddress', function ($sub) use ($district) {
+                        $sub->where('district', 'like', "%{$district}%");
+                    });
+            });
+        }
+
+        if ($request->filled('taluka')) {
+            $taluka = trim($request->taluka);
+            $query->where(function ($q) use ($taluka) {
+                $q->whereHas('shippingAddress', function ($sub) use ($taluka) {
+                    $sub->where('taluka', 'like', "%{$taluka}%");
+                })
+                    ->orWhereHas('billingAddress', function ($sub) use ($taluka) {
+                        $sub->where('taluka', 'like', "%{$taluka}%");
+                    });
+            });
+        }
+
+        if ($request->filled('village')) {
+            $village = trim($request->village);
+            $query->where(function ($q) use ($village) {
+                $q->whereHas('shippingAddress', function ($sub) use ($village) {
+                    $sub->where('village', 'like', "%{$village}%");
+                })
+                    ->orWhereHas('billingAddress', function ($sub) use ($village) {
+                        $sub->where('village', 'like', "%{$village}%");
+                    });
+            });
+        }
+
         $countsQuery = clone $query;
         $counts = $countsQuery->reorder()->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
@@ -96,11 +134,28 @@ class OrderProcessingController extends Controller
 
         $orders = $query->paginate(15)->withQueryString();
 
+        $districtCounts = (clone $query)
+            ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
+            ->select('customer_addresses.district', DB::raw('count(orders.id) as total'))
+            ->groupBy('customer_addresses.district')
+            ->reorder('total', 'desc')
+            ->get();
+
+        $states = Village::distinct()->pluck('state_name')->filter()->sort()->values();
+        
+        $districts = Village::when($request->filled('state'), function ($q) use ($request) {
+            return $q->where('state_name', $request->state);
+        })->distinct()->pluck('district_name')->filter()->sort()->values();
+
+        $talukas = Village::when($request->filled('district'), function ($q) use ($request) {
+            return $q->where('district_name', $request->district);
+        })->distinct()->pluck('taluka_name')->filter()->sort()->values();
+
         if ($request->ajax()) {
-            return view('central.processing.orders.partials.orders-content', compact('orders', 'counts'));
+            return view('central.processing.orders.partials.orders-content', compact('orders', 'counts', 'districtCounts', 'districts', 'talukas'));
         }
 
-        return view('central.processing.orders.index', compact('orders', 'counts'));
+        return view('central.processing.orders.index', compact('orders', 'counts', 'states', 'districts', 'talukas', 'districtCounts'));
     }
 
     /**

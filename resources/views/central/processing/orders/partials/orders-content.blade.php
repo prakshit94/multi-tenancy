@@ -86,10 +86,54 @@
     </div>
 </div>
 
+<!-- District Insights -->
+@if($districtCounts->count() > 0)
+    <div class="flex flex-col gap-2 mt-6" x-data="{ showDistricts: false }">
+        <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">District Insights</span>
+            </div>
+            <button @click="showDistricts = !showDistricts" 
+                    class="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                <span x-text="showDistricts ? 'Hide' : 'Show Full List'"></span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                     class="transition-transform duration-300" :class="showDistricts ? 'rotate-180' : ''">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </button>
+        </div>
+        <div x-show="showDistricts" 
+             style="display: none;"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-2"
+             class="flex flex-wrap items-center gap-2 pb-2">
+            @foreach($districtCounts as $stat)
+                @php
+                    $districtUrl = request()->fullUrlWithQuery(['district' => $stat->district]);
+                @endphp
+                <a href="{{ $districtUrl }}" 
+                   @click.prevent="loadData('{{ $districtUrl }}')"
+                   class="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] group whitespace-nowrap {{ request('district') == $stat->district ? 'ring-2 ring-primary/20 border-primary/50 bg-primary/5' : '' }}">
+                    <span class="text-xs font-semibold text-foreground/80 group-hover:text-primary transition-colors">{{ $stat->district ?: 'Unknown' }}</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-bold ring-1 ring-primary/20">{{ $stat->total }}</span>
+                </a>
+            @endforeach
+        </div>
+    </div>
+@endif
+
+
 <!-- Filters & Navigation Tabs -->
 <div
     class="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 sticky top-0 z-30 bg-gray-50/95 backdrop-blur-xl p-2 rounded-2xl border border-gray-200/60 shadow-sm mt-4">
-    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar w-full xl:w-auto">
+    <div class="flex flex-wrap items-center gap-1 w-full xl:w-auto">
         @php
             $navItems = [
                 ['label' => 'Active', 'route' => route('central.processing.orders.index'), 'active' => !request('status'), 'count' => $counts['active'] ?? 0],
@@ -115,43 +159,84 @@
         @endforeach
     </div>
 
-    <!-- Search Form -->
-    <form action="{{ url()->current() }}" method="GET" class="relative group w-full xl:w-72" x-data="{
-                    async loadData(urlStr) {
-                        try {
-                            const response = await fetch(urlStr, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                            if (response.ok) { 
-                                document.getElementById('orders-content').innerHTML = await response.text(); 
-                                window.history.pushState({}, '', urlStr);
+    <!-- Regional Filters & Search -->
+    <div class="flex items-center gap-3 w-full xl:w-auto py-1">
+                <form action="{{ url()->current() }}" method="GET" id="filter-form" class="flex flex-wrap items-center gap-3" x-data="{
+                        performFilter() {
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete('page');
+                            
+                            // Collect all form values
+                            const formData = new FormData($refs.filterForm);
+                            for (let [key, value] of formData.entries()) {
+                                if (value) {
+                                    url.searchParams.set(key, value);
+                                } else {
+                                    url.searchParams.delete(key);
+                                }
                             }
-                        } catch (error) { console.error('Request Failed:', error); }
-                    },
-                    performSearch() {
-                        const url = new URL(window.location.href);
-                        url.searchParams.set('search', $refs.searchInput.value);
-                        url.searchParams.delete('page'); 
-                        this.loadData(url.toString());
-                    }
-                }" @submit.prevent="performSearch" @pagination-click.window="loadData($event.detail.url)">
+                            
+                            this.loadData(url.toString());
+                        }
+                    }" x-ref="filterForm" @submit.prevent="performFilter" @pagination-click.window="loadData($event.detail.url)">
 
-        @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
-        @if(request('date_filter'))
-            <input type="hidden" name="date_filter" value="{{ request('date_filter') }}">
-            @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
-            @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
-        @endif
-        <div
-            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-            </svg>
-        </div>
-        <input type="text" name="search" x-ref="searchInput" value="{{ request('search') }}"
-            placeholder="Search orders..." @refresh-orders.window="performSearch()"
-            @input.debounce.500ms="performSearch"
-            class="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none">
-    </form>
+            @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
+            @if(request('date_filter'))
+                <input type="hidden" name="date_filter" value="{{ request('date_filter') }}">
+                @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
+                @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
+            @endif
+
+            <!-- District Filter -->
+            <div class="relative min-w-[140px]">
+                <select name="district" @change="performFilter"
+                    class="w-full h-10 pl-3 pr-8 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none appearance-none">
+                    <option value="">All Districts</option>
+                    @foreach($districts as $d)
+                        <option value="{{ $d }}" {{ request('district') == $d ? 'selected' : '' }}>{{ $d }}</option>
+                    @endforeach
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+
+            <!-- Taluka Filter -->
+            <div class="relative min-w-[140px]">
+                <select name="taluka" @change="performFilter"
+                    class="w-full h-10 pl-3 pr-8 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none appearance-none">
+                    <option value="">All Talukas</option>
+                    @foreach($talukas as $t)
+                        <option value="{{ $t }}" {{ request('taluka') == $t ? 'selected' : '' }}>{{ $t }}</option>
+                    @endforeach
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+
+            <!-- Village Filter -->
+            <div class="relative min-w-[140px]">
+                <input type="text" name="village" value="{{ request('village') }}" placeholder="Village..."
+                    @input.debounce.500ms="performFilter"
+                    class="w-full h-10 pl-3 pr-4 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none">
+            </div>
+
+            <!-- Search -->
+            <div class="relative w-full xl:w-64">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                    </svg>
+                </div>
+                <input type="text" name="search" value="{{ request('search') }}"
+                    placeholder="Search orders..." @refresh-orders.window="performFilter()"
+                    @input.debounce.500ms="performFilter"
+                    class="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none">
+            </div>
+        </form>
+    </div>
+
 </div>
 
 <!-- Toolbar -->

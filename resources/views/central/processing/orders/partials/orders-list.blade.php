@@ -94,7 +94,7 @@
 
             {{-- Items Preview --}}
             <div class="px-6 py-4 bg-gray-50/30">
-                <div class="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2">
+                <div class="flex flex-wrap items-center gap-4 pb-2">
                     @foreach($order->items as $item)
                         <div class="group/item relative flex-shrink-0 w-16 h-16 rounded-lg bg-white border border-border/50 overflow-hidden shadow-sm" title="{{ $item->product_name }} (x{{ $item->quantity }})">
                             @if($item->product && $item->product->image_url)

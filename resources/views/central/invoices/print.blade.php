@@ -7,15 +7,27 @@
 
     <style>
         @page {
-            size: a5;
-            margin: 12px 15px;
+            size: A4 portrait;
+            margin: 14mm 12mm;
         }
 
         body {
             font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
-            font-size: 9.5px;
+            font-size: 10px;
             color: #334155;
-            line-height: 1.25;
+            line-height: 1.35;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #cbd5e1;
+            padding: 6px;
+            vertical-align: top;
         }
 
         .text-right {
@@ -32,35 +44,28 @@
 
         .title {
             text-align: center;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
-            padding: 4px;
+            padding: 6px;
             border: 2px solid #1e40af;
-            background-color: #eff6ff;
+            background: #eff6ff;
             color: #1e40af;
-            border-radius: 4px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             letter-spacing: 1px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            page-break-inside: avoid;
-            border: 1px solid #cbd5e1;
-        }
-
-        th,
-        td {
-            border: 1px solid #cbd5e1;
-            padding: 5px;
-            vertical-align: top;
-        }
-
-        th {
-            background: #e2e8f0;
-            color: #1e293b;
+        .company-name {
+            font-size: 13px;
             font-weight: bold;
+            color: #1e40af;
+        }
+
+        .muted {
+            color: #444;
+        }
+
+        .header-table td {
+            border: 1px solid #cbd5e1;
         }
 
         .no-border td {
@@ -74,21 +79,10 @@
             white-space: nowrap;
         }
 
-        .company-name {
-            font-size: 13px;
-            font-weight: bold;
-            color: #1e40af;
-        }
-
-        .muted {
-            color: #444;
-        }
-
-        .items th {
-            text-align: center;
+        .items thead th {
             background: #1e40af;
-            color: #ffffff;
-            border-color: #1e40af;
+            color: #fff;
+            text-align: center;
         }
 
         .items td {
@@ -103,12 +97,15 @@
             font-size: 12px;
             font-weight: bold;
             background: #f1f5f9;
-            color: #0f172a;
         }
 
         .terms {
             font-size: 10px;
-            line-height: 1.35;
+            line-height: 1.4;
+        }
+
+        .page-break {
+            page-break-inside: avoid;
         }
     </style>
 </head>
@@ -117,11 +114,13 @@
 
     <div class="title">DELIVERY CHALLAN</div>
 
-    <!-- ================= HEADER ================= -->
-    <table>
+    <!-- HEADER -->
+    <table class="header-table">
         <tr>
+
             <td width="60%">
                 <div class="company-name">Krushify Agro Pvt Ltd.</div>
+
                 <div class="muted">
                     <strong>Mobile:</strong> 9199125925<br>
                     <strong>Address:</strong> The One World (B), 1005, Ayodhya Circle<br>
@@ -129,24 +128,32 @@
                     <strong>GST:</strong> 24AAMCK0386L1Z6
                 </div>
             </td>
+
             <td width="40%">
                 <strong>Invoice No:</strong> {{ $invoice->invoice_number }}<br>
                 <strong>Dated:</strong> {{ $invoice->issue_date->format('d-m-Y') }}<br>
-                <strong>Payment Mode:</strong> {{ ucfirst($invoice->order->payment_method ?? 'Cash') }}<br>
+
+                <strong>Payment Mode:</strong>
+                {{ ucfirst($invoice->order->payment_method ?? 'Cash') }}<br>
+
                 @if(strtolower($invoice->order->payment_method) === 'cod')
-                    <strong>To Collect:</strong> Rs. {{ number_format($invoice->order->grand_total, 2) }}<br>
+                    <strong>To Collect:</strong>
+                    Rs. {{ number_format($invoice->order->grand_total, 2) }}<br>
                 @endif
+
                 <br>
+
                 <strong>Reference No.</strong><br>
                 Seed Lic No.: GAN/FSR220001380/2022-2023<br>
                 Pesti Lic No.: GAN/FP1220002020/2022-2023
+
             </td>
         </tr>
     </table>
 
     <br>
 
-    <!-- ================= ADDRESSES ================= -->
+    <!-- ADDRESSES -->
     <table>
         <tr>
             <th width="50%" align="left">Customer Address</th>
@@ -154,239 +161,345 @@
         </tr>
 
         <tr>
-            <!-- Billing -->
+
             <td>
                 <table class="no-border">
+
                     <tr>
                         <td class="label">Name</td>
-                        <td>{{ $invoice->order->customer->first_name ?? '' }}
-                            {{ $invoice->order->customer->last_name ?? '' }}</td>
+                        <td>
+                            {{ $invoice->order->customer->first_name ?? '' }}
+                            {{ $invoice->order->customer->last_name ?? '' }}
+                        </td>
                     </tr>
+
                     <tr>
                         <td class="label">Mobile</td>
                         <td>{{ $invoice->order->customer->mobile ?? 'N/A' }}</td>
                     </tr>
 
                     @if($invoice->order->billingAddress)
+
                         <tr>
                             <td class="label">Address</td>
                             <td>{{ $invoice->order->billingAddress->address_line1 }}</td>
                         </tr>
+
                         @if($invoice->order->billingAddress->address_line2)
                             <tr>
-                                <td class="label"></td>
+                                <td></td>
                                 <td>{{ $invoice->order->billingAddress->address_line2 }}</td>
                             </tr>
                         @endif
+
                         <tr>
                             <td class="label">Village</td>
                             <td>{{ $invoice->order->billingAddress->village }}</td>
                         </tr>
+
                         <tr>
                             <td class="label">Taluka</td>
                             <td>{{ $invoice->order->billingAddress->taluka ?? '-' }}</td>
                         </tr>
+
                         <tr>
                             <td class="label">District</td>
                             <td>{{ $invoice->order->billingAddress->district ?? '-' }}</td>
                         </tr>
+
                         <tr>
                             <td class="label">Post Office</td>
                             <td>{{ $invoice->order->billingAddress->post_office ?? '-' }}</td>
                         </tr>
+
                         <tr>
                             <td class="label">State / PIN</td>
-                            <td>{{ $invoice->order->billingAddress->state }} -
-                                {{ $invoice->order->billingAddress->pincode }}</td>
+                            <td>
+                                {{ $invoice->order->billingAddress->state }} -
+                                {{ $invoice->order->billingAddress->pincode }}
+                            </td>
                         </tr>
+
                         <tr>
                             <td class="label">Country</td>
                             <td>{{ $invoice->order->billingAddress->country ?? 'India' }}</td>
                         </tr>
+
                     @else
+
                         <tr>
                             <td colspan="2">N/A</td>
                         </tr>
+
                     @endif
+
                 </table>
             </td>
 
-            <!-- Shipping -->
             <td>
+
                 <table class="no-border">
+
                     <tr>
                         <td class="label">Name</td>
-                        <td>{{ $invoice->order->customer->first_name ?? '' }}
-                            {{ $invoice->order->customer->last_name ?? '' }}</td>
+                        <td>
+                            {{ $invoice->order->customer->first_name ?? '' }}
+                            {{ $invoice->order->customer->last_name ?? '' }}
+                        </td>
                     </tr>
+
                     <tr>
                         <td class="label">Mobile</td>
                         <td>{{ $invoice->order->customer->mobile ?? 'N/A' }}</td>
                     </tr>
 
                     @if($invoice->order->shippingAddress)
+
                         <tr>
                             <td class="label">Address</td>
                             <td>{{ $invoice->order->shippingAddress->address_line1 }}</td>
                         </tr>
+
                         @if($invoice->order->shippingAddress->address_line2)
                             <tr>
-                                <td class="label"></td>
+                                <td></td>
                                 <td>{{ $invoice->order->shippingAddress->address_line2 }}</td>
                             </tr>
                         @endif
+
                         <tr>
                             <td class="label">Village</td>
                             <td>{{ $invoice->order->shippingAddress->village }}</td>
                         </tr>
+
                         <tr>
                             <td class="label">Taluka</td>
                             <td>{{ $invoice->order->shippingAddress->taluka ?? '-' }}</td>
                         </tr>
+
                         <tr>
                             <td class="label">District</td>
                             <td>{{ $invoice->order->shippingAddress->district ?? '-' }}</td>
                         </tr>
+
                         <tr>
                             <td class="label">Post Office</td>
                             <td>{{ $invoice->order->shippingAddress->post_office ?? '-' }}</td>
                         </tr>
+
                         <tr>
                             <td class="label">State / PIN</td>
-                            <td>{{ $invoice->order->shippingAddress->state }} -
-                                {{ $invoice->order->shippingAddress->pincode }}</td>
+                            <td>
+                                {{ $invoice->order->shippingAddress->state }} -
+                                {{ $invoice->order->shippingAddress->pincode }}
+                            </td>
                         </tr>
+
                         <tr>
                             <td class="label">Country</td>
                             <td>{{ $invoice->order->shippingAddress->country ?? 'India' }}</td>
                         </tr>
+
                     @else
+
                         <tr>
                             <td colspan="2">Same as Billing</td>
                         </tr>
+
                     @endif
+
                 </table>
+
             </td>
+
         </tr>
     </table>
 
     <br>
 
-    <!-- ================= ITEMS ================= -->
-    <table class="items">
+    <!-- ITEMS -->
+    <table class="items page-break">
+
         <thead>
+
             <tr>
                 <th width="4%">Sl</th>
                 <th width="30%">Description</th>
                 <th width="6%">Qty</th>
                 <th width="10%">Rate</th>
-                <th width="8%">Disc.</th>
+                <th width="8%">Disc</th>
                 <th width="12%">Taxable</th>
                 <th width="10%">CGST</th>
                 <th width="10%">SGST</th>
                 <th width="10%">Total</th>
             </tr>
+
         </thead>
+
         <tbody>
+
             @php
                 $totalTaxable = 0;
                 $totalCGST = 0;
                 $totalSGST = 0;
             @endphp
+
             @foreach($invoice->order->items as $i => $item)
+
                 @php
                     $baseTotal = $item->unit_price * $item->quantity;
                     $discount = $item->discount_amount ?? 0;
-                    
-                    // Tax calculation logic matching controller (tax on base price currently, or implied on taxable?)
-                    // The previous view logic was: ($baseTotal * rate) / 100.
-                    // We will stick to that to preserve values, but display 'Taxable' as (Base - Disc).
-                    // WARNING: If Tax is on Base, then Taxable Value displayed might be misleading if we claim Tax is calc'd on it.
-                    // However, for standard Indian GST, it's usually on Transaction Value (Price - Disc).
-                    // The Controller actually calculated tax on Price * Qty (Base).
-                    // We will display "Net Amt" (Base - Disc) as Taxable, but keep Tax Amount derived from Controller/View logic to avoid 'impacting other logic'.
-                    // Actually, let's verify if we can just split the existing `taxAmount` safely.
-                    
+
                     $taxAmount = ($baseTotal * ($item->tax_percent ?? 0)) / 100;
-                    $taxableValue = $baseTotal - $discount; // For display purpose
-                    
+                    $taxableValue = $baseTotal - $discount;
+
                     $cgstRate = ($item->tax_percent ?? 0) / 2;
                     $sgstRate = ($item->tax_percent ?? 0) / 2;
+
                     $cgstAmount = $taxAmount / 2;
                     $sgstAmount = $taxAmount / 2;
-                    
+
                     $lineTotal = $baseTotal + $taxAmount - $discount;
-                    
+
                     $totalTaxable += $taxableValue;
                     $totalCGST += $cgstAmount;
                     $totalSGST += $sgstAmount;
                 @endphp
+
                 <tr>
+
                     <td class="text-center">{{ $i + 1 }}</td>
-                    <td>{{ $item->product_name }}<br><small class="muted">{{ $item->sku }}</small></td>
+
+                    <td>
+                        {{ $item->product_name }}<br>
+                        <small class="muted">{{ $item->sku }}</small>
+                    </td>
+
                     <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-right">{{ number_format($discount, 2) }}</td>
-                    <td class="text-right">{{ number_format($taxableValue, 2) }}</td>
-                    
+
                     <td class="text-right">
+                        {{ number_format($item->unit_price, 2) }}
+                    </td>
+
+                    <td class="text-right">
+                        {{ number_format($discount, 2) }}
+                    </td>
+
+                    <td class="text-right">
+                        {{ number_format($taxableValue, 2) }}
+                    </td>
+
+                    <td class="text-right">
+
                         @if($cgstRate > 0)
-                            <span style="font-size:9px;">{{ $cgstRate }}%</span><br>
+
+                            <span style="font-size:9px">
+                                {{ $cgstRate }}%
+                            </span><br>
+
                             {{ number_format($cgstAmount, 2) }}
+
                         @else
                             -
                         @endif
+
                     </td>
+
                     <td class="text-right">
+
                         @if($sgstRate > 0)
-                            <span style="font-size:9px;">{{ $sgstRate }}%</span><br>
+
+                            <span style="font-size:9px">
+                                {{ $sgstRate }}%
+                            </span><br>
+
                             {{ number_format($sgstAmount, 2) }}
+
                         @else
                             -
                         @endif
+
                     </td>
-                    
-                    <td class="text-right">{{ number_format($lineTotal, 2) }}</td>
+
+                    <td class="text-right">
+                        {{ number_format($lineTotal, 2) }}
+                    </td>
+
                 </tr>
+
             @endforeach
+
         </tbody>
     </table>
 
     <br>
 
-    <!-- ================= TOTALS ================= -->
+    <!-- TOTALS -->
     <table class="totals">
+
         <tr>
-            <td colspan="8" class="text-right bold">Total Taxable Value</td>
-            <td class="text-right">{{ number_format($totalTaxable, 2) }}</td>
+            <td colspan="8" class="text-right bold">
+                Total Taxable Value
+            </td>
+
+            <td class="text-right">
+                {{ number_format($totalTaxable, 2) }}
+            </td>
         </tr>
+
         <tr>
-            <td colspan="8" class="text-right bold">Total CGST</td>
-            <td class="text-right">{{ number_format($totalCGST, 2) }}</td>
+            <td colspan="8" class="text-right bold">
+                Total CGST
+            </td>
+
+            <td class="text-right">
+                {{ number_format($totalCGST, 2) }}
+            </td>
         </tr>
+
         <tr>
-            <td colspan="8" class="text-right bold">Total SGST</td>
-            <td class="text-right">{{ number_format($totalSGST, 2) }}</td>
+            <td colspan="8" class="text-right bold">
+                Total SGST
+            </td>
+
+            <td class="text-right">
+                {{ number_format($totalSGST, 2) }}
+            </td>
         </tr>
+
         <tr class="grand-total">
-            <td colspan="8" class="text-right">Grand Total</td>
-            <td class="text-right">{{ number_format($invoice->total_amount, 2) }}</td>
+
+            <td colspan="8" class="text-right">
+                Grand Total
+            </td>
+
+            <td class="text-right">
+                {{ number_format($invoice->total_amount, 2) }}
+            </td>
+
         </tr>
+
     </table>
 
     <br>
 
-    <!-- ================= TERMS ================= -->
+    <!-- TERMS -->
+
     <table class="terms">
+
         <tr>
             <td>
+
                 <strong>Terms & Conditions</strong><br>
+
                 1. Composition taxable person, not eligible to collect tax on supplies.<br>
                 2. Goods once sold will not be taken back.<br>
                 3. Subject to local jurisdiction.<br>
                 4. This is a computer-generated invoice.
+
             </td>
         </tr>
+
     </table>
 
 </body>
