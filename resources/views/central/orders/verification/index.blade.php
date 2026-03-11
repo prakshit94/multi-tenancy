@@ -54,6 +54,27 @@
                 </a>
             </div>
         </div>
+        
+        <!-- District Insights -->
+        @if($districtCounts->count() > 0)
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2 px-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">District Insights</span>
+                </div>
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+                    @foreach($districtCounts as $stat)
+                        <a href="{{ request()->fullUrlWithQuery(['district' => $stat->district]) }}" 
+                           class="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] group whitespace-nowrap {{ request('district') == $stat->district ? 'ring-2 ring-primary/20 border-primary/50 bg-primary/5' : '' }}">
+                            <span class="text-xs font-semibold text-foreground/80 group-hover:text-primary transition-colors">{{ $stat->district ?: 'Unknown' }}</span>
+                            <span class="px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-bold ring-1 ring-primary/20">{{ $stat->total }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <div id="orders-table-container" x-data="{ selected: [], verifyModalOpen: false, activeOrder: null }">
 

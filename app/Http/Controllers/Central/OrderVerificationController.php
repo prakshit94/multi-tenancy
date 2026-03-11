@@ -125,6 +125,19 @@ class OrderVerificationController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | DISTRICT COUNTS (Insight)
+        |--------------------------------------------------------------------------
+        */
+
+        $districtCounts = (clone $query)
+            ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
+            ->select('customer_addresses.district', DB::raw('count(orders.id) as total'))
+            ->groupBy('customer_addresses.district')
+            ->orderByDesc('total')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
         | STATE FILTER
         |--------------------------------------------------------------------------
         */
@@ -186,7 +199,7 @@ class OrderVerificationController extends Controller
         $orders = $query->paginate($request->get('per_page', 10))
             ->withQueryString();
 
-        return view('central.orders.verification.index', compact('orders', 'states', 'districts', 'talukas'));
+        return view('central.orders.verification.index', compact('orders', 'states', 'districts', 'talukas', 'districtCounts'));
     }
 
     public function store(Request $request, Order $order)
