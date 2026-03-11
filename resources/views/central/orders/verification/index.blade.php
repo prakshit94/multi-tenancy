@@ -64,7 +64,7 @@
                     </svg>
                     <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">District Insights</span>
                 </div>
-                <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+                <div class="flex flex-wrap items-center gap-2 pb-2">
                     @foreach($districtCounts as $stat)
                         <a href="{{ request()->fullUrlWithQuery(['district' => $stat->district]) }}" 
                            class="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] group whitespace-nowrap {{ request('district') == $stat->district ? 'ring-2 ring-primary/20 border-primary/50 bg-primary/5' : '' }}">
