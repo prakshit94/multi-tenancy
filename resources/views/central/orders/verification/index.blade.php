@@ -782,7 +782,7 @@
                     <form id="search-form" method="GET" action="{{ url()->current() }}"
                         class="relative transition-all duration-300 group-focus-within:w-64 w-56">
                         <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
-                        @foreach(request()->only(['date_from', 'date_to', 'state', 'per_page', 'sort_direction']) as $key => $value)
+                        @foreach(request()->only(['date_from', 'date_to', 'state', 'district', 'taluka', 'village', 'per_page', 'sort_direction']) as $key => $value)
                             @if($value)
                                 <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                             @endif
@@ -853,13 +853,48 @@
                             </select>
                         </div>
 
+                        <!-- District -->
+                        <div class="flex flex-col">
+                            <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">District</span>
+                            <select name="district"
+                                class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer appearance-none">
+                                <option value="">All Districts</option>
+                                @foreach ($districts as $district)
+                                    <option value="{{ $district }}" @selected(request('district') == $district)>
+                                        {{ $district }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Taluka -->
+                        <div class="flex flex-col">
+                            <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">Taluka</span>
+                            <select name="taluka"
+                                class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer appearance-none">
+                                <option value="">All Talukas</option>
+                                @foreach ($talukas as $taluka)
+                                    <option value="{{ $taluka }}" @selected(request('taluka') == $taluka)>
+                                        {{ $taluka }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Village -->
+                        <div class="flex flex-col">
+                            <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">Village</span>
+                            <input type="text" name="village" value="{{ request('village') }}" placeholder="Village name..."
+                                class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30 w-32">
+                        </div>
+
                         <button type="submit"
                             class="bg-primary text-white hover:bg-primary/90 px-4 py-1 rounded-lg text-xs font-bold shadow-sm transition-all mt-3">
                             Filter
                         </button>
 
-                        @if (request()->anyFilled(['date_from', 'date_to', 'state']))
-                            <a href="{{ request()->fullUrlWithQuery(['date_from' => null, 'date_to' => null, 'state' => null]) }}"
+                        @if (request()->anyFilled(['date_from', 'date_to', 'state', 'district', 'taluka', 'village']))
+                            <a href="{{ request()->fullUrlWithQuery(['date_from' => null, 'date_to' => null, 'state' => null, 'district' => null, 'taluka' => null, 'village' => null]) }}"
                                 class="text-[10px] font-bold text-destructive hover:underline mt-3 ml-1">
                                 Clear
                             </a>
@@ -909,7 +944,7 @@
                         <form id="per-page-form" method="GET" action="{{ url()->current() }}"
                             class="flex items-center gap-2">
                             <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
-                            @foreach(request()->only(['search', 'date_from', 'date_to', 'state']) as $key => $value)
+                            @foreach(request()->only(['search', 'date_from', 'date_to', 'state', 'district', 'taluka', 'village']) as $key => $value)
                                 @if($value)
                                     <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                                 @endif

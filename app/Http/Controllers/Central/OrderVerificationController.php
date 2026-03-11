@@ -25,6 +25,14 @@ class OrderVerificationController extends Controller
         $this->authorize('orders view');
 
         $states = Village::distinct()->pluck('state_name')->filter()->sort()->values();
+        
+        $districts = Village::when($request->filled('state'), function ($q) use ($request) {
+            return $q->where('state_name', $request->state);
+        })->distinct()->pluck('district_name')->filter()->sort()->values();
+
+        $talukas = Village::when($request->filled('district'), function ($q) use ($request) {
+            return $q->where('district_name', $request->district);
+        })->distinct()->pluck('taluka_name')->filter()->sort()->values();
 
         $status = $request->input('status', 'unverified');
 
@@ -133,10 +141,52 @@ class OrderVerificationController extends Controller
             });
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | ADDITIONAL REGIONAL FILTERS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('district')) {
+            $district = trim($request->district);
+            $query->where(function ($q) use ($district) {
+                $q->whereHas('shippingAddress', function ($sub) use ($district) {
+                    $sub->where('district', 'like', "%{$district}%");
+                })
+                    ->orWhereHas('billingAddress', function ($sub) use ($district) {
+                        $sub->where('district', 'like', "%{$district}%");
+                    });
+            });
+        }
+
+        if ($request->filled('taluka')) {
+            $taluka = trim($request->taluka);
+            $query->where(function ($q) use ($taluka) {
+                $q->whereHas('shippingAddress', function ($sub) use ($taluka) {
+                    $sub->where('taluka', 'like', "%{$taluka}%");
+                })
+                    ->orWhereHas('billingAddress', function ($sub) use ($taluka) {
+                        $sub->where('taluka', 'like', "%{$taluka}%");
+                    });
+            });
+        }
+
+        if ($request->filled('village')) {
+            $village = trim($request->village);
+            $query->where(function ($q) use ($village) {
+                $q->whereHas('shippingAddress', function ($sub) use ($village) {
+                    $sub->where('village', 'like', "%{$village}%");
+                })
+                    ->orWhereHas('billingAddress', function ($sub) use ($village) {
+                        $sub->where('village', 'like', "%{$village}%");
+                    });
+            });
+        }
+
         $orders = $query->paginate($request->get('per_page', 10))
             ->withQueryString();
 
-        return view('central.orders.verification.index', compact('orders', 'states'));
+        return view('central.orders.verification.index', compact('orders', 'states', 'districts', 'talukas'));
     }
 
     public function store(Request $request, Order $order)
