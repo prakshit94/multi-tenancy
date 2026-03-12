@@ -245,6 +245,7 @@
                         <td class="label">Name</td>
                         <td>
                             {{ $invoice->order->customer->first_name ?? '' }}
+                            {{ $invoice->order->customer->middle_name ?? '' }}
                             {{ $invoice->order->customer->last_name ?? '' }}
                         </td>
                     </tr>
