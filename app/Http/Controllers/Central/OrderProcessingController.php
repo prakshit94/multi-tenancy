@@ -132,7 +132,8 @@ class OrderProcessingController extends Controller
             $query->where('status', $request->input('status'));
         }
 
-        $orders = $query->paginate(15)->withQueryString();
+        $orders = $query->paginate(50)->withQueryString();
+
 
         $districtCounts = (clone $query)
             ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
@@ -142,7 +143,7 @@ class OrderProcessingController extends Controller
             ->get();
 
         $states = Village::distinct()->pluck('state_name')->filter()->sort()->values();
-        
+
         $districts = Village::when($request->filled('state'), function ($q) use ($request) {
             return $q->where('state_name', $request->state);
         })->distinct()->pluck('district_name')->filter()->sort()->values();
@@ -259,8 +260,13 @@ class OrderProcessingController extends Controller
         $handle = fopen($file->getPathname(), 'r');
         $header = fgetcsv($handle); // Get header row
 
-        // Normalize header keys to lowercase
-        $header = array_map('strtolower', $header);
+        if (!$header) {
+            fclose($handle);
+            return back()->with('error', 'CSV file is empty or invalid.');
+        }
+
+        // Normalize header keys to lowercase and trim
+        $header = array_map(fn($h) => strtolower(trim($h)), $header);
 
         // Required columns
         $required = ['order_number', 'courier', 'tracking_number'];

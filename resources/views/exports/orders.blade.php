@@ -18,9 +18,6 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
-            /* Crucial for forcing columns to fit */
-            word-wrap: break-word;
         }
 
         th,
@@ -28,8 +25,7 @@
             border: 1px solid #e5e7eb;
             padding: 4px;
             vertical-align: top;
-            overflow-wrap: break-word;
-            word-break: break-all;
+            white-space: nowrap;
         }
 
         th {
@@ -40,23 +36,6 @@
             font-size: 7px;
             color: #6b7280;
         }
-
-        /* Strict Width Distributions */
-        .w-sm {
-            width: 5%;
-        }
-
-        .w-md {
-            width: 8%;
-        }
-
-        .w-lg {
-            width: 12%;
-        }
-
-        .w-xl {
-            width: 22%;
-        }
     </style>
 </head>
 
@@ -64,25 +43,61 @@
     <table>
         <thead>
             <tr>
-                <th class="w-sm">Order #</th>
-                <th class="w-sm">Date</th>
-                <th class="w-sm">Status</th>
-                <th class="w-sm">Payment</th>
-                <th class="w-sm">Total</th>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Total</th>
 
-                <!-- Customer Details Stacked -->
-                <th class="w-lg">Customer Info</th>
-                <th class="w-md">Contact</th>
+                <!-- Customer Details -->
+                <th>First Name</th>
+                <th>Middle Name</th>
+                <th>Last Name</th>
+                <th>Display Name</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th>Phone 2</th>
+                <th>Company</th>
+                <th>GST</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Source</th>
+                <th>KYC Status</th>
 
                 <!-- Products -->
-                <th class="w-xl">Ordered Products</th>
+                <th>Ordered Products</th>
 
-                <!-- Addresses Stacked -->
-                <th class="w-lg">Billing Address</th>
-                <th class="w-lg">Shipping Address</th>
+                <!-- Billing Address -->
+                <th>Billing Label</th>
+                <th>Billing Name</th>
+                <th>Billing Phone</th>
+                <th>Billing Address 1</th>
+                <th>Billing Address 2</th>
+                <th>Billing Village</th>
+                <th>Billing Taluka</th>
+                <th>Billing District</th>
+                <th>Billing Post Office</th>
+                <th>Billing State</th>
+                <th>Billing Country</th>
+                <th>Billing Pincode</th>
+
+                <!-- Shipping Address -->
+                <th>Shipping Label</th>
+                <th>Shipping Name</th>
+                <th>Shipping Phone</th>
+                <th>Shipping Address 1</th>
+                <th>Shipping Address 2</th>
+                <th>Shipping Village</th>
+                <th>Shipping Taluka</th>
+                <th>Shipping District</th>
+                <th>Shipping Post Office</th>
+                <th>Shipping State</th>
+                <th>Shipping Country</th>
+                <th>Shipping Pincode</th>
 
                 <!-- Logistics -->
-                <th class="w-md">Logistics</th>
+                <th>Courier Service</th>
+                <th>Tracking Number</th>
             </tr>
         </thead>
         <tbody>
@@ -92,68 +107,67 @@
                     $couriers = $order->shipments->pluck('carrier')->filter()->unique()->implode(', ');
                     $trackingNumbers = $order->shipments->pluck('tracking_number')->filter()->unique()->implode(', ');
 
-                    // Customer Strings
-                    $customerName = $order->customer?->name ?? ($order->customer?->first_name . ' ' . $order->customer?->last_name) ?? 'N/A';
-                    $customerType = $order->customer ? ucfirst($order->customer->type) : 'N/A';
-                    $customerCategory = $order->customer ? ucfirst($order->customer->category) : 'N/A';
-                    $companyDetails = $order->customer?->company_name ?? 'N/A';
-                    if ($order->customer && $order->customer->gst_number) {
-                        $companyDetails .= ' (GST: ' . $order->customer->gst_number . ')';
-                    }
-
                     // Products String
                     $orderedProducts = $order->items->map(function ($item) {
                         return $item->product_name . ' (' . floatval($item->quantity) . 'x)';
-                    })->implode('<br>');
-
-                    // Billing Address
-                    $billLines = array_filter([$order->billingAddress?->address_line1, $order->billingAddress?->address_line2]);
-                    $billCityState = array_filter([$order->billingAddress?->city, $order->billingAddress?->state]);
-
-                    // Shipping Address
-                    $shipLines = array_filter([$order->shippingAddress?->address_line1, $order->shippingAddress?->address_line2]);
-                    $shipCityState = array_filter([$order->shippingAddress?->city, $order->shippingAddress?->state]);
+                    })->implode(', ');
                 @endphp
                 <tr>
-                    <td><strong>{{ $order->order_number }}</strong></td>
+                    <td>{{ $order->order_number }}</td>
                     <td>{{ $order->created_at->format('Y-m-d') }}</td>
                     <td>{{ ucfirst($order->status) }}</td>
                     <td>{{ ucfirst($order->payment_status) }}</td>
                     <td>{{ number_format($order->grand_total, 2) }}</td>
 
-                    <!-- Customer Stacked -->
-                    <td>
-                        <strong>{{ $customerName }}</strong><br>
-                        Company: {{ $companyDetails }}<br>
-                        Type: {{ $customerType }} ({{ $customerCategory }})
-                    </td>
-                    <td>
-                        M: {{ $order->customer?->mobile ?? 'N/A' }}<br>
-                        E: {{ $order->customer?->email ?? 'N/A' }}
-                    </td>
+                    <!-- Customer -->
+                    <td>{{ $order->customer?->first_name ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->middle_name ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->last_name ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->display_name ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->mobile ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->email ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->phone_number_2 ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->company_name ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->gst_number ?? 'N/A' }}</td>
+                    <td>{{ ucfirst($order->customer?->type ?? 'N/A') }}</td>
+                    <td>{{ ucfirst($order->customer?->category ?? 'N/A') }}</td>
+                    <td>{{ $order->customer?->source ?? 'N/A' }}</td>
+                    <td>{{ $order->customer?->kyc_completed ? 'Completed' : 'Pending' }}</td>
 
                     <!-- Products -->
-                    <td>{!! $orderedProducts !!}</td>
+                    <td>{{ $orderedProducts }}</td>
 
                     <!-- Billing -->
-                    <td>
-                        <strong>{{ $order->billingAddress?->name ?? 'N/A' }}</strong><br>
-                        {{ implode(', ', $billLines) }}<br>
-                        {{ implode(', ', $billCityState) }} - {{ $order->billingAddress?->postal_code ?? '' }}
-                    </td>
+                    <td>{{ $order->billingAddress?->label ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->contact_name ?? $order->billingAddress?->name ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->contact_phone ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->address_line1 ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->address_line2 ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->village ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->taluka ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->district ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->post_office ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->state ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->country ?? 'N/A' }}</td>
+                    <td>{{ $order->billingAddress?->pincode ?? 'N/A' }}</td>
 
                     <!-- Shipping -->
-                    <td>
-                        <strong>{{ $order->shippingAddress?->name ?? 'N/A' }}</strong><br>
-                        {{ implode(', ', $shipLines) }}<br>
-                        {{ implode(', ', $shipCityState) }} - {{ $order->shippingAddress?->postal_code ?? '' }}
-                    </td>
+                    <td>{{ $order->shippingAddress?->label ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->contact_name ?? $order->shippingAddress?->name ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->contact_phone ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->address_line1 ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->address_line2 ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->village ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->taluka ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->district ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->post_office ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->state ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->country ?? 'N/A' }}</td>
+                    <td>{{ $order->shippingAddress?->pincode ?? 'N/A' }}</td>
 
                     <!-- Logistics -->
-                    <td>
-                        Courier: {{ $couriers ?: 'N/A' }}<br>
-                        Tracking: {{ $trackingNumbers ?: 'N/A' }}
-                    </td>
+                    <td>{{ $couriers ?: 'N/A' }}</td>
+                    <td>{{ $trackingNumbers ?: 'N/A' }}</td>
                 </tr>
             @endforeach
         </tbody>

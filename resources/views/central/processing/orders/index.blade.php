@@ -82,6 +82,9 @@
                         @endif
                         @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
                     @endif
+                    @if(request('district')) <input type="hidden" name="district" value="{{ request('district') }}"> @endif
+                    @if(request('taluka')) <input type="hidden" name="taluka" value="{{ request('taluka') }}"> @endif
+                    @if(request('village')) <input type="hidden" name="village" value="{{ request('village') }}"> @endif
                     <input type="hidden" name="ids" :value="selected.join(',')">
                     <button type="submit"
                         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold shadow-lg shadow-gray-900/10 hover:shadow-gray-900/20 hover:bg-black transition-all transform hover:-translate-y-0.5">

@@ -430,6 +430,9 @@
                 @endif
                 @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
             @endif
+            @if(request('district')) <input type="hidden" name="district" value="{{ request('district') }}"> @endif
+            @if(request('taluka')) <input type="hidden" name="taluka" value="{{ request('taluka') }}"> @endif
+            @if(request('village')) <input type="hidden" name="village" value="{{ request('village') }}"> @endif
             <input type="hidden" name="ids" :value="selected.join(',')">
 
             <button type="submit"

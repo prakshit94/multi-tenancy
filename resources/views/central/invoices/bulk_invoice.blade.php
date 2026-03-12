@@ -7,7 +7,7 @@
 
     <style>
         @page {
-            size: a5;
+            size: a4;
             margin: 12px 15px;
         }
 
