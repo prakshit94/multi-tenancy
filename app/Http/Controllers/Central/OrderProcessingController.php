@@ -135,12 +135,12 @@ class OrderProcessingController extends Controller
         $orders = $query->paginate(50)->withQueryString();
 
 
-        $districtCounts = (clone $query)
-            ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
-            ->select('customer_addresses.district', DB::raw('count(orders.id) as total'))
-            ->groupBy('customer_addresses.district')
-            ->reorder('total', 'desc')
-            ->get();
+        $districtCounts = Order::query()
+    ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
+    ->select('customer_addresses.district', DB::raw('count(orders.id) as total'))
+    ->groupBy('customer_addresses.district')
+    ->orderByDesc('total')
+    ->get();
 
         $states = Village::distinct()->pluck('state_name')->filter()->sort()->values();
 
@@ -213,155 +213,181 @@ class OrderProcessingController extends Controller
      * Also generates invoice.
      */
     public function readyToShip(Request $request, Order $order): RedirectResponse
-    {
-        $validated = $request->validate([
-            'courier' => 'required|string|max:255',
-            'tracking_number' => 'required|string|max:255',
-        ]);
+{
+    $validated = $request->validate([
+        'courier' => 'required|string|max:255',
+        'tracking_number' => 'required|string|max:255',
+    ]);
 
-        try {
-            DB::transaction(function () use ($order, $validated) {
-                if ($order->status !== 'processing') {
-                    throw new Exception('Order must be Processing before Ready to Ship.');
-                }
+    try {
 
+        DB::transaction(function () use ($order, $validated) {
 
-                // Do the heavy lifting (stock deduction, shipment creation)
-                $this->orderService->shipOrder(
-                    $order,
-                    $validated['tracking_number'],
-                    $validated['courier']
-                );
+            if ($order->status !== 'processing') {
+                throw new Exception('Order must be Processing before Ready to Ship.');
+            }
 
-                // Override status back to ready_to_ship & pending as requested
-                // since shipOrder sets it to shipped.
-                $order->update([
-                    'status' => 'ready_to_ship',
-                    'shipping_status' => 'pending',
-                ]);
-            });
+            // Create shipment record only (NO stock deduction)
+            $order->shipments()->create([
+                'warehouse_id' => $order->warehouse_id,
+                'tracking_number' => $validated['tracking_number'],
+                'carrier' => $validated['courier'],
+                'status' => 'pending',
+            ]);
 
-            return back()->with('success', 'Order marked as Ready to Parcel. Shipment created.');
-        } catch (Exception $e) {
-            return back()->with('error', 'Error updating order: ' . $e->getMessage());
-        }
+            $order->update([
+                'status' => 'ready_to_ship',
+                'shipping_status' => 'pending',
+                'updated_by' => auth()->id(),
+            ]);
+
+        });
+
+        return back()->with('success', 'Order marked as Ready to Ship.');
+
+    } catch (Exception $e) {
+
+        return back()->with('error', 'Error updating order: ' . $e->getMessage());
     }
+}
 
     /**
      * Bulk Dispatch via CSV
      */
     public function bulkDispatch(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt',
-        ]);
+{
+    $request->validate([
+        'csv_file' => 'required|file|mimes:csv,txt',
+    ]);
 
-        $file = $request->file('csv_file');
-        $handle = fopen($file->getPathname(), 'r');
-        $header = fgetcsv($handle); // Get header row
+    $file = $request->file('csv_file');
 
-        if (!$header) {
-            fclose($handle);
-            return back()->with('error', 'CSV file is empty or invalid.');
+    if (!$file->isValid()) {
+        return back()->with('error', 'Invalid file uploaded.');
+    }
+
+    $handle = fopen($file->getPathname(), 'r');
+
+    if (!$handle) {
+        return back()->with('error', 'Unable to read CSV file.');
+    }
+
+    $header = fgetcsv($handle);
+
+    if (!$header) {
+        fclose($handle);
+        return back()->with('error', 'CSV file is empty or invalid.');
+    }
+
+    // Normalize headers
+    $header = array_map(fn($h) => strtolower(trim($h)), $header);
+
+    $required = ['order_number', 'courier', 'tracking_number'];
+    $missing = array_diff($required, $header);
+
+    if (!empty($missing)) {
+        fclose($handle);
+        return back()->with(
+            'error',
+            'CSV is missing required columns: ' . implode(', ', $missing)
+        );
+    }
+
+    $indices = array_flip($header);
+
+    $successCount = 0;
+    $failCount = 0;
+    $errors = [];
+
+    while (($row = fgetcsv($handle)) !== false) {
+
+        if (empty(array_filter($row))) {
+            continue;
         }
 
-        // Normalize header keys to lowercase and trim
-        $header = array_map(fn($h) => strtolower(trim($h)), $header);
+        $orderNumber = $row[$indices['order_number']] ?? null;
+        $courier = $row[$indices['courier']] ?? null;
+        $tracking = $row[$indices['tracking_number']] ?? null;
 
-        // Required columns
-        $required = ['order_number', 'courier', 'tracking_number'];
-        $missing = array_diff($required, $header);
-
-        if (!empty($missing)) {
-            fclose($handle);
-            return back()->with('error', 'CSV is missing required columns: ' . implode(', ', $missing));
+        if (!$orderNumber || !$courier || !$tracking) {
+            $failCount++;
+            $errors[] = "Invalid row data for order.";
+            continue;
         }
 
-        // Map header indices
-        $indices = array_flip($header);
+        try {
 
-        $successCount = 0;
-        $failCount = 0;
-        $errors = [];
+            $order = Order::where('order_number', $orderNumber)->first();
 
-        while (($row = fgetcsv($handle)) !== false) {
-            // Skip empty rows
-            if (empty(array_filter($row))) {
+            if (!$order) {
+                $failCount++;
+                $errors[] = "Order {$orderNumber} not found.";
                 continue;
             }
 
-            try {
-                $orderNumber = $row[$indices['order_number']] ?? null;
-                $courier = $row[$indices['courier']] ?? null;
-                $tracking = $row[$indices['tracking_number']] ?? null;
-
-                if (!$orderNumber || !$courier || !$tracking) {
-                    $failCount++;
-                    continue;
-                }
-
-                $order = Order::where('order_number', $orderNumber)->first();
-
-                if (!$order) {
-                    $failCount++;
-                    $errors[] = "Order $orderNumber not found.";
-                    continue;
-                }
-
-                // Only dispatch if ready to ship or processing (flexible)
-                if (!in_array($order->status, ['ready_to_ship', 'processing'])) {
-                    $failCount++;
-                    $errors[] = "Order $orderNumber is in status '{$order->status}', cannot dispatch.";
-                    continue;
-                }
-
-                $this->orderService->shipOrder($order, $tracking, $courier);
-                $successCount++;
-
-            } catch (Exception $e) {
+            // Only allow dispatch from Ready to Ship
+            if ($order->status !== 'ready_to_ship') {
                 $failCount++;
-                $errors[] = "Error dispatching $orderNumber: " . $e->getMessage();
+                $errors[] = "Order {$orderNumber} must be Ready to Ship before dispatch.";
+                continue;
             }
+
+            DB::transaction(function () use ($order, $tracking, $courier) {
+                $this->orderService->shipOrder(
+                    $order,
+                    $tracking,
+                    $courier
+                );
+            });
+
+            $successCount++;
+
+        } catch (Exception $e) {
+
+            $failCount++;
+            $errors[] = "Error dispatching {$orderNumber}: " . $e->getMessage();
         }
-
-        fclose($handle);
-
-        $message = "Bulk Dispatch Completed: $successCount successful, $failCount failed.";
-
-        if ($failCount > 0) {
-            // Include first few errors in message if any
-            $errorMsg = implode(' | ', array_slice($errors, 0, 3));
-            if (count($errors) > 3)
-                $errorMsg .= '...';
-            return back()->with('warning', "$message Errors: $errorMsg");
-        }
-
-        return back()->with('success', $message);
     }
 
+    fclose($handle);
+
+    $message = "Bulk Dispatch Completed: {$successCount} successful, {$failCount} failed.";
+
+    if ($failCount > 0) {
+
+        $errorMsg = implode(' | ', array_slice($errors, 0, 3));
+
+        if (count($errors) > 3) {
+            $errorMsg .= '...';
+        }
+
+        return back()->with('warning', "{$message} Errors: {$errorMsg}");
+    }
+
+    return back()->with('success', $message);
+}
     /**
      * Dispatch Order (Ready to Ship -> Shipped)
      * Requires courier details.
      */
-    public function dispatch(Request $request, Order $order): RedirectResponse
-    {
-        try {
-            if ($order->status !== 'ready_to_ship') {
-                throw new Exception('Order must be Ready to Ship before Dispatching.');
-            }
+    public function dispatch(Order $order): RedirectResponse
+{
+    try {
 
-            $order->update([
-                'status' => 'shipped',
-                'shipping_status' => 'shipped',
-                'updated_by' => auth()->id(),
-            ]);
-
-            return back()->with('success', 'Order Dispatched (Shipped) successfully.');
-
-        } catch (Exception $e) {
-            return back()->with('error', 'Error dispatching order: ' . $e->getMessage());
+        if ($order->status !== 'ready_to_ship') {
+            throw new Exception('Order must be Ready to Ship before Dispatching.');
         }
+
+        // Dispatch order (shipment already contains courier + tracking)
+        $this->orderService->shipOrder($order);
+
+        return back()->with('success', 'Order Dispatched (Shipped) successfully.');
+
+    } catch (Exception $e) {
+
+        return back()->with('error', 'Error dispatching order: ' . $e->getMessage());
     }
+}
 
     /**
      * List approved returns that need to be received
@@ -496,86 +522,118 @@ class OrderProcessingController extends Controller
      * Bulk Status Update
      */
     public function bulkStatusUpdate(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:orders,id',
-            'status' => 'required|in:confirmed,processing,ready_to_ship,delivered,cancelled',
-        ]);
+{
+    $validated = $request->validate([
+        'ids' => 'required|array',
+        'ids.*' => 'exists:orders,id',
+        'status' => 'required|in:confirmed,processing,ready_to_ship,delivered,cancelled',
+    ]);
 
-        try {
-            DB::beginTransaction();
+    try {
 
-            $orders = Order::whereIn('id', $validated['ids'])->get();
-            $statusFlow = ['placed', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'];
-            $targetStatus = $validated['status'];
-            $targetIndex = array_search($targetStatus, $statusFlow);
+        DB::beginTransaction();
 
-            $failedOrders = [];
+        $orders = Order::whereIn('id', $validated['ids'])->get();
+        $failedOrders = [];
 
-            foreach ($orders as $order) {
-                // Skip if status is already same
-                if ($order->status === $targetStatus) {
-                    continue;
+        foreach ($orders as $order) {
+
+            try {
+
+                switch ($validated['status']) {
+
+                    case 'processing':
+
+                        if ($order->status !== 'confirmed') {
+                            throw new Exception();
+                        }
+
+                        $order->update([
+                            'status' => 'processing',
+                            'updated_by' => auth()->id(),
+                        ]);
+
+                        if ($order->invoices()->doesntExist()) {
+
+                            Invoice::create([
+                                'order_id' => $order->id,
+                                'customer_id' => $order->customer_id,
+                                'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT),
+                                'issue_date' => now(),
+                                'due_date' => now(),
+                                'total_amount' => $order->grand_total,
+                                'paid_amount' => 0,
+                                'status' => 'unpaid',
+                            ]);
+                        }
+
+                        break;
+
+                    case 'ready_to_ship':
+
+                        if ($order->status !== 'processing') {
+                            throw new Exception();
+                        }
+
+                        $order->update([
+                            'status' => 'ready_to_ship',
+                            'updated_by' => auth()->id(),
+                        ]);
+
+                        break;
+
+                    case 'delivered':
+
+                        if ($order->status !== 'shipped') {
+                            throw new Exception();
+                        }
+
+                        $order->update([
+                            'status' => 'delivered',
+                            'updated_by' => auth()->id(),
+                        ]);
+
+                        break;
+
+                    case 'cancelled':
+
+                        if (in_array($order->status, ['delivered', 'cancelled'])) {
+                            throw new Exception();
+                        }
+
+                        $order->update([
+                            'status' => 'cancelled',
+                            'updated_by' => auth()->id(),
+                        ]);
+
+                        break;
                 }
 
-                $currentIndex = array_search($order->status, $statusFlow);
+            } catch (Exception $e) {
 
-                // Validation Logic
-                $isValid = false;
+                $failedOrders[] = $order->order_number;
 
-                // Allow cancellation if not delivered
-                if ($targetStatus === 'cancelled') {
-                    if ($order->status !== 'delivered' && $order->status !== 'cancelled') {
-                        $isValid = true;
-                    }
-                }
-                // Forward transition check
-                elseif ($currentIndex !== false && $targetIndex !== false) {
-                    if ($targetIndex > $currentIndex) {
-                        $isValid = true;
-                    }
-                }
-
-                if (!$isValid) {
-                    $failedOrders[] = $order->order_number;
-                    continue; // Skip invalid updates
-                }
-
-                // If valid, proceed to update
-                $order->update([
-                    'status' => $validated['status'],
-                    'updated_by' => auth()->id(),
-                ]);
-
-                // If updated to processing, ensure invoice exists
-                if ($validated['status'] === 'processing' && $order->invoices()->doesntExist()) {
-                    Invoice::create([
-                        'order_id' => $order->id,
-                        'customer_id' => $order->customer_id,
-                        'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT),
-                        'issue_date' => now(),
-                        'due_date' => now(),
-                        'total_amount' => $order->grand_total,
-                        'paid_amount' => 0,
-                        'status' => 'unpaid',
-                    ]);
-                }
             }
 
-            DB::commit();
-
-            if (count($failedOrders) > 0) {
-                // Determine if it was a reversion attempt for better messaging
-                $message = 'Status Update Failed: You cannot revert the status of orders that have already progressed. The following orders were skipped: ' . implode(', ', $failedOrders);
-                return back()->with('error', $message);
-            }
-
-            return back()->with('success', 'Bulk status update completed successfully.');
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error updating orders: ' . $e->getMessage());
         }
+
+        DB::commit();
+
+        if (!empty($failedOrders)) {
+
+            return back()->with(
+                'error',
+                'Some orders could not be updated: ' . implode(', ', $failedOrders)
+            );
+        }
+
+        return back()->with('success', 'Bulk status update completed successfully.');
+
+    } catch (Exception $e) {
+
+        DB::rollBack();
+
+        return back()->with('error', 'Error updating orders: ' . $e->getMessage());
     }
+}
 }
