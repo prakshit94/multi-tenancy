@@ -93,6 +93,12 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">SKU <span class="text-xs text-gray-500 font-normal">(Unique)</span></label>
                                         <input type="text" name="sku" value="{{ old('sku', $product->sku) }}"
                                             class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-50 focus:bg-white transition-colors py-2.5 px-3">
+                                        <div class="mt-2 flex items-center">
+                                            <input type="hidden" name="is_sku_enabled" value="0">
+                                            <input type="checkbox" name="is_sku_enabled" value="1" id="is_sku_enabled" {{ old('is_sku_enabled', $product->is_sku_enabled) ? 'checked' : '' }}
+                                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                            <label for="is_sku_enabled" class="ml-2 block text-sm text-gray-700">Enable SKU (Available for Sale)</label>
+                                        </div>
                                     </div>
 
                                     <div>
@@ -263,6 +269,21 @@
                                             <input type="radio" name="manage_stock" value="0" class="sr-only" {{ !old('manage_stock', $product->manage_stock) ? 'checked' : '' }}>
                                             <span class="block text-sm font-medium text-gray-900">Don't Track</span>
                                         </label>
+                                    </div>
+
+                                    <div x-data="{ allowOversell: {{ old('allow_oversell', $product->allow_oversell) ? 'true' : 'false' }} }" class="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                        <div class="flex items-center space-x-3 mb-4">
+                                            <input type="hidden" name="allow_oversell" value="0">
+                                            <input type="checkbox" name="allow_oversell" id="allow_oversell" value="1" x-model="allowOversell" {{ old('allow_oversell', $product->allow_oversell) ? 'checked' : '' }}
+                                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                            <label for="allow_oversell" class="block text-sm font-medium text-gray-700">Allow Overselling</label>
+                                            <span class="text-xs text-gray-500">(Allow placing orders even when stock is zero)</span>
+                                        </div>
+                                        <div x-show="allowOversell" x-transition class="mt-2 ml-7">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Oversell Limit Minimum Qty <span class="text-xs font-normal text-gray-500">(Leave empty for unlimited)</span></label>
+                                            <input type="number" step="1" name="oversell_limit" value="{{ old('oversell_limit', $product->oversell_limit) }}" placeholder="e.g. 100"
+                                                class="block w-full max-w-xs rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-white transition-colors py-2.5 px-3">
+                                        </div>
                                     </div>
 
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

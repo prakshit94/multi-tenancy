@@ -84,12 +84,13 @@ class OrderController extends Controller
         $customerId = $request->query('customer_id');
         $preSelectedCustomer = $customerId ? Customer::with('addresses')->withCount('orders')->find($customerId) : null;
         $pendingProductQuantities = \App\Models\OrderItem::whereHas('order', function ($q) {
-            $q->where('status', 'pending');
+            $q->whereIn('status', ['pending', 'scheduled', 'draft']);
         })->selectRaw('product_id, SUM(quantity) as total_pending')
             ->groupBy('product_id')
             ->pluck('total_pending', 'product_id');
 
         $products = Product::where('is_active', true)
+            ->where('is_sku_enabled', true)
             ->with(['stocks', 'images', 'taxClass.rates'])
             ->limit(20)
             ->get()
@@ -104,6 +105,10 @@ class OrderController extends Controller
                     $taxAmount = $product->price * ($product->tax_rate / 100);
                 }
 
+                $oversoldAmount = max(0, $pendingQty - $grossSellable);
+                $oversellLimit = $product->oversell_limit !== null ? (int) $product->oversell_limit : null;
+                $effectiveOversellLimit = $oversellLimit !== null ? max(0, $oversellLimit - $oversoldAmount) : null;
+
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -112,7 +117,9 @@ class OrderController extends Controller
                     'mrp' => (float) $product->mrp,
                     'tax_amount' => (float) $taxAmount,
                     'total_price_with_tax' => (float) ($product->price + $taxAmount),
-                    'stock_on_hand' => max(0, $grossSellable - $pendingQty),
+                    'stock_on_hand' => (float) max(0, $grossSellable - $pendingQty),
+                    'allow_oversell' => (bool) $product->allow_oversell,
+                    'oversell_limit' => $effectiveOversellLimit,
                     'unit_type' => $product->unit_type,
                     'brand' => $product->brand->name ?? 'N/A',
                     'description' => $product->description,
@@ -121,7 +128,7 @@ class OrderController extends Controller
                     'image_url' => $product->image_url,
                     'category' => $product->category->name ?? 'Uncategorized',
                     'default_discount_type' => $product->default_discount_type,
-                    'default_discount_value' => $product->default_discount_value,
+                    'default_discount_value' => (float) $product->default_discount_value,
                     'tax_rate' => $product->tax_rate,
                     'tax_class_id' => $product->tax_class_id,
                     'tax_class' => $product->taxClass ? [
@@ -178,7 +185,7 @@ class OrderController extends Controller
                 $itemDiscountsTotal = 0;
 
                 $productIds = collect($validated['items'])->pluck('product_id');
-                $products = Product::whereIn('id', $productIds)->with(['taxClass.rates'])->get()->keyBy('id'); // Updated to load Tax Info
+                $products = Product::whereIn('id', $productIds)->with(['taxClass.rates', 'stocks'])->get()->keyBy('id'); // Updated to load Tax Info and Stocks
 
                 $preparedItems = [];
                 $totalTaxAmount = 0; // Track Total Tax
@@ -186,6 +193,33 @@ class OrderController extends Controller
                 foreach ($validated['items'] as $item) {
 
                     $product = $products[$item['product_id']] ?? null; // Get product for Tax Calc
+                    if (!$product) {
+                        throw new \Exception("Product not found.");
+                    }
+
+                    // Stock and Oversell Validation
+                    $grossSellable = $product->stocks->sum(fn($stock) => max(0, $stock->quantity - $stock->reserve_quantity));
+                    $pendingQty = \App\Models\OrderItem::whereHas('order', function ($q) {
+                        $q->whereIn('status', ['pending', 'scheduled', 'draft']);
+                    })->where('product_id', $product->id)->sum('quantity');
+
+                    $currentStock = max(0, $grossSellable - $pendingQty);
+                    $requestedQty = $item['quantity'];
+
+                    if ($requestedQty > $currentStock) {
+                        if (!$product->allow_oversell) {
+                            throw new \Exception("Product {$product->name} is out of stock.");
+                        }
+
+                        $existingOversold = max(0, $pendingQty - $grossSellable);
+                        $additionalOversellNeeded = $requestedQty - $currentStock;
+                        $totalOversoldAfterThis = $existingOversold + $additionalOversellNeeded;
+
+                        if ($product->oversell_limit !== null && $totalOversoldAfterThis > $product->oversell_limit) {
+                            $availableOversell = max(0, $product->oversell_limit - $existingOversold);
+                            throw new \Exception("Oversell limit exceeded for {$product->name}. Remaining oversell capacity: {$availableOversell}");
+                        }
+                    }
 
                     $itemBasePrice = $item['quantity'] * $item['price'];
 

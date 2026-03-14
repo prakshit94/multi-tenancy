@@ -208,12 +208,17 @@
                                     <p
                                         class="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2">
                                         Available Stock</p>
-                                    <p class="text-xl font-black"
-                                        :class="detailedProduct?.stock_on_hand > 0 ? 'text-foreground' : 'text-destructive'">
-                                        <span x-text="detailedProduct?.stock_on_hand || 0"></span>
-                                        <span class="text-sm font-bold text-muted-foreground ml-1 font-mono"
-                                            x-text="detailedProduct?.unit_type"></span>
-                                    </p>
+                                    <div class="flex flex-col">
+                                        <p class="text-xl font-black"
+                                            :class="detailedProduct?.stock_on_hand > 0 ? 'text-foreground' : (detailedProduct?.allow_oversell ? 'text-indigo-600' : 'text-destructive')">
+                                            <span x-text="detailedProduct?.stock_on_hand > 0 ? detailedProduct?.stock_on_hand : (detailedProduct?.allow_oversell ? (detailedProduct?.oversell_limit === null ? '∞' : detailedProduct?.oversell_limit) : '0')"></span>
+                                            <span class="text-sm font-bold text-muted-foreground ml-1 font-mono"
+                                                x-text="detailedProduct?.unit_type"></span>
+                                        </p>
+                                        <template x-if="detailedProduct?.stock_on_hand <= 0 && detailedProduct?.allow_oversell">
+                                            <span class="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-1">Oversell Capacity</span>
+                                        </template>
+                                    </div>
                                 </div>
                                 <div class="p-4 rounded-2xl bg-muted/30 border border-border/50">
                                     <p
@@ -248,7 +253,7 @@
                             class="flex-1 h-14 rounded-2xl">
                             Close Details
                         </x-ui.button>
-                        <template x-if="detailedProduct?.stock_on_hand > 0">
+                        <template x-if="detailedProduct?.stock_on_hand > 0 || (detailedProduct?.allow_oversell && (detailedProduct?.oversell_limit === null || detailedProduct?.oversell_limit > 0))">
                             <x-ui.button @click="addToCart(detailedProduct); showProductDetailsModal = false"
                                 class="flex-[2] h-14 rounded-2xl shadow-xl shadow-primary/20">
                                 Add to Order (Rs <span
@@ -501,8 +506,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </template>
+                            </template>
 
                         <!-- Mode B: Customer Details (Shown if customer selected) -->
                         <template x-if="selectedCustomer">
@@ -1668,17 +1672,24 @@
                                             <td class="p-4 text-center">
                                                 <div class="inline-flex flex-col items-center">
                                                     <span class="px-2.5 py-1 rounded-full text-xs font-bold border"
-                                                        :class="product.stock_on_hand > 0 
+                                                        :class="(product.stock_on_hand > 0 || (product.allow_oversell && (product.oversell_limit === null || product.oversell_limit > 0))) 
                                                                     ? 'bg-green-500/10 text-green-600 border-green-500/20' 
                                                                     : 'bg-red-500/10 text-red-600 border-red-500/20'">
                                                         <span
-                                                            x-text="product.stock_on_hand > 0 ? 'In Stock' : 'Out of Stock'"></span>
+                                                            x-text="product.stock_on_hand > 0 ? 'In Stock' : (product.allow_oversell && (product.oversell_limit === null || product.oversell_limit > 0) ? 'Oversell' : 'Out of Stock')"></span>
                                                     </span>
-                                                    <span x-show="product.stock_on_hand > 0"
-                                                        class="text-xs text-muted-foreground mt-1 font-mono">
-                                                        <span x-text="product.stock_on_hand"></span> <span
-                                                            x-text="product.unit_type"></span>
-                                                    </span>
+                                                    <div class="flex flex-col items-center mt-1">
+                                                        <span x-show="product.stock_on_hand > 0"
+                                                            class="text-xs text-muted-foreground font-mono">
+                                                            <span x-text="product.stock_on_hand"></span> <span
+                                                                x-text="product.unit_type"></span>
+                                                        </span>
+                                                        <template x-if="product.stock_on_hand <= 0 && product.allow_oversell && (product.oversell_limit === null || product.oversell_limit > 0)">
+                                                            <span class="text-[10px] text-indigo-600 font-black uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100/50">
+                                                                Oversell Avl: <span x-text="product.oversell_limit === null ? '∞' : product.oversell_limit"></span>
+                                                            </span>
+                                                        </template>
+                                                    </div>
                                                 </div>
                                             </td>
 
@@ -1720,9 +1731,9 @@
                                                 <div x-data="{ qty: 1 }" class="flex justify-end">
                                                     <template x-if="!isInCart(product.id)">
                                                         <button @click="addToCart(product)"
-                                                            :disabled="product.stock_on_hand <= 0"
+                                                            :disabled="product.stock_on_hand <= 0 && (!product.allow_oversell || (product.oversell_limit !== null && product.oversell_limit <= 0))"
                                                             class="rounded-lg px-4 py-2 font-semibold text-sm transition-all shadow-sm flex items-center gap-2 border border-transparent"
-                                                            :class="product.stock_on_hand > 0 ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0' : 'bg-muted text-muted-foreground cursor-not-allowed border-border opacity-50'">
+                                                            :class="(product.stock_on_hand > 0 || (product.allow_oversell && (product.oversell_limit === null || product.oversell_limit > 0))) ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0' : 'bg-muted text-muted-foreground cursor-not-allowed border-border opacity-50'">
                                                             <span>Add</span>
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                                 viewBox="0 0 24 24">
@@ -1743,8 +1754,8 @@
                                                                 x-text="getCartQty(product.id)"></span>
                                                             <button @click="updateCartQty(product.id, 1)"
                                                                 class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-muted text-foreground transition-colors font-bold text-lg"
-                                                                :disabled="getCartQty(product.id) >= product.stock_on_hand"
-                                                                :class="getCartQty(product.id) >= product.stock_on_hand ? 'opacity-30 cursor-not-allowed' : ''">+</button>
+                                                                :disabled="!itemCanIncrease(product)"
+                                                                :class="!itemCanIncrease(product) ? 'opacity-30 cursor-not-allowed' : ''">+</button>
                                                         </div>
                                                     </template>
                                                 </div>
@@ -1928,7 +1939,7 @@
                                                         x-text="item.quantity"></span>
                                                     <button @click="updateCartQty(item.product_id, 1)"
                                                         class="text-muted-foreground hover:text-primary px-1 font-bold"
-                                                        :disabled="item.quantity >= item.max_stock">+</button>
+                                                        :disabled="!itemCanIncrease(item)">+</button>
                                                 </div>
                                             </div>
 
@@ -3576,12 +3587,21 @@
                     },
 
                     addToCart(product) {
-                        if (product.stock_on_hand <= 0) return;
+                        if (product.stock_on_hand <= 0 && !product.allow_oversell) return;
+                        
                         let existing = this.cart.find(i => i.product_id === product.id);
                         if (existing) {
-                            if (existing.quantity < product.stock_on_hand) {
-                                existing.quantity++;
+                            let canAdd = false;
+                            if (product.allow_oversell) {
+                                let oversold = Math.max(0, (existing.quantity + 1) - product.stock_on_hand);
+                                if (product.oversell_limit === null || oversold <= product.oversell_limit) {
+                                    canAdd = true;
+                                }
+                            } else if (existing.quantity < product.stock_on_hand) {
+                                canAdd = true;
                             }
+                            
+                            if (canAdd) existing.quantity++;
                         } else {
                             this.cart.push({
                                 product_id: product.id,
@@ -3590,6 +3610,8 @@
                                 image_url: product.image_url,
                                 quantity: 1,
                                 max_stock: product.stock_on_hand,
+                                allow_oversell: product.allow_oversell,
+                                oversell_limit: product.oversell_limit,
                                 discount_type: product.default_discount_type || 'fixed',
                                 discount_value: parseFloat(product.default_discount_value || 0),
                                 tax_rate: product.tax_rate,
@@ -3616,7 +3638,16 @@
                         let item = this.cart.find(i => i.product_id === id);
                         if (item) {
                             if (change > 0) {
-                                if (item.quantity < item.max_stock) item.quantity += change;
+                                let canAdd = false;
+                                if (item.allow_oversell) {
+                                    let oversold = Math.max(0, (item.quantity + change) - item.max_stock);
+                                    if (item.oversell_limit === null || oversold <= item.oversell_limit) {
+                                        canAdd = true;
+                                    }
+                                } else if (item.quantity < item.max_stock) {
+                                    canAdd = true;
+                                }
+                                if (canAdd) item.quantity += change;
                             } else {
                                 item.quantity += change;
                             }
@@ -3673,6 +3704,20 @@
                         const middle = this.newCustomer.middle_name || '';
                         const last = this.newCustomer.last_name || '';
                         this.newCustomer.display_name = [first, middle, last].filter(Boolean).join(' ').trim();
+                    },
+
+                    itemCanIncrease(product) {
+                        let existing = this.cart.find(i => i.product_id === (product.product_id || product.id));
+                        let currentQty = existing ? existing.quantity : 0;
+                        let maxStock = product.max_stock !== undefined ? product.max_stock : product.stock_on_hand;
+                        let allowOversell = product.allow_oversell || (existing ? existing.allow_oversell : false);
+                        let oversellLimit = product.oversell_limit !== undefined ? product.oversell_limit : (existing ? existing.oversell_limit : null);
+
+                        if (allowOversell) {
+                            let oversold = Math.max(0, (currentQty + 1) - maxStock);
+                            return (oversellLimit === null || oversold <= oversellLimit);
+                        }
+                        return currentQty < maxStock;
                     },
 
                     get subTotal() {

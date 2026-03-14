@@ -51,6 +51,20 @@ class ProductController extends Controller
         $perPage = (int) $request->input('per_page', 10);
         $products = $query->latest()->paginate($perPage)->withQueryString();
 
+        // Calculate pending quantities for current page products
+        $productIds = $products->pluck('id');
+        $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
+            ->whereHas('order', function ($q) {
+                $q->whereIn('status', ['pending', 'scheduled', 'draft']);
+            })
+            ->selectRaw('product_id, SUM(quantity) as total_pending')
+            ->groupBy('product_id')
+            ->pluck('total_pending', 'product_id');
+
+        foreach ($products as $product) {
+            $product->pending_order_qty = $pendingQuantities->get($product->id, 0);
+        }
+
         return view('central.products.index', compact('products'));
     }
 
@@ -98,6 +112,9 @@ class ProductController extends Controller
 
             // Inventory
             'manage_stock' => 'boolean',
+            'allow_oversell' => 'boolean',
+            'oversell_limit' => 'nullable|integer|min:0',
+            'is_sku_enabled' => 'boolean',
             'stock_on_hand' => 'nullable|numeric|min:0', // Will be calculated from warehouse stock
             'warehouse_id' => 'nullable|required_with:opening_stock|exists:warehouses,id',
             'opening_stock' => 'nullable|numeric|min:0',
@@ -238,6 +255,9 @@ class ProductController extends Controller
 
             // Inventory
             'manage_stock' => 'boolean',
+            'allow_oversell' => 'boolean',
+            'oversell_limit' => 'nullable|integer|min:0',
+            'is_sku_enabled' => 'boolean',
             'stock_on_hand' => 'nullable|numeric|min:0',
             'min_order_qty' => 'nullable|integer|min:0',
             'reorder_level' => 'nullable|integer|min:0',
@@ -326,5 +346,41 @@ class ProductController extends Controller
 
         $product->delete();
         return redirect()->route('central.products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    /**
+     * Toggle SKU enabled status.
+     */
+    public function toggleSku(Product $product)
+    {
+        $this->authorize('products edit');
+
+        $product->update([
+            'is_sku_enabled' => !$product->is_sku_enabled
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'is_sku_enabled' => $product->is_sku_enabled,
+            'message' => 'Product SKU ' . ($product->is_sku_enabled ? 'enabled' : 'disabled') . ' successfully.'
+        ]);
+    }
+
+    /**
+     * Toggle Overselling status.
+     */
+    public function toggleOversell(Product $product)
+    {
+        $this->authorize('products edit');
+
+        $product->update([
+            'allow_oversell' => !$product->allow_oversell
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'allow_oversell' => $product->allow_oversell,
+            'message' => 'Overselling ' . ($product->allow_oversell ? 'enabled' : 'disabled') . ' successfully.'
+        ]);
     }
 }

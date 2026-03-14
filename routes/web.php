@@ -161,6 +161,11 @@ Route::middleware('auth')->group(function () {
         ->parameters(['product-types' => 'productType'])
         ->names('central.product_types');
 
+    Route::patch('products/{product}/toggle-sku', [\App\Http\Controllers\Central\ProductController::class, 'toggleSku'])
+        ->name('central.products.toggle-sku');
+    Route::patch('products/{product}/toggle-oversell', [\App\Http\Controllers\Central\ProductController::class, 'toggleOversell'])
+        ->name('central.products.toggle-oversell');
+
     Route::resource('products', \App\Http\Controllers\Central\ProductController::class)
         ->names('central.products');
     Route::resource('warehouses', \App\Http\Controllers\Central\WarehouseController::class)

@@ -82,6 +82,7 @@ class SearchController extends Controller
     {
         $term = (string) $request->input('q', '');
         $query = Product::where('is_active', true)
+            ->where('is_sku_enabled', true)
             ->with(['category', 'brand', 'images', 'stocks', 'taxClass.rates']);
 
         if (empty($term)) {
@@ -100,7 +101,7 @@ class SearchController extends Controller
         }
 
         $pendingProductQuantities = \App\Models\OrderItem::whereHas('order', function ($q) {
-            $q->where('status', 'pending');
+            $q->whereIn('status', ['pending', 'scheduled', 'draft']);
         })->selectRaw('product_id, SUM(quantity) as total_pending')
             ->groupBy('product_id')
             ->pluck('total_pending', 'product_id');
@@ -116,6 +117,10 @@ class SearchController extends Controller
                 $taxAmount = $product->price * ($product->tax_rate / 100);
             }
 
+            $oversoldAmount = max(0, $pendingQty - $grossSellable);
+            $oversellLimit = $product->oversell_limit !== null ? (int) $product->oversell_limit : null;
+            $effectiveOversellLimit = $oversellLimit !== null ? max(0, $oversellLimit - $oversoldAmount) : null;
+
             return [
                 'id' => $product->id,
                 'name' => $product->name,
@@ -125,6 +130,8 @@ class SearchController extends Controller
                 'tax_amount' => (float) $taxAmount,
                 'total_price_with_tax' => (float) ($product->price + $taxAmount),
                 'stock_on_hand' => (float) max(0, $grossSellable - $pendingQty),
+                'allow_oversell' => (bool) $product->allow_oversell,
+                'oversell_limit' => $effectiveOversellLimit,
                 'unit_type' => $product->unit_type,
                 'brand' => $product->brand->name ?? 'N/A',
                 'description' => $product->description,

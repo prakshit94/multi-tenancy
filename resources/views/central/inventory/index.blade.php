@@ -250,7 +250,39 @@
                                 </div>
                             </td>
                             <td class="p-6 align-middle text-center font-mono text-xs text-muted-foreground">
-                                {{ $product->sku ?? '-' }}
+                                <div x-data="{ 
+                                    enabled: {{ $product->is_sku_enabled ? 'true' : 'false' }},
+                                    async toggle() {
+                                        try {
+                                            const res = await fetch('{{ route('central.products.toggle-sku', $product) }}', {
+                                                method: 'PATCH',
+                                                headers: {
+                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                    'Accept': 'application/json'
+                                                }
+                                            });
+                                            const data = await res.json();
+                                            if (data.success) {
+                                                this.enabled = data.is_sku_enabled;
+                                                window.toast && window.toast(data.message);
+                                            }
+                                        } catch (err) {
+                                            console.error(err);
+                                        }
+                                    }
+                                }">
+                                    <button @click="toggle" 
+                                        class="hover:opacity-80 transition-all duration-200"
+                                        :class="!enabled ? 'line-through opacity-50 text-red-600' : ''"
+                                        :title="enabled ? 'Click to disable SKU' : 'Click to enable SKU'">
+                                        {{ $product->sku ?? '-' }}
+                                    </button>
+                                    <template x-if="!enabled">
+                                        <div class="mt-1">
+                                            <span class="inline-flex items-center justify-center rounded-md bg-destructive/10 px-1.5 py-0.5 text-[8px] font-black text-destructive uppercase tracking-widest border border-destructive/20">Disabled</span>
+                                        </div>
+                                    </template>
+                                </div>
                             </td>
                             <td class="p-6 align-middle">
                                 <span class="inline-flex items-center rounded-md border border-border bg-secondary/50 px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
@@ -288,11 +320,44 @@
                                     <span class="text-[10px] text-muted-foreground font-medium">
                                         Res: {{ number_format($totalRes, 0) }}
                                     </span>
+                                    @if(isset($product->pending_order_qty) && $product->pending_order_qty > 0)
+                                        <div class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold bg-indigo-50/50 text-indigo-600 border border-indigo-100/50 mt-1 shadow-sm">
+                                            Placed: {{ number_format($product->pending_order_qty, 0) }}
+                                        </div>
+                                    @endif
                                     @if($product->stock_on_hand <= $product->reorder_level)
                                         <span class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold bg-destructive/10 text-destructive border border-destructive/20 mt-1">
                                             Low Stock
                                         </span>
                                     @endif
+                                    <div x-data="{ 
+                                        oversell: {{ $product->allow_oversell ? 'true' : 'false' }},
+                                        async toggle() {
+                                            try {
+                                                const res = await fetch('{{ route('central.products.toggle-oversell', $product) }}', {
+                                                    method: 'PATCH',
+                                                    headers: {
+                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                        'Accept': 'application/json'
+                                                    }
+                                                });
+                                                const data = await res.json();
+                                                if (data.success) {
+                                                    this.oversell = data.allow_oversell;
+                                                    window.toast && window.toast(data.message);
+                                                }
+                                            } catch (err) {
+                                                console.error(err);
+                                            }
+                                        }
+                                    }">
+                                        <button @click="toggle"
+                                            class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold border mt-1 transition-all duration-200"
+                                            :class="oversell ? 'bg-primary/10 text-primary border-primary/20 hover:border-primary/40' : 'bg-gray-100 text-gray-400 border-gray-200 hover:border-gray-300'"
+                                            :title="oversell ? 'Overselling enabled. Click to disable.' : 'Overselling disabled. Click to enable.'">
+                                            Oversell: <span x-text="oversell ? '{{ $product->oversell_limit ?? 'Unlimited' }}' : 'Off'"></span>
+                                        </button>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

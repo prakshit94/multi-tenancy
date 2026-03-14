@@ -41,6 +41,21 @@ class InventoryController extends Controller
         }
 
         $products = $query->paginate(15)->withQueryString();
+
+        // Calculate pending quantities for current page products
+        $productIds = $products->pluck('id');
+        $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
+            ->whereHas('order', function ($q) {
+                $q->whereIn('status', ['pending', 'scheduled', 'draft']);
+            })
+            ->selectRaw('product_id, SUM(quantity) as total_pending')
+            ->groupBy('product_id')
+            ->pluck('total_pending', 'product_id');
+
+        foreach ($products as $product) {
+            $product->pending_order_qty = $pendingQuantities->get($product->id, 0);
+        }
+
         $warehouses = \App\Models\Warehouse::where('is_active', true)->get();
 
         return view('central.inventory.index', compact('products', 'warehouses'));

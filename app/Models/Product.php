@@ -33,6 +33,9 @@ class Product extends Model
         'dimensions' => 'array',
         'min_order_qty' => 'integer',
         'reorder_level' => 'integer',
+        'allow_oversell' => 'boolean',
+        'oversell_limit' => 'integer',
+        'is_sku_enabled' => 'boolean',
     ];
 
     protected static function boot()
@@ -43,7 +46,7 @@ class Product extends Model
                 $product->slug = \Illuminate\Support\Str::slug($product->name);
             }
 
-            if (empty($product->sku)) {
+            if (empty($product->sku) && $product->is_sku_enabled !== false) {
                 $generateSku = function () {
                     return 'SKU-' . strtoupper(\Illuminate\Support\Str::random(8));
                 };
@@ -105,7 +108,7 @@ class Product extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('is_active', true)->where('is_sku_enabled', true);
     }
 
     public function getImageUrlAttribute()

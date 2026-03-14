@@ -229,8 +229,40 @@
                                                     {{ $product->name }}
                                                 </div>
                                                 <div class="flex items-center gap-2 flex-wrap">
-                                                    <span
-                                                        class="text-[10px] font-bold text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">{{ $product->sku }}</span>
+                                                    <div class="flex items-center gap-1" x-data="{ 
+                                                        enabled: {{ $product->is_sku_enabled ? 'true' : 'false' }},
+                                                        async toggle() {
+                                                            try {
+                                                                const res = await fetch('{{ route('central.products.toggle-sku', $product) }}', {
+                                                                    method: 'PATCH',
+                                                                    headers: {
+                                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                        'Accept': 'application/json'
+                                                                    }
+                                                                });
+                                                                const data = await res.json();
+                                                                if (data.success) {
+                                                                    this.enabled = data.is_sku_enabled;
+                                                                    window.toast && window.toast(data.message);
+                                                                }
+                                                            } catch (err) {
+                                                                console.error(err);
+                                                            }
+                                                        }
+                                                    }">
+                                                        <button @click="toggle" 
+                                                            class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-md border transition-all duration-200"
+                                                            :class="enabled ? 'bg-gray-50 text-gray-400 border-gray-100 hover:border-indigo-300' : 'line-through text-gray-300 bg-gray-50 border-gray-100 hover:border-red-300'"
+                                                            :title="enabled ? 'Click to disable SKU' : 'Click to enable SKU'">
+                                                            {{ $product->sku ?: 'No SKU' }}
+                                                        </button>
+                                                        <template x-if="!enabled">
+                                                            <span class="inline-flex items-center rounded-md bg-red-50 px-1.5 py-0.5 text-[8px] font-black text-red-600 uppercase tracking-[0.1em] border border-red-100/50" title="Not available for sale">Disabled</span>
+                                                        </template>
+                                                        <template x-if="enabled">
+                                                            <span class="inline-flex items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-[8px] font-black text-emerald-600 uppercase tracking-[0.1em] border border-emerald-100/50" title="Available for sale">Enabled</span>
+                                                        </template>
+                                                    </div>
                                                     <span
                                                         class="inline-flex items-center rounded-md bg-gray-50 px-2 py-0.5 text-[9px] font-black text-gray-500 uppercase tracking-[0.1em] border border-gray-100">{{ $product->type }}</span>
                                                     @if($product->is_featured)
@@ -301,6 +333,44 @@
                                                         InStock: {{ floatval($product->stock_on_hand) }}
                                                     </div>
                                                 @endif
+                                                @if($product->pending_order_qty > 0)
+                                                    <div class="mt-1.5 flex flex-col gap-1">
+                                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/50 border border-indigo-100/50 text-[10px] font-black text-indigo-600 uppercase tracking-widest shadow-sm">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                            </svg>
+                                                            Placed: {{ floatval($product->pending_order_qty) }}
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                                <div x-data="{ 
+                                                    oversell: {{ $product->allow_oversell ? 'true' : 'false' }},
+                                                    async toggle() {
+                                                        try {
+                                                            const res = await fetch('{{ route('central.products.toggle-oversell', $product) }}', {
+                                                                method: 'PATCH',
+                                                                headers: {
+                                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                    'Accept': 'application/json'
+                                                                }
+                                                            });
+                                                            const data = await res.json();
+                                                            if (data.success) {
+                                                                this.oversell = data.allow_oversell;
+                                                                window.toast && window.toast(data.message);
+                                                            }
+                                                        } catch (err) {
+                                                            console.error(err);
+                                                        }
+                                                    }
+                                                }">
+                                                    <button @click="toggle"
+                                                        class="text-[9px] font-bold px-2 py-0.5 rounded-md border transition-all duration-200 mt-1 w-fit"
+                                                        :class="oversell ? 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:border-indigo-400' : 'bg-gray-50 text-gray-400 border-gray-100 hover:border-gray-300'"
+                                                        :title="oversell ? 'Overselling enabled. Click to disable.' : 'Overselling disabled. Click to enable.'">
+                                                        Oversell: <span x-text="oversell ? '{{ $product->oversell_limit ?? 'Unlimited' }}' : 'Off'"></span>
+                                                    </button>
+                                                </div>
                                                 <!-- <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-3">
                                                                                                                 {{ $product->unit_type }}
                                                                                                             </div> -->
@@ -502,9 +572,14 @@
                                     <h3 class="font-black text-3xl tracking-tighter text-gray-900"
                                         x-text="viewingProduct?.name"></h3>
                                     <div class="flex items-center gap-3 mt-2">
-                                        <span
-                                            class="px-3 py-1 rounded-full bg-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-500 border border-gray-200"
-                                            x-text="viewingProduct?.sku"></span>
+                                        <div class="flex items-center gap-1">
+                                            <span
+                                                class="px-3 py-1 rounded-full bg-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-500 border border-gray-200"
+                                                :class="!viewingProduct?.is_sku_enabled ? 'line-through' : ''"
+                                                x-text="viewingProduct?.sku || 'No SKU'"></span>
+                                            <span x-show="!viewingProduct?.is_sku_enabled"
+                                                class="px-2 py-1 rounded-full bg-red-50 text-[10px] font-black uppercase tracking-widest text-red-600 border border-red-100">Sale Disabled</span>
+                                        </div>
                                         <span
                                             class="px-3 py-1 rounded-full bg-indigo-50 text-[10px] font-black uppercase tracking-widest text-indigo-600 border border-indigo-100"
                                             x-text="viewingProduct?.category?.name || 'Uncategorized'"></span>
@@ -561,6 +636,13 @@
                                             <span class="text-sm font-black"
                                                 :class="viewingProduct?.stock_on_hand > 10 ? 'text-emerald-600' : 'text-amber-600'"
                                                 x-text="viewingProduct?.manage_stock ? parseFloat(viewingProduct?.stock_on_hand) : 'Not Tracked'">
+                                            </span>
+                                        </div>
+                                        <div class="flex justify-between items-center" x-show="viewingProduct?.allow_oversell">
+                                            <span
+                                                class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Oversold Limit</span>
+                                            <span class="text-sm font-black text-indigo-600"
+                                                x-text="viewingProduct?.oversell_limit !== null ? viewingProduct.oversell_limit : 'Unlimited'">
                                             </span>
                                         </div>
                                     </div>

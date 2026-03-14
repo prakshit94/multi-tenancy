@@ -40,11 +40,21 @@ class OrderService
 
                 $available = $stock->quantity - $stock->reserve_quantity;
 
-                if ($available < $item->quantity) {
-                    throw new Exception(
-                        "Insufficient stock for Product ID {$item->product_id}. 
-                        Required: {$item->quantity}, Available: {$available}"
-                    );
+                if ($available < $item->quantity && !$item->product->manage_stock) {
+                    if (!$item->product->allow_oversell) {
+                        throw new Exception(
+                            "Insufficient stock for Product ID {$item->product_id}. 
+                            Required: {$item->quantity}, Available: {$available}"
+                        );
+                    }
+                    
+                    $oversold_amount = abs($available - $item->quantity);
+                    if ($item->product->oversell_limit !== null && $oversold_amount > $item->product->oversell_limit) {
+                        throw new Exception(
+                            "Oversell limit exceeded for Product ID {$item->product_id}. 
+                            Allowed oversell: {$item->product->oversell_limit}, Requested oversell: {$oversold_amount}"
+                        );
+                    }
                 }
 
                 $stock->increment('reserve_quantity', $item->quantity);
@@ -217,11 +227,21 @@ class OrderService
 
             $available = $stock->quantity - $stock->reserve_quantity;
 
-            if ($available < $item->quantity) {
-                throw new Exception(
-                    "Insufficient stock for Product ID {$item->product_id}. 
-                    Required: {$item->quantity}, Available: {$available}"
-                );
+            if ($available < $item->quantity && !$item->product->manage_stock) {
+                 if (!$item->product->allow_oversell) {
+                    throw new Exception(
+                        "Insufficient stock for Product ID {$item->product_id}. 
+                        Required: {$item->quantity}, Available: {$available}"
+                    );
+                }
+                
+                $oversold_amount = abs($available - $item->quantity);
+                if ($item->product->oversell_limit !== null && $oversold_amount > $item->product->oversell_limit) {
+                    throw new Exception(
+                        "Oversell limit exceeded for Product ID {$item->product_id}. 
+                        Allowed oversell: {$item->product->oversell_limit}, Requested oversell: {$oversold_amount}"
+                    );
+                }
             }
 
             $stock->increment('reserve_quantity', $item->quantity);
