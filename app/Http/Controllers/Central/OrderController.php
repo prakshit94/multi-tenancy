@@ -98,6 +98,10 @@ class OrderController extends Controller
                 $grossSellable = $product->stocks->sum(fn($stock) => max(0, $stock->quantity - $stock->reserve_quantity));
                 $pendingQty = $pendingProductQuantities->get($product->id, 0);
 
+                $totalPhysicalQty = $product->stocks->sum('quantity');
+                $totalReservedQty = $product->stocks->sum('reserve_quantity');
+                $totalCommitment = $totalReservedQty + $pendingQty;
+
                 $taxAmount = 0.00;
                 if ($product->taxClass && $product->taxClass->rates->isNotEmpty()) {
                     $taxAmount = $product->price * ($product->taxClass->rates->sum('rate') / 100);
@@ -105,9 +109,9 @@ class OrderController extends Controller
                     $taxAmount = $product->price * ($product->tax_rate / 100);
                 }
 
-                $oversoldAmount = max(0, $pendingQty - $grossSellable);
+                $currentOversoldAmount = max(0, $totalCommitment - $totalPhysicalQty);
                 $oversellLimit = $product->oversell_limit !== null ? (int) $product->oversell_limit : null;
-                $effectiveOversellLimit = $oversellLimit !== null ? max(0, $oversellLimit - $oversoldAmount) : null;
+                $effectiveOversellLimit = $oversellLimit !== null ? max(0, $oversellLimit - $currentOversoldAmount) : null;
 
                 return [
                     'id' => $product->id,
@@ -117,7 +121,7 @@ class OrderController extends Controller
                     'mrp' => (float) $product->mrp,
                     'tax_amount' => (float) $taxAmount,
                     'total_price_with_tax' => (float) ($product->price + $taxAmount),
-                    'stock_on_hand' => (float) max(0, $grossSellable - $pendingQty),
+                    'stock_on_hand' => (float) max(0, $totalPhysicalQty - $totalCommitment),
                     'allow_oversell' => (bool) $product->allow_oversell,
                     'oversell_limit' => $effectiveOversellLimit,
                     'unit_type' => $product->unit_type,
@@ -198,12 +202,14 @@ class OrderController extends Controller
                     }
 
                     // Stock and Oversell Validation
-                    $grossSellable = $product->stocks->sum(fn($stock) => max(0, $stock->quantity - $stock->reserve_quantity));
+                    $totalPhysicalQty = $product->stocks->sum('quantity');
+                    $totalReservedQty = $product->stocks->sum('reserve_quantity');
                     $pendingQty = \App\Models\OrderItem::whereHas('order', function ($q) {
                         $q->whereIn('status', ['pending', 'scheduled', 'draft']);
                     })->where('product_id', $product->id)->sum('quantity');
+                    $totalCommitment = $totalReservedQty + $pendingQty;
 
-                    $currentStock = max(0, $grossSellable - $pendingQty);
+                    $currentStock = max(0, $totalPhysicalQty - $totalCommitment);
                     $requestedQty = $item['quantity'];
 
                     if ($requestedQty > $currentStock) {
@@ -211,12 +217,11 @@ class OrderController extends Controller
                             throw new \Exception("Product {$product->name} is out of stock.");
                         }
 
-                        $existingOversold = max(0, $pendingQty - $grossSellable);
-                        $additionalOversellNeeded = $requestedQty - $currentStock;
-                        $totalOversoldAfterThis = $existingOversold + $additionalOversellNeeded;
+                        $currentOversold = max(0, $totalCommitment - $totalPhysicalQty);
+                        $totalOversoldAfterThis = $currentOversold + ($requestedQty - $currentStock);
 
-                        if ($product->oversell_limit !== null && $totalOversoldAfterThis > $product->oversell_limit) {
-                            $availableOversell = max(0, $product->oversell_limit - $existingOversold);
+                        if ($product->oversell_limit !== null && $totalOversoldAfterThis > (int)$product->oversell_limit) {
+                            $availableOversell = max(0, (int)$product->oversell_limit - $currentOversold);
                             throw new \Exception("Oversell limit exceeded for {$product->name}. Remaining oversell capacity: {$availableOversell}");
                         }
                     }

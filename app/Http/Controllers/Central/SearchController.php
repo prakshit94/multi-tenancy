@@ -107,8 +107,10 @@ class SearchController extends Controller
             ->pluck('total_pending', 'product_id');
 
         $data = $products->map(function ($product) use ($pendingProductQuantities) {
-            $grossSellable = $product->stocks->sum(fn($stock) => max(0, $stock->quantity - $stock->reserve_quantity));
+            $totalPhysicalQty = $product->stocks->sum('quantity');
+            $totalReservedQty = $product->stocks->sum('reserve_quantity');
             $pendingQty = $pendingProductQuantities->get($product->id, 0);
+            $totalCommitment = $totalReservedQty + $pendingQty;
 
             $taxAmount = 0.00;
             if ($product->taxClass && $product->taxClass->rates->isNotEmpty()) {
@@ -117,9 +119,9 @@ class SearchController extends Controller
                 $taxAmount = $product->price * ($product->tax_rate / 100);
             }
 
-            $oversoldAmount = max(0, $pendingQty - $grossSellable);
+            $currentOversoldAmount = max(0, $totalCommitment - $totalPhysicalQty);
             $oversellLimit = $product->oversell_limit !== null ? (int) $product->oversell_limit : null;
-            $effectiveOversellLimit = $oversellLimit !== null ? max(0, $oversellLimit - $oversoldAmount) : null;
+            $effectiveOversellLimit = $oversellLimit !== null ? max(0, $oversellLimit - $currentOversoldAmount) : null;
 
             return [
                 'id' => $product->id,
@@ -129,7 +131,7 @@ class SearchController extends Controller
                 'mrp' => (float) $product->mrp,
                 'tax_amount' => (float) $taxAmount,
                 'total_price_with_tax' => (float) ($product->price + $taxAmount),
-                'stock_on_hand' => (float) max(0, $grossSellable - $pendingQty),
+                'stock_on_hand' => (float) max(0, $totalPhysicalQty - $totalCommitment),
                 'allow_oversell' => (bool) $product->allow_oversell,
                 'oversell_limit' => $effectiveOversellLimit,
                 'unit_type' => $product->unit_type,
