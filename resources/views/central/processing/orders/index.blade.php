@@ -226,18 +226,28 @@
                                                                                             'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
                                                                                         }
                                                                                     })
-                                                                                    .then(response => response.json())
-                                                                                    .then(data => {
-                                                                                        if (data.success) {
+                                                                                    .then(async response => {
+                                                                                        const data = await response.json();
+                                                                                        if (response.ok && data.success) {
                                                                                             this.order = data.order;
                                                                                             this.open = true;
                                                                                         } else {
-                                                                                            alert('Error processing order: ' + (data.message || 'Unknown error'));
+                                                                                            window.dispatchEvent(new CustomEvent('notify', {
+                                                                                                detail: {
+                                                                                                    type: 'error',
+                                                                                                    message: data.message || 'Error processing order'
+                                                                                                }
+                                                                                            }));
                                                                                         }
                                                                                     })
                                                                                     .catch(error => {
                                                                                         console.error('Error:', error);
-                                                                                        alert('An error occurred');
+                                                                                        window.dispatchEvent(new CustomEvent('notify', {
+                                                                                            detail: {
+                                                                                                type: 'error',
+                                                                                                message: 'An error occurred while processing the order'
+                                                                                            }
+                                                                                        }));
                                                                                     });
                                                                                 },
                                                                                 closeModal() {

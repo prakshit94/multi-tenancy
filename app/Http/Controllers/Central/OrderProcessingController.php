@@ -169,6 +169,8 @@ class OrderProcessingController extends Controller
                 throw new Exception('Order must be Confirmed before Processing.');
             }
 
+            $this->orderService->validateStockForProcessing($order);
+
             $order->update([
                 'status' => 'processing',
                 'shipping_status' => 'pending',
@@ -204,6 +206,12 @@ class OrderProcessingController extends Controller
                 ->with('success', 'Order marked as Processing.')
                 ->with('processed_order', $order);
         } catch (Exception $e) {
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
             return back()->with('error', 'Error updating order: ' . $e->getMessage());
         }
     }
@@ -547,6 +555,8 @@ class OrderProcessingController extends Controller
                         if ($order->status !== 'confirmed') {
                             throw new Exception();
                         }
+
+                        $this->orderService->validateStockForProcessing($order);
 
                         $order->update([
                             'status' => 'processing',

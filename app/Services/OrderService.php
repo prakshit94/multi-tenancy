@@ -153,6 +153,28 @@ class OrderService
     }
 
     /**
+     * Validate stock availability for processing an order.
+     * Throws an exception if stock is insufficient.
+     */
+    public function validateStockForProcessing(Order $order): void
+    {
+        foreach ($order->items as $item) {
+            $stock = InventoryStock::where('product_id', $item->product_id)
+                ->where('warehouse_id', $order->warehouse_id)
+                ->first();
+
+            $available = $stock ? (float)$stock->quantity : 0.0;
+            $required = (float)$item->quantity;
+
+            if ($available < $required) {
+                throw new Exception(
+                    "Stock mismatch for Product ID {$item->product_id}. Available: " . number_format($available, 3) . ", Required: " . number_format($required, 3)
+                );
+            }
+        }
+    }
+
+    /**
      * Deliver order.
      * shipped → delivered
      */

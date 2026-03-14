@@ -498,6 +498,9 @@ class OrderController extends Controller
                     if ($order->status !== 'confirmed') {
                         throw new Exception('Order must be Confirmed before Processing.');
                     }
+
+                    $this->orderService->validateStockForProcessing($order);
+
                     $order->update([
                         'status' => 'processing',
                         'shipping_status' => 'pending',
