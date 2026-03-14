@@ -46,7 +46,7 @@ class InventoryController extends Controller
         $productIds = $products->pluck('id');
         $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
             ->whereHas('order', function ($q) {
-                $q->whereIn('status', ['pending', 'scheduled', 'draft']);
+                $q->whereIn('status', ['pending', 'scheduled', 'draft', 'confirmed', 'processing', 'ready_to_ship']);
             })
             ->selectRaw('product_id, SUM(quantity) as total_pending')
             ->groupBy('product_id')
