@@ -104,68 +104,115 @@
     </div>
 
     <!-- Dispatch / Ready Modal -->
-    <div x-data="{ open: false, orderId: '', orderNumber: '', actionUrl: '', modalMode: '' }"
-        x-on:open-dispatch-modal.window="open = true; orderId = $event.detail.orderId; orderNumber = $event.detail.orderNumber; actionUrl = $event.detail.actionUrl; modalMode = $event.detail.mode || 'dispatch'"
-        x-show="open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-        style="display: none;">
+<div x-data="{ open: false, orderId: '', orderNumber: '', actionUrl: '', modalMode: '' }"
+    x-on:open-dispatch-modal.window="open = true; orderId = $event.detail.orderId; orderNumber = $event.detail.orderNumber; actionUrl = $event.detail.actionUrl; modalMode = $event.detail.mode || 'dispatch'"
+    x-show="open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+    style="display: none;">
 
-        <div @click.away="open = false"
-            class="bg-white border border-gray-100 shadow-2xl rounded-2xl w-full max-w-md p-8 space-y-6 animate-in fade-in zoom-in duration-200 relative overflow-hidden">
+    <div @click.away="open = false"
+        class="bg-white border border-gray-100 shadow-2xl rounded-2xl w-full max-w-md p-8 space-y-6 animate-in fade-in zoom-in duration-200 relative overflow-hidden">
 
-            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
 
-            <div class="space-y-1">
-                <h3 class="text-xl font-bold text-gray-900"
-                    x-text="modalMode === 'ready' ? 'Ready to Ship' : 'Dispatch Order'"></h3>
-                <p class="text-sm text-gray-500">Enter courier details for <span x-text="orderNumber"
-                        class="font-mono font-semibold text-gray-900"></span></p>
+        <div class="space-y-1">
+            <h3 class="text-xl font-bold text-gray-900"
+                x-text="modalMode === 'ready' ? 'Ready to Ship' : 'Dispatch Order'"></h3>
+            <p class="text-sm text-gray-500">
+                Enter courier details for
+                <span x-text="orderNumber" class="font-mono font-semibold text-gray-900"></span>
+            </p>
+        </div>
+
+        <form x-bind:action="actionUrl || ('/processing/orders/' + orderId + '/dispatch')" method="POST"
+            class="space-y-5">
+            @csrf
+
+            <div class="space-y-4">
+
+                <!-- Courier Service -->
+                <div>
+                    <label
+                        class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Courier
+                        Service</label>
+
+                    <div class="relative">
+                        <div
+                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                </path>
+                            </svg>
+                        </div>
+
+                        <input type="text"
+                            name="courier"
+                            list="courier-list"
+                            value="India Post"
+                            required
+                            placeholder="Select or type courier"
+                            class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all">
+
+                        <!-- Dropdown Suggestions -->
+                        <datalist id="courier-list">
+                            <option value="India Post">
+                            <option value="DTDC">
+                            <option value="Blue Dart">
+                            <option value="Delhivery">
+                            <option value="Ecom Express">
+                            <option value="XpressBees">
+                            <option value="Amazon Shipping">
+                            <option value="FedEx">
+                            <option value="DHL">
+                        </datalist>
+
+                    </div>
+                </div>
+
+                <!-- Tracking Number -->
+                <div>
+                    <label
+                        class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tracking
+                        Number</label>
+
+                    <div class="relative">
+                        <div
+                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
+                            </svg>
+                        </div>
+
+                        <input type="text"
+                            name="tracking_number"
+                            required
+                            placeholder="Tracking ID"
+                            class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all">
+                    </div>
+                </div>
+
             </div>
 
-            <form x-bind:action="actionUrl || ('/processing/orders/' + orderId + '/dispatch')" method="POST"
-                class="space-y-5">
-                @csrf
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Courier
-                            Service</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <input type="text" name="courier" required placeholder="e.g. DHL, FedEx, Local"
-                                class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tracking
-                            Number</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
-                                </svg>
-                            </div>
-                            <input type="text" name="tracking_number" required placeholder="Tracking ID"
-                                class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all">
-                        </div>
-                    </div>
-                </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" @click="open = false"
+                    class="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors">
+                    Cancel
+                </button>
 
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" @click="open = false"
-                        class="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
-                    <button type="submit"
-                        class="px-5 py-2.5 text-sm font-semibold bg-gray-900 text-white hover:bg-black rounded-xl shadow-lg shadow-gray-900/20 transition-all transform hover:-translate-y-0.5"
-                        x-text="modalMode === 'ready' ? 'Confirm Details' : 'Confirm Dispatch'">
-                    </button>
-                </div>
-            </form>
-        </div>
+                <button type="submit"
+                    class="px-5 py-2.5 text-sm font-semibold bg-gray-900 text-white hover:bg-black rounded-xl shadow-lg shadow-gray-900/20 transition-all transform hover:-translate-y-0.5"
+                    x-text="modalMode === 'ready' ? 'Confirm Details' : 'Confirm Dispatch'">
+                </button>
+            </div>
+
+        </form>
     </div>
+</div>
 
     <!-- Import Dispatch CSV Modal -->
     <div x-data="{ open: false }" x-on:open-import-modal.window="open = true" x-show="open"
