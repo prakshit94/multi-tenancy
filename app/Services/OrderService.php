@@ -161,14 +161,24 @@ class OrderService
         foreach ($order->items as $item) {
             $stock = InventoryStock::where('product_id', $item->product_id)
                 ->where('warehouse_id', $order->warehouse_id)
+                ->lockForUpdate()
                 ->first();
 
-            $available = $stock ? (float)$stock->quantity : 0.0;
+            $quantity = $stock ? (float)$stock->quantity : 0.0;
+            
+            // Committed stock = Sum of quantities in orders already in 'processing' or 'ready_to_ship'
+            $committed = \App\Models\OrderItem::where('product_id', $item->product_id)
+                ->whereHas('order', function($q) use ($order) {
+                    $q->where('warehouse_id', $order->warehouse_id)
+                      ->whereIn('status', ['processing', 'ready_to_ship']);
+                })->sum('quantity');
+
+            $available = $quantity - (float)$committed;
             $required = (float)$item->quantity;
 
             if ($available < $required) {
                 throw new Exception(
-                    "Stock mismatch for Product ID {$item->product_id}. Available: " . number_format($available, 3) . ", Required: " . number_format($required, 3)
+                    "Insufficient stock for Product ID {$item->product_id} after accounting for other orders already in progress. Physical Stock: " . number_format($quantity, 3) . ", Already Committed: " . number_format((float)$committed, 3) . ", Available for you: " . number_format($available, 3) . ", Required: " . number_format($required, 3)
                 );
             }
         }
