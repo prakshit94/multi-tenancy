@@ -297,39 +297,68 @@
                                     $avl = $oh - $res;
                                 @endphp
                                 <td class="p-6 align-middle text-center">
-                                    <div class="flex flex-col items-center">
-                                        <span class="font-medium {{ $oh <= 5 ? 'text-amber-600' : 'text-foreground' }}">
-                                            {{ number_format($oh, 0) }}
-                                        </span>
-                                        <div class="flex gap-2 text-[10px] text-muted-foreground/60">
-                                            <span title="Reserved">{{ number_format($res, 0) }}</span>
-                                            <span>/</span>
-                                            <span title="Available" class="{{ $avl <= 0 ? 'text-destructive font-bold' : '' }}">{{ number_format($avl, 0) }}</span>
+                                    <div class="flex flex-col items-center gap-1.5">
+                                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-background border border-border/60 shadow-sm">
+                                            <span class="text-[9px] font-black uppercase tracking-tighter text-muted-foreground/50">OH:</span>
+                                            <span class="text-xs font-bold {{ $oh <= 5 ? 'text-amber-600' : 'text-foreground' }}">
+                                                {{ $oh > 0 ? '+' : '' }}{{ number_format($oh, 0) }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2 px-2 py-0.5 rounded bg-muted/30 text-[9px] font-medium tracking-tight text-muted-foreground/70">
+                                            <span title="Reserved" class="flex items-center gap-1">
+                                                <span class="opacity-50 font-black uppercase text-[8px]">Res:</span>
+                                                {{ $res > 0 ? '+' : '' }}{{ number_format($res, 0) }}
+                                            </span>
+                                            <span class="text-muted-foreground/30">|</span>
+                                            <span title="Available" class="flex items-center gap-1 {{ $avl < 0 ? 'text-rose-600 font-black' : ($avl == 0 ? 'text-muted-foreground/50' : 'text-emerald-600') }}">
+                                                <span class="opacity-50 font-black uppercase text-[8px]">Avl:</span>
+                                                {{ $avl > 0 ? '+' : '' }}{{ number_format($avl, 0) }}
+                                            </span>
                                         </div>
                                     </div>
                                 </td>
                             @endforeach
                             <td class="p-6 align-middle text-right">
-                                <div class="flex flex-col items-end">
-                                    @php
-                                        $totalRes = $product->stocks->sum('reserve_quantity');
-                                    @endphp
-                                    <span class="text-lg font-bold {{ $product->stock_on_hand <= $product->reorder_level ? 'text-destructive' : 'text-primary' }}">
-                                        {{ number_format($product->stock_on_hand, 0) }}
-                                    </span>
-                                    <span class="text-[10px] text-muted-foreground font-medium">
-                                        Res: {{ number_format($totalRes, 0) }}
-                                    </span>
-                                    @if(isset($product->pending_order_qty) && $product->pending_order_qty > 0)
-                                        <div class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold bg-indigo-50/50 text-indigo-600 border border-indigo-100/50 mt-1 shadow-sm">
-                                            Placed: {{ number_format($product->pending_order_qty, 0) }}
+                                <div class="flex flex-col items-end gap-2.5">
+                                    <!-- Main Stock Status -->
+                                    <div class="space-y-1">
+                                        @if($product->stock_on_hand <= 0)
+                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/10 w-fit shadow-sm ml-auto">
+                                                <span class="flex h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                                <span class="text-[9px] font-black uppercase tracking-[0.1em]">Out of Stock</span>
+                                            </div>
+                                        @elseif($product->stock_on_hand <= $product->reorder_level)
+                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/10 w-fit shadow-sm ml-auto">
+                                                <span class="flex h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                                <span class="text-[9px] font-black uppercase tracking-[0.1em]">Low: {{ floatval($product->stock_on_hand) }}</span>
+                                            </div>
+                                        @else
+                                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/10 w-fit shadow-sm ml-auto">
+                                                <span class="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                <span class="text-[9px] font-black uppercase tracking-[0.1em]">Total: {{ floatval($product->stock_on_hand) }}</span>
+                                            </div>
+                                        @endif
+
+                                        <!-- Statistics Section -->
+                                        <div class="flex flex-col gap-1.5 items-end pr-3 border-r-2 border-gray-100/80">
+                                            @if($product->pending_order_qty > 0)
+                                                <span class="p-1 px-1.5 rounded-md bg-indigo-50/50 text-[9px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100/50 shadow-sm flex items-center gap-1.5">
+                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                    </svg>
+                                                    Placed: {{ floatval($product->pending_order_qty) }}
+                                                </span>
+                                            @endif
+                                            <span class="p-1 px-1.5 rounded-md bg-emerald-50/50 text-[9px] font-black text-emerald-600 uppercase tracking-widest border border-emerald-100/50 shadow-sm flex items-center gap-1.5">
+                                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Sellable: {{ floatval($product->sellable_qty) }}
+                                            </span>
                                         </div>
-                                    @endif
-                                    @if($product->stock_on_hand <= $product->reorder_level)
-                                        <span class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold bg-destructive/10 text-destructive border border-destructive/20 mt-1">
-                                            Low Stock
-                                        </span>
-                                    @endif
+                                    </div>
+
+                                    <!-- Oversell Toggle -->
                                     <div x-data="{ 
                                         oversell: {{ $product->allow_oversell ? 'true' : 'false' }},
                                         async toggle() {
@@ -352,10 +381,14 @@
                                         }
                                     }">
                                         <button @click="toggle"
-                                            class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold border mt-1 transition-all duration-200"
-                                            :class="oversell ? 'bg-primary/10 text-primary border-primary/20 hover:border-primary/40' : 'bg-gray-100 text-gray-400 border-gray-200 hover:border-gray-300'"
+                                            class="group flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded-md border transition-all duration-300 ml-auto"
+                                            :class="oversell ? 'bg-indigo-50/30 text-indigo-500 border-indigo-100 hover:bg-indigo-50' : 'bg-gray-50/50 text-gray-400 border-gray-100 hover:bg-gray-50'"
                                             :title="oversell ? 'Overselling enabled. Click to disable.' : 'Overselling disabled. Click to enable.'">
-                                            Oversell: <span x-text="oversell ? '{{ $product->oversell_limit ?? 'Unlimited' }}' : 'Off'"></span>
+                                            <span class="relative flex h-1.5 w-1.5">
+                                                <span :class="oversell ? 'animate-ping' : ''" class="absolute inline-flex h-full w-full rounded-full opacity-75" :class="oversell ? 'bg-indigo-400' : 'bg-gray-300'"></span>
+                                                <span class="relative inline-flex rounded-full h-1.5 w-1.5" :class="oversell ? 'bg-indigo-500' : 'bg-gray-400'"></span>
+                                            </span>
+                                            Oversell: <span x-text="oversell ? '{{ $product->oversell_limit ?? 'Unlimited' }}' : 'Disabled'"></span>
                                         </button>
                                     </div>
                                 </div>

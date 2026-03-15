@@ -71,22 +71,65 @@
                             @foreach($warehouses as $wh)
                                 @php 
                                     $stock = $product->stocks->firstWhere('warehouse_id', $wh->id);
-                                    $qty = $stock ? $stock->quantity : 0;
+                                    $oh = $stock ? $stock->quantity : 0;
+                                    $res = $stock ? $stock->reserve_quantity : 0;
+                                    $avl = $oh - $res;
                                 @endphp
                                 <td class="p-4 text-center">
-                                    <span class="font-medium {{ $qty <= 10 ? 'text-amber-600' : 'text-foreground' }}">
-                                        {{ number_format($qty, 0) }}
-                                    </span>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background border border-border/60 shadow-sm">
+                                            <span class="text-[8px] font-black uppercase tracking-tighter text-muted-foreground/40">OH:</span>
+                                            <span class="text-[10px] font-bold {{ $oh <= 5 ? 'text-amber-600' : 'text-foreground' }}">
+                                                {{ $oh > 0 ? '+' : '' }}{{ number_format($oh, 0) }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-muted/30 text-[8px] font-medium tracking-tight text-muted-foreground/60">
+                                            <span title="Reserved" class="flex items-center gap-0.5">
+                                                <span class="opacity-40 font-black uppercase text-[7px]">Res:</span>
+                                                {{ $res > 0 ? '+' : '' }}{{ number_format($res, 0) }}
+                                            </span>
+                                            <span class="text-muted-foreground/20">|</span>
+                                            <span title="Available" class="flex items-center gap-0.5 {{ $avl < 0 ? 'text-rose-600 font-black' : ($avl == 0 ? 'text-muted-foreground/40' : 'text-emerald-600') }}">
+                                                <span class="opacity-40 font-black uppercase text-[7px]">Avl:</span>
+                                                {{ $avl > 0 ? '+' : '' }}{{ number_format($avl, 0) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </td>
                             @endforeach
                             <td class="p-4 text-right">
-                                <div class="flex flex-col items-end">
-                                    <span class="text-lg font-bold {{ $product->stock_on_hand <= $product->reorder_level ? 'text-destructive' : 'text-primary' }}">
-                                        {{ number_format($product->stock_on_hand, 0) }}
-                                    </span>
-                                    @if($product->stock_on_hand <= $product->reorder_level)
-                                        <span class="text-[10px] font-bold text-destructive uppercase tracking-widest">Low Stock</span>
-                                    @endif
+                                <div class="flex flex-col items-end gap-2">
+                                    <!-- Main Stock Status -->
+                                    <div class="space-y-1">
+                                        @if($product->stock_on_hand <= 0)
+                                            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/10 w-fit shadow-sm ml-auto">
+                                                <span class="flex h-1 w-1 rounded-full bg-rose-500 animate-pulse"></span>
+                                                <span class="text-[8px] font-black uppercase tracking-widest">Out of Stock</span>
+                                            </div>
+                                        @elseif($product->stock_on_hand <= $product->reorder_level)
+                                            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/10 w-fit shadow-sm ml-auto">
+                                                <span class="flex h-1 w-1 rounded-full bg-amber-500 animate-pulse"></span>
+                                                <span class="text-[8px] font-black uppercase tracking-widest">Low: {{ floatval($product->stock_on_hand) }}</span>
+                                            </div>
+                                        @else
+                                            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/10 w-fit shadow-sm ml-auto">
+                                                <span class="flex h-1 w-1 rounded-full bg-emerald-500"></span>
+                                                <span class="text-[8px] font-black uppercase tracking-widest">Total: {{ floatval($product->stock_on_hand) }}</span>
+                                            </div>
+                                        @endif
+
+                                        <!-- Statistics Section -->
+                                        <div class="flex flex-col gap-1 items-end pr-2 border-r-2 border-gray-100/80">
+                                            @if($product->pending_order_qty > 0)
+                                                <span class="px-1 py-0.5 rounded bg-indigo-50/50 text-[8px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100/50 shadow-sm flex items-center gap-1">
+                                                    Placed: {{ floatval($product->pending_order_qty) }}
+                                                </span>
+                                            @endif
+                                            <span class="px-1 py-0.5 rounded bg-emerald-50/50 text-[8px] font-black text-emerald-600 uppercase tracking-widest border border-emerald-100/50 shadow-sm flex items-center gap-1">
+                                                Sellable: {{ floatval($product->sellable_qty) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

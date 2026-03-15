@@ -302,47 +302,50 @@
                                         </div>
                                     </td>
 
-                                    <!-- Inventory -->
                                     <td class="p-5 align-middle">
-                                        <div class="flex flex-col gap-2">
+                                        <div class="flex flex-col gap-3">
                                             @if($product->manage_stock)
-                                                @if($product->stock_on_hand <= 0)
-                                                    <div
-                                                        class="inline-flex items-center gap-2 rounded-full bg-red-50/80 px-3 py-1 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/10 w-fit shadow-sm">
-                                                        <div class="relative flex h-2 w-2">
-                                                            <span
-                                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                                <!-- Main Stock Status -->
+                                                <div class="space-y-1.5">
+                                                    @if($product->stock_on_hand <= 0)
+                                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/10 w-fit shadow-sm">
+                                                            <span class="flex h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                                            <span class="text-[9px] font-black uppercase tracking-[0.1em]">Out of Stock</span>
                                                         </div>
-                                                        Out of Stock
-                                                    </div>
-                                                @elseif($product->stock_on_hand <= $product->reorder_level)
-                                                    <div
-                                                        class="inline-flex items-center gap-2 rounded-full bg-amber-50/80 px-3 py-1 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/10 w-fit shadow-sm">
-                                                        <div class="relative flex h-2 w-2">
-                                                            <span
-                                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                                    @elseif($product->stock_on_hand <= $product->reorder_level)
+                                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/10 w-fit shadow-sm">
+                                                            <span class="flex h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                                            <span class="text-[9px] font-black uppercase tracking-[0.1em]">Low Stock: {{ floatval($product->stock_on_hand) }}</span>
                                                         </div>
-                                                        Low: {{ floatval($product->stock_on_hand) }}
-                                                    </div>
-                                                @else
-                                                    <div
-                                                        class="inline-flex items-center gap-2 rounded-full bg-emerald-50/80 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/10 w-fit shadow-sm">
-                                                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                                        InStock: {{ floatval($product->stock_on_hand) }}
-                                                    </div>
-                                                @endif
-                                                @if($product->pending_order_qty > 0)
-                                                    <div class="mt-1.5 flex flex-col gap-1">
-                                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/50 border border-indigo-100/50 text-[10px] font-black text-indigo-600 uppercase tracking-widest shadow-sm">
-                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                                            </svg>
-                                                            Placed: {{ floatval($product->pending_order_qty) }}
+                                                    @else
+                                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/10 w-fit shadow-sm">
+                                                            <span class="flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                            <span class="text-[9px] font-black uppercase tracking-[0.1em]">In Stock: {{ floatval($product->stock_on_hand) }}</span>
+                                                        </div>
+                                                    @endif
+
+                                                    <!-- Committed & Sellable Details -->
+                                                    <div class="flex flex-col gap-2 pl-3 border-l-2 border-gray-100/80">
+                                                        <div class="flex items-center gap-2 group/stat">
+                                                            <span class="p-1 px-1.5 rounded-md bg-indigo-50/50 text-[10px] font-black text-indigo-500 uppercase tracking-widest border border-indigo-100/50 shadow-sm flex items-center gap-1.5 transition-transform group-hover/stat:scale-105">
+                                                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                                </svg>
+                                                                Placed: {{ floatval($product->pending_order_qty) }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2 group/stat">
+                                                            <span class="p-1 px-1.5 rounded-md bg-emerald-50/50 text-[10px] font-black text-emerald-600 uppercase tracking-widest border border-emerald-100/50 shadow-sm flex items-center gap-1.5 transition-transform group-hover/stat:scale-105">
+                                                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                Sellable: {{ floatval($product->sellable_qty) }}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                @endif
+                                                </div>
+
+                                                <!-- Oversell Toggle -->
                                                 <div x-data="{ 
                                                     oversell: {{ $product->allow_oversell ? 'true' : 'false' }},
                                                     async toggle() {
@@ -365,19 +368,23 @@
                                                     }
                                                 }">
                                                     <button @click="toggle"
-                                                        class="text-[9px] font-bold px-2 py-0.5 rounded-md border transition-all duration-200 mt-1 w-fit"
-                                                        :class="oversell ? 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:border-indigo-400' : 'bg-gray-50 text-gray-400 border-gray-100 hover:border-gray-300'"
+                                                        class="group flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded-md border transition-all duration-300"
+                                                        :class="oversell ? 'bg-indigo-50/30 text-indigo-500 border-indigo-100 hover:bg-indigo-50' : 'bg-gray-50/50 text-gray-400 border-gray-100 hover:bg-gray-50'"
                                                         :title="oversell ? 'Overselling enabled. Click to disable.' : 'Overselling disabled. Click to enable.'">
-                                                        Oversell: <span x-text="oversell ? '{{ $product->oversell_limit ?? 'Unlimited' }}' : 'Off'"></span>
+                                                        <span class="relative flex h-1.5 w-1.5">
+                                                            <span :class="oversell ? 'animate-ping' : ''" class="absolute inline-flex h-full w-full rounded-full opacity-75" :class="oversell ? 'bg-indigo-400' : 'bg-gray-300'"></span>
+                                                            <span class="relative inline-flex rounded-full h-1.5 w-1.5" :class="oversell ? 'bg-indigo-500' : 'bg-gray-400'"></span>
+                                                        </span>
+                                                        Oversell: <span x-text="oversell ? '{{ $product->oversell_limit ?? 'Unlimited' }}' : 'Disabled'"></span>
                                                     </button>
                                                 </div>
-                                                <!-- <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-3">
-                                                                                                                {{ $product->unit_type }}
-                                                                                                            </div> -->
                                             @else
-                                                <span
-                                                    class="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1.5 rounded-xl w-fit border border-gray-100/50 border-dashed">Not
-                                                    Tracked</span>
+                                                <div class="flex items-center gap-2 p-3 rounded-2xl bg-gray-50/50 border border-dashed border-gray-200">
+                                                    <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                    </svg>
+                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Not Tracked</span>
+                                                </div>
                                             @endif
                                         </div>
                                     </td>

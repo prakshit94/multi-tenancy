@@ -55,14 +55,15 @@ class ProductController extends Controller
         $productIds = $products->pluck('id');
         $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
             ->whereHas('order', function ($q) {
-                $q->whereIn('status', ['pending', 'scheduled', 'draft', 'confirmed', 'processing', 'ready_to_ship']);
+                $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship']);
             })
             ->selectRaw('product_id, SUM(quantity) as total_pending')
             ->groupBy('product_id')
             ->pluck('total_pending', 'product_id');
 
         foreach ($products as $product) {
-            $product->pending_order_qty = $pendingQuantities->get($product->id, 0);
+            $product->pending_order_qty = (float) $pendingQuantities->get($product->id, 0);
+            $product->sellable_qty = (float) $product->stock_on_hand - $product->pending_order_qty;
         }
 
         return view('central.products.index', compact('products'));
