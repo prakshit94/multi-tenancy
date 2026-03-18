@@ -141,7 +141,7 @@
                                             <circle cx="18.5" cy="18.5" r="2.5"></circle>
                                         </svg>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-x-8 gap-y-1 w-full">
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-1 w-full">
                                         <div>
                                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block">Courier / Carrier</span>
                                             <span class="font-semibold text-sm text-foreground" x-text="activeOrder?.shipments?.[0]?.carrier || activeOrder?.shipping_method || '-'"></span>
@@ -149,6 +149,11 @@
                                         <div>
                                             <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block">Tracking Number</span>
                                             <span class="font-medium font-mono text-sm text-primary" x-text="activeOrder?.shipments?.[0]?.tracking_number || '-'"></span>
+                                        </div>
+                                        <div class="col-span-2 md:col-span-1">
+                                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block">Dispatch Date & Time</span>
+                                            <span class="font-medium text-sm text-foreground" 
+                                                x-text="activeOrder?.shipments?.[0]?.shipped_at ? new Date(activeOrder.shipments[0].shipped_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -850,6 +855,11 @@
                                             </a>
                                             <span
                                                 class="text-[10px] font-mono text-muted-foreground">{{ $order->created_at->format('M d, H:i') }}</span>
+                                            @if($order->shipments->first()?->shipped_at)
+                                                <span class="text-[9px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded w-fit">
+                                                    🚀 {{ $order->shipments->first()->shipped_at->format('M d, H:i') }}
+                                                </span>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="p-4 px-4 align-middle">
