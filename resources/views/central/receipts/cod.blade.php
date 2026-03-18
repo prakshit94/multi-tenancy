@@ -136,7 +136,7 @@
             <strong>District:</strong> {{ $order->shippingAddress->district }}<br>
             <strong>Post Office:</strong> {{ $order->shippingAddress->post_office }}<br>
             <strong>State:</strong> {{ $order->shippingAddress->state }} - {{ $order->shippingAddress->pincode }}<br>
-            <strong>Contact:</strong> {{ $order->customer->mobile }}
+            <strong>Contact:</strong> {{ $order->customer->mobile }} @if($order->customer->phone_number_2) / {{ $order->customer->phone_number_2 }} @endif
         </div>
 
         <div class="box">

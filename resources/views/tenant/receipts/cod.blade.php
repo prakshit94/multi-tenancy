@@ -69,6 +69,10 @@
             <td>Customer:</td>
             <td class="text-right">{{ $order->customer->name }}</td>
         </tr>
+        <tr>
+            <td>Contact:</td>
+            <td class="text-right">{{ $order->customer->mobile }} @if($order->customer->phone_number_2) / {{ $order->customer->phone_number_2 }} @endif</td>
+        </tr>
     </table>
 
     <div class="separator"></div>
