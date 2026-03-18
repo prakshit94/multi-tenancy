@@ -505,7 +505,7 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-col md:flex-row justify-between items-center gap-6 mt-8 p-6 bg-gray-50/50 rounded-2xl border border-gray-100" x-data="{ showShipModal: false }">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-6 mt-8 p-6 bg-gray-50/50 rounded-2xl border border-gray-100" x-data="{ showShipModal: false, courier: '', trackingNumber: '' }">
                         <div class="flex items-center gap-3 w-full md:w-auto">
                             <a href="{{ route('tenant.orders.index') }}" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-all">
                                 <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
@@ -648,13 +648,33 @@
                                         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                                             <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Ship Order</h3>
                                             <div class="mt-4 space-y-4">
-                                                <div>
+                                                <div class="space-y-1.5 focus-within:text-indigo-600 transition-colors">
                                                     <label class="block text-sm font-medium text-gray-700">Courier / Carrier</label>
-                                                    <input type="text" name="carrier" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g. FedEx, Local">
+                                                    <div class="relative">
+                                                        <select name="carrier" 
+                                                            x-model="courier" 
+                                                            required
+                                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm cursor-pointer font-medium">
+                                                            <option value="">Select Courier</option>
+                                                            <option value="India Post">India Post</option>
+                                                            <option value="DTDC">DTDC</option>
+                                                            <option value="Blue Dart">Blue Dart</option>
+                                                            <option value="Delhivery">Delhivery</option>
+                                                            <option value="Ecom Express">Ecom Express</option>
+                                                            <option value="XpressBees">XpressBees</option>
+                                                            <option value="Amazon Shipping">Amazon Shipping</option>
+                                                            <option value="FedEx">FedEx</option>
+                                                            <option value="DHL">DHL</option>
+                                                            <option value="Vehicle">Vehicle</option>
+                                                            <option value="LMD">LMD</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <label class="block text-sm font-medium text-gray-700">Tracking Number</label>
-                                                    <input type="text" name="tracking_number" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                                <div class="space-y-1.5 focus-within:text-indigo-600 transition-colors">
+                                                    <label class="block text-sm font-medium text-gray-700" x-text="courier === 'Vehicle' ? 'Vehicle Number' : (courier === 'LMD' ? 'Reference Number' : 'Tracking Number')"></label>
+                                                    <input type="text" name="tracking_number" x-model="trackingNumber" required
+                                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm font-medium"
+                                                        :placeholder="courier === 'Vehicle' ? 'Enter Vehicle Number' : (courier === 'LMD' ? 'Enter Reference' : 'Tracking Scan ID')">
                                                 </div>
                                             </div>
                                         </div>

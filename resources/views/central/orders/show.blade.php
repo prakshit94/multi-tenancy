@@ -786,22 +786,49 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <form action="{{ route('central.orders.update-status', $order) }}" method="POST" class="space-y-4">
+            <form action="{{ route('central.orders.update-status', $order) }}" method="POST" class="space-y-4" x-data="{ courier: '', trackingNumber: '' }">
                 @csrf
                 <input type="hidden" name="action" value="ship">
 
-                <div class="space-y-1.5">
+                <div class="space-y-1.5 focus-within:text-indigo-600 transition-colors">
                     <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Courier / Carrier</label>
-                    <input type="text" name="carrier"
-                        class="flex h-10 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                        placeholder="e.g. FedEx, BlueDart">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011 1v2.5a.5.5 0 01-1 0V16zm-1.5-3h.01M9 16H5v2h4v-2z"></path></svg>
+                        </div>
+                        <select name="carrier" 
+                            x-model="courier" 
+                            required
+                            class="flex h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all appearance-none cursor-pointer font-medium">
+                            <option value="">Select Courier</option>
+                            <option value="India Post">India Post</option>
+                            <option value="DTDC">DTDC</option>
+                            <option value="Blue Dart">Blue Dart</option>
+                            <option value="Delhivery">Delhivery</option>
+                            <option value="Ecom Express">Ecom Express</option>
+                            <option value="XpressBees">XpressBees</option>
+                            <option value="Amazon Shipping">Amazon Shipping</option>
+                            <option value="FedEx">FedEx</option>
+                            <option value="DHL">DHL</option>
+                            <option value="Vehicle">Vehicle</option>
+                            <option value="LMD">LMD</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="space-y-1.5">
-                    <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Tracking Number</label>
-                    <input type="text" name="tracking_number"
-                        class="flex h-10 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                        placeholder="Tracking Scan ID">
+                <div class="space-y-1.5 focus-within:text-indigo-600 transition-colors">
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-500" x-text="courier === 'Vehicle' ? 'Vehicle Number' : (courier === 'LMD' ? 'Reference Number' : 'Tracking Number')"></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                        </div>
+                        <input type="text" name="tracking_number" x-model="trackingNumber" required
+                            class="flex h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-medium"
+                            :placeholder="courier === 'Vehicle' ? 'Enter Vehicle Number' : (courier === 'LMD' ? 'Enter Reference' : 'Tracking Scan ID')">
+                    </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4">
@@ -895,22 +922,50 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
-                <form action="{{ route('central.shipments.update', $shipment) }}" method="POST" class="space-y-4">
+                <form action="{{ route('central.shipments.update', $shipment) }}" method="POST" class="space-y-4" x-data="{ courier: '{{ old('carrier', $shipment->carrier) }}', trackingNumber: '{{ old('tracking_number', $shipment->tracking_number) }}' }">
                     @csrf
                     @method('PUT')
                     
-                    <div class="space-y-1.5">
+                    <div class="space-y-1.5 focus-within:text-indigo-600 transition-colors">
                         <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Courier / Carrier</label>
-                        <input type="text" name="carrier" value="{{ old('carrier', $shipment->carrier) }}" required
-                            class="flex h-10 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                            placeholder="e.g. FedEx, BlueDart">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011 1v2.5a.5.5 0 01-1 0V16zm-1.5-3h.01M9 16H5v2h4v-2z"></path></svg>
+                            </div>
+                            <select name="carrier" 
+                                x-model="courier" 
+                                required
+                                class="flex h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all appearance-none cursor-pointer font-medium">
+                                <option value="India Post" {{ $shipment->carrier === 'India Post' ? 'selected' : '' }}>India Post</option>
+                                <option value="DTDC" {{ $shipment->carrier === 'DTDC' ? 'selected' : '' }}>DTDC</option>
+                                <option value="Blue Dart" {{ $shipment->carrier === 'Blue Dart' ? 'selected' : '' }}>Blue Dart</option>
+                                <option value="Delhivery" {{ $shipment->carrier === 'Delhivery' ? 'selected' : '' }}>Delhivery</option>
+                                <option value="Ecom Express" {{ $shipment->carrier === 'Ecom Express' ? 'selected' : '' }}>Ecom Express</option>
+                                <option value="XpressBees" {{ $shipment->carrier === 'XpressBees' ? 'selected' : '' }}>XpressBees</option>
+                                <option value="Amazon Shipping" {{ $shipment->carrier === 'Amazon Shipping' ? 'selected' : '' }}>Amazon Shipping</option>
+                                <option value="FedEx" {{ $shipment->carrier === 'FedEx' ? 'selected' : '' }}>FedEx</option>
+                                <option value="DHL" {{ $shipment->carrier === 'DHL' ? 'selected' : '' }}>DHL</option>
+                                <option value="Vehicle" {{ $shipment->carrier === 'Vehicle' ? 'selected' : '' }}>Vehicle</option>
+                                <option value="LMD" {{ $shipment->carrier === 'LMD' ? 'selected' : '' }}>LMD</option>
+                                @if(!in_array($shipment->carrier, ['India Post', 'DTDC', 'Blue Dart', 'Delhivery', 'Ecom Express', 'XpressBees', 'Amazon Shipping', 'FedEx', 'DHL', 'Vehicle', 'LMD']))
+                                    <option value="{{ $shipment->carrier }}" selected>{{ $shipment->carrier }}</option>
+                                @endif
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Tracking Number</label>
-                        <input type="text" name="tracking_number" value="{{ old('tracking_number', $shipment->tracking_number) }}"
-                            class="flex h-10 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                            placeholder="Tracking Scan ID">
+                    <div class="space-y-1.5 focus-within:text-indigo-600 transition-colors">
+                        <label class="text-xs font-bold uppercase tracking-wider text-gray-500" x-text="courier === 'Vehicle' ? 'Vehicle Number' : (courier === 'LMD' ? 'Reference Number' : 'Tracking Number')"></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                            </div>
+                            <input type="text" name="tracking_number" x-model="trackingNumber" required
+                                class="flex h-11 w-full rounded-xl border border-gray-200 bg-white pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-medium">
+                        </div>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4">
