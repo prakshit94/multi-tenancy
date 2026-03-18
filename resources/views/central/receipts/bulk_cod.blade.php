@@ -148,7 +148,7 @@
                     @else
                         <strong>Address:</strong> N/A (No Shipping Address)<br>
                     @endif
-                    <strong>Contact:</strong> {{ $order->customer->mobile }}
+                    <strong>Contact:</strong> {{ $order->customer->mobile }} @if($order->customer->phone_number_2) / {{ $order->customer->phone_number_2 }} @endif
                 </div>
 
                 <div class="box">
