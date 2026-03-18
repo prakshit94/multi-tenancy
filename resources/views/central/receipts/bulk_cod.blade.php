@@ -156,7 +156,7 @@
                     <strong>Krushify Agro Pvt. Ltd.</strong><br>
                     Srp Camp, New 150ft Ring Road, Ghanteshwar,<br>
                     Bapa Sitaram Chowk, Vardhman Sheri Block No: 22<br>
-                    Gujarat. | <strong>Mobile:</strong> 9199125925<br>
+                    360006 Rajkot, Gujarat. | <strong>Mobile:</strong> 9199125925<br>
                     <strong>GST:</strong> 24AAMCK0386L1Z6
                 </div>
 

@@ -26,7 +26,7 @@ class OrderTrackingController extends Controller
         // Default to 'shipped' if no status is provided
         $status = $request->input('status', 'shipped');
 
-        $query = Order::with(['customer', 'items', 'trackings.user', 'shippingAddress'])
+        $query = Order::with(['customer', 'items', 'trackings.user', 'shippingAddress', 'billingAddress', 'shipments'])
             ->latest();
 
         // Apply Shipping Status Filter

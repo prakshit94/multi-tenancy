@@ -219,7 +219,7 @@
                     @endif
 
                     {{-- Cancel (Separate) --}}
-                     @if(!in_array($order->status, ['completed', 'cancelled', 'returned']))
+                     @if(!in_array($order->status, ['completed', 'cancelled', 'returned', 'shipped', 'in_transit', 'delivered']))
                         @can('orders cancel')
                             <form action="{{ route('central.orders.update-status', $order) }}" method="POST"
                                 onsubmit="return confirm('Are you sure?');" class="ml-2 pl-2 border-l border-gray-200">

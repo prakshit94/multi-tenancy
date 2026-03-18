@@ -310,7 +310,7 @@ class OrderService
      */
     public function cancelOrder(Order $order): Order
     {
-        if (in_array($order->status, ['shipped', 'delivered', 'cancelled'], true)) {
+        if (in_array($order->status, ['shipped', 'in_transit', 'delivered', 'cancelled'], true)) {
             throw new Exception("Order cannot be cancelled from status: {$order->status}");
         }
 

@@ -113,7 +113,7 @@
                                             class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1">Customer
                                             Name</span>
                                         <span class="font-semibold text-base text-foreground"
-                                            x-text="activeOrder?.customer?.name || ((activeOrder?.customer?.first_name || '') + ' ' + (activeOrder?.customer?.last_name || '')).trim() || 'Guest User'"></span>
+                                            x-text="activeOrder?.customer?.name || ((activeOrder?.customer?.first_name || '') + ' ' + (activeOrder?.customer?.middle_name || '') + ' ' + (activeOrder?.customer?.last_name || '')).replace(/\s+/g, ' ').trim() || 'Guest User'"></span>
                                     </div>
                                     <div>
                                         <span
@@ -126,6 +126,30 @@
                                             class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1">Email</span>
                                         <span class="font-medium text-sm text-foreground/80 truncate block"
                                             x-text="activeOrder?.customer?.email || '-'"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Courier Details -->
+                            <div class="p-5 rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-3 bg-indigo-500/10 rounded-full text-indigo-600 shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect>
+                                            <path d="M16 8h4l3 3v5h-7V8z"></path>
+                                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                                        </svg>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-x-8 gap-y-1 w-full">
+                                        <div>
+                                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block">Courier / Carrier</span>
+                                            <span class="font-semibold text-sm text-foreground" x-text="activeOrder?.shipments?.[0]?.carrier || activeOrder?.shipping_method || '-'"></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block">Tracking Number</span>
+                                            <span class="font-medium font-mono text-sm text-primary" x-text="activeOrder?.shipments?.[0]?.tracking_number || '-'"></span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -175,6 +199,12 @@
                                                         class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-semibold block mb-0.5">District</span>
                                                     <span class="font-medium text-foreground"
                                                         x-text="activeOrder.billing_address.district || '-'"></span>
+                                                </div>
+                                                <div>
+                                                    <span
+                                                        class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-semibold block mb-0.5">Post Office</span>
+                                                    <span class="font-medium text-foreground"
+                                                        x-text="activeOrder.billing_address.post_office || '-'"></span>
                                                 </div>
                                                 <div>
                                                     <span
@@ -263,6 +293,12 @@
                                                         class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-semibold block mb-0.5">District</span>
                                                     <span class="font-medium text-foreground"
                                                         x-text="activeOrder.shipping_address.district || '-'"></span>
+                                                </div>
+                                                <div>
+                                                    <span
+                                                        class="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-semibold block mb-0.5">Post Office</span>
+                                                    <span class="font-medium text-foreground"
+                                                        x-text="activeOrder.shipping_address.post_office || '-'"></span>
                                                 </div>
                                                 <div>
                                                     <span
