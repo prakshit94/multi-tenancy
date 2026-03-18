@@ -363,6 +363,9 @@ class OrderProcessingController extends Controller
                         // Increment Quantity
                         $stock->increment('quantity', (int) $item->quantity);
 
+                        // Refresh Product Denormalized Stock
+                        $item->product->refreshStockOnHand();
+
                         // Log Movement
                         InventoryMovement::create([
                             'stock_id' => $stock->id,

@@ -261,6 +261,9 @@ class OrderReturnController extends Controller
                                 );
                                 $stock->increment('quantity', $item->quantity);
 
+                                // Refresh Product Denormalized Stock
+                                $item->product->refreshStockOnHand();
+
                                 InventoryMovement::create([
                                     'stock_id' => $stock->id,
                                     'type' => 'return',

@@ -127,9 +127,9 @@
             class="space-y-5">
             @csrf
 
-            <div class="space-y-4">
+            <div class="space-y-4" x-show="modalMode === 'ready'">
 
-                <!-- Courier Service -->
+                <!-- Courier Service (Only for Ready to Ship) -->
                 <div>
                     <label
                         class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Courier
@@ -151,7 +151,8 @@
                             name="courier"
                             list="courier-list"
                             value="India Post"
-                            required
+                            style="display: block;"
+                            :required="modalMode === 'ready'"
                             placeholder="Select or type courier"
                             class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all">
 
@@ -171,7 +172,7 @@
                     </div>
                 </div>
 
-                <!-- Tracking Number -->
+                <!-- Tracking Number (Only for Ready to Ship) -->
                 <div>
                     <label
                         class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tracking
@@ -190,12 +191,17 @@
 
                         <input type="text"
                             name="tracking_number"
-                            required
+                            :required="modalMode === 'ready'"
                             placeholder="Tracking ID"
                             class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all">
                     </div>
                 </div>
 
+            </div>
+            
+            <div x-show="modalMode === 'dispatch'" class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 flex items-start gap-3">
+                <svg class="w-5 h-5 text-indigo-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <p class="text-sm font-medium text-indigo-900 leading-relaxed">Ensure the package has been physically handed over to the courier. The tracking information confirmed during the 'Ready to Ship' phase will be retained.</p>
             </div>
 
             <div class="flex justify-end gap-3 pt-2">
@@ -228,9 +234,8 @@
                 <h3 class="text-xl font-bold text-gray-900">Bulk Dispatch</h3>
                 <p class="text-sm text-gray-500">Upload a CSV file to dispatch multiple orders.</p>
                 <p class="text-xs text-muted-foreground mt-1">Required columns: <code
-                        class="bg-gray-100 px-1 py-0.5 rounded">order_number</code>, <code
-                        class="bg-gray-100 px-1 py-0.5 rounded">courier</code>, <code
-                        class="bg-gray-100 px-1 py-0.5 rounded">tracking_number</code></p>
+                        class="bg-gray-100 px-1 py-0.5 rounded text-gray-900 border border-gray-200">order_number</code></p>
+                <p class="text-[11px] text-gray-400 mt-0.5 pb-2">Optional columns: <code class="bg-gray-100 px-1 py-0.5 rounded">courier</code>, <code class="bg-gray-100 px-1 py-0.5 rounded">tracking_number</code> (will reuse existing if left empty)</p>
             </div>
 
             <form action="{{ route('central.processing.orders.bulk-dispatch') }}" method="POST"

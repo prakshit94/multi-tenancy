@@ -42,7 +42,11 @@
     ? 'bg-green-100 text-green-800'
     : ($invoice->status === 'partial'
         ? 'bg-blue-100 text-blue-800'
-        : 'bg-red-100 text-red-800') }}">
+        : ($invoice->status === 'cancelled'
+            ? 'bg-gray-100 text-gray-800'
+            : ($invoice->status === 'returned'
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-red-100 text-red-800'))) }}">
                                     {{ strtoupper($invoice->status) }}
                                 </span>
                             </div>
@@ -163,7 +167,11 @@
 
                         <h3 class="font-bold text-lg mb-4">Record Payment</h3>
 
-                        @if($invoice->status !== 'paid')
+                        @if($invoice->status === 'cancelled' || $invoice->status === 'returned')
+                            <div class="text-center bg-gray-50 p-4 rounded text-gray-800 font-bold border border-gray-200 uppercase tracking-widest text-xs">
+                                Invoice {{ $invoice->status }}
+                            </div>
+                        @elseif($invoice->status !== 'paid')
                             <form action="{{ route('central.invoices.add-payment', $invoice) }}" method="POST">
                                 @csrf
 

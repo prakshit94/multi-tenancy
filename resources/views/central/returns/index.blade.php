@@ -100,21 +100,34 @@
             <div class="flex items-center gap-1 overflow-x-auto no-scrollbar w-full md:w-auto">
                 @php
                     $filters = [
-                        ['label' => 'All', 'value' => null],
-                        ['label' => 'Requested', 'value' => 'requested'],
-                        ['label' => 'Approved', 'value' => 'approved'],
-                        ['label' => 'Received', 'value' => 'received'],
-                        ['label' => 'Refunded', 'value' => 'refunded'],
-                        ['label' => 'Rejected', 'value' => 'rejected'],
-                        ['label' => 'Completed', 'value' => 'completed'],
+                        ['label' => 'Requested', 'value' => 'requested', 'key' => 'requested'],
+                        ['label' => 'Approved', 'value' => 'approved', 'key' => 'approved'],
+                        ['label' => 'Received', 'value' => 'received', 'key' => 'received'],
+                        ['label' => 'Refunded', 'value' => 'refunded', 'key' => 'refunded'],
+                        ['label' => 'Rejected', 'value' => 'rejected', 'key' => 'rejected'],
+                        ['label' => 'Completed', 'value' => 'completed', 'key' => 'completed'],
                     ];
+                    $currentStatus = request('status', 'requested');
                 @endphp
                 @foreach($filters as $filter)
                     <a href="{{ route('central.returns.index', ['status' => $filter['value']]) }}" 
-                       class="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap {{ request('status') == $filter['value'] ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50' }}">
+                       class="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 {{ $currentStatus == $filter['value'] ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50' }}">
                         {{ $filter['label'] }}
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold {{ $currentStatus == $filter['value'] ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400' }}">
+                            {{ $stats[$filter['key']] ?? 0 }}
+                        </span>
                     </a>
                 @endforeach
+
+                <div class="h-6 w-px bg-gray-200 mx-2 hidden md:block"></div>
+
+                <a href="{{ route('central.returns.create') }}" 
+                   class="px-4 py-2 rounded-xl text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-all whitespace-nowrap flex items-center gap-2">
+                    Available Orders
+                    <span class="px-1.5 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-bold">
+                        {{ $stats['eligible_orders'] ?? 0 }}
+                    </span>
+                </a>
             </div>
 
             <form action="{{ url()->current() }}" method="GET" class="relative group w-full md:w-72">
@@ -161,6 +174,19 @@
                                     </div>
                                     
                                     <div class="flex items-center gap-2">
+                                        @if($rma->status === 'refunded')
+                                            @can('returns manage')
+                                            <form action="{{ route('central.returns.update-status', $rma) }}" method="POST">
+                                                @csrf @method('PATCH')
+                                                <input type="hidden" name="status" value="completed">
+                                                <button type="submit" class="px-3 py-1.5 text-xs font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all flex items-center gap-1 shadow-sm">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                                    Mark as Completed
+                                                </button>
+                                            </form>
+                                            @endcan
+                                        @endif
+
                                         @if($rma->status === 'requested')
                                             @can('returns edit')
                                             <a href="{{ route('central.returns.edit', $rma) }}" class="px-3 py-1.5 text-xs font-semibold bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">Edit</a>

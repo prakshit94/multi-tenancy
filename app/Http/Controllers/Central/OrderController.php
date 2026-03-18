@@ -515,8 +515,8 @@ class OrderController extends Controller
     public function edit(Order $order): View|RedirectResponse
     {
         $this->authorize('orders edit');
-        if (in_array($order->status, ['completed', 'delivered', 'cancelled', 'returned'])) {
-            return back()->with('error', 'Cannot edit orders that are already delivered, completed, cancelled, or returned.');
+        if (in_array($order->status, ['shipped', 'in_transit', 'completed', 'delivered', 'cancelled', 'returned'])) {
+            return back()->with('error', 'Cannot edit orders that are already dispatched, delivered, completed, cancelled, or returned.');
         }
         $pendingProductQuantities = \App\Models\OrderItem::whereHas('order', function ($q) {
             $q->where('status', 'pending');
@@ -560,8 +560,8 @@ class OrderController extends Controller
     public function update(Request $request, Order $order): JsonResponse|RedirectResponse
     {
         $this->authorize('orders edit');
-        if (in_array($order->status, ['completed', 'delivered', 'cancelled', 'returned'])) {
-            $msg = 'Cannot update orders that are already delivered, completed, cancelled, or returned.';
+        if (in_array($order->status, ['shipped', 'in_transit', 'completed', 'delivered', 'cancelled', 'returned'])) {
+            $msg = 'Cannot update orders that are already dispatched, delivered, completed, cancelled, or returned.';
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $msg], 422);
             }

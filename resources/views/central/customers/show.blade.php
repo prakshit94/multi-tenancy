@@ -78,7 +78,7 @@
                         <div class="space-y-4">
                             <div>
                                 <div class="text-xs text-gray-500 mb-1">Outstanding Balance</div>
-                                <div class="text-xl font-bold {{ $customer->outstanding_balance > 0 ? 'text-red-600' : 'text-green-600' }}">
+                                <div class="text-xl font-bold {{ $customer->outstanding_balance > 0 ? 'text-green-600' : 'text-red-600' }}">
                                     ₹{{ number_format((float) $customer->outstanding_balance, 0) }}
                                 </div>
                             </div>

@@ -33,24 +33,55 @@ class InvoiceController extends Controller
 
         $query = Invoice::with(['order.customer']);
 
+        // Advanced Search (Invoice #, Order #, Customer Name, Customer Email)
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'like', "%{$search}%")
-                    ->orWhereHas(
-                        'order',
-                        fn($oq) =>
+                    ->orWhereHas('order', function ($oq) use ($search) {
                         $oq->where('order_number', 'like', "%{$search}%")
-                    );
+                            ->orWhereHas('customer', function ($cq) use ($search) {
+                                $cq->where('first_name', 'like', "%{$search}%")
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('email', 'like', "%{$search}%");
+                            });
+                    });
             });
+        }
+
+        // Date Range Filter
+        if ($request->filled('start_date')) {
+            $query->whereDate('issue_date', '>=', $request->input('start_date'));
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('issue_date', '<=', $request->input('end_date'));
         }
 
         if ($request->filled('status') && $request->input('status') !== 'all') {
             $query->where('status', (string) $request->input('status'));
         }
 
-        $perPage = (int) $request->input('per_page', 5);
-        $perPage = ($perPage > 0 && $perPage <= 100) ? $perPage : 5;
+        // Stats for cards and tabs
+        $stats = [
+            'total_receivable' => Invoice::whereNotIn('status', ['paid', 'cancelled', 'returned'])->get()->sum(fn($i) => $i->total_amount - $i->paid_amount),
+            'paid_this_month' => Payment::whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)->sum('amount'),
+            'overdue_count' => Invoice::where('status', 'overdue')->count(),
+            'overdue_amount' => Invoice::where('status', 'overdue')->get()->sum(fn($i) => $i->total_amount - $i->paid_amount),
+            
+            // Tab counts
+            'all_count' => Invoice::count(),
+            'paid_count' => Invoice::where('status', 'paid')->count(),
+            'pending_count' => Invoice::where('status', 'sent')->count(), // assuming 'sent' is pending
+            'partial_count' => Invoice::where('status', 'partial')->count(),
+            'overdue_tab_count' => Invoice::where('status', 'overdue')->count(),
+        ];
+        
+        // Correcting pending vs partial logic if needed - standardizing on UI tabs: Paid, Pending, Overdue
+        // If the code uses 'sent', 'partial', 'overdue', we should sum them or show them correctly.
+        $stats['pending_total_count'] = Invoice::whereIn('status', ['sent', 'partial'])->count();
+
+        $perPage = (int) $request->input('per_page', 10);
+        $perPage = ($perPage > 0 && $perPage <= 100) ? $perPage : 10;
 
         $invoices = $query->latest()->paginate($perPage)->withQueryString();
 
@@ -58,7 +89,7 @@ class InvoiceController extends Controller
             return view('central.invoices.partials.invoices-list', compact('invoices'));
         }
 
-        return view('central.invoices.index', compact('invoices'));
+        return view('central.invoices.index', compact('invoices', 'stats'));
     }
 
     /**

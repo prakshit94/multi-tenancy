@@ -239,7 +239,7 @@
 
                 {{-- Edit --}}
                 @can('orders edit')
-                    @if(!in_array($order->status, ['confirmed', 'completed', 'cancelled', 'returned']))
+                    @if(!in_array($order->status, ['confirmed', 'shipped', 'in_transit', 'completed', 'delivered', 'cancelled', 'returned']))
                         <a href="{{ route('central.orders.edit', $order) }}" class="inline-flex items-center px-3 py-1.5 border border-gray-200 shadow-sm text-xs font-bold rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-all gap-1">
                             <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             Edit
@@ -331,7 +331,15 @@
             </div>
 
             @if($order->shipments->isNotEmpty())
-                <div class="mt-10 bg-indigo-50/50 rounded-xl border border-indigo-100 p-6 flex flex-wrap gap-12 items-center">
+                <div class="mt-10 bg-indigo-50/50 rounded-xl border border-indigo-100 p-6 flex flex-wrap gap-12 items-center relative">
+                    <!-- Edit Tracking Button -->
+                    @can('orders manage')
+                        <button onclick="document.getElementById('edit-tracking-dialog').showModal()" class="absolute top-4 right-4 text-xs font-bold uppercase tracking-wider bg-white text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            Edit Tracking
+                        </button>
+                    @endcan
+
                     <div class="flex items-center gap-4">
                         <div class="p-3 bg-white rounded-lg text-indigo-600 shadow-sm border border-indigo-50">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -873,5 +881,49 @@
             </div>
         </form>
     </dialog>
+
+    <!-- Edit Tracking Dialog -->
+    @if($order->shipments->isNotEmpty())
+        @php $shipment = $order->shipments->first(); @endphp
+        <dialog id="edit-tracking-dialog"
+            class="p-0 rounded-2xl shadow-2xl backdrop:bg-black/50 w-full max-w-md bg-white border border-gray-100">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-gray-900">Edit Tracking Information</h3>
+                    <button onclick="document.getElementById('edit-tracking-dialog').close()"
+                        class="text-gray-400 hover:text-gray-600 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <form action="{{ route('central.shipments.update', $shipment) }}" method="POST" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Courier / Carrier</label>
+                        <input type="text" name="carrier" value="{{ old('carrier', $shipment->carrier) }}" required
+                            class="flex h-10 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            placeholder="e.g. FedEx, BlueDart">
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Tracking Number</label>
+                        <input type="text" name="tracking_number" value="{{ old('tracking_number', $shipment->tracking_number) }}"
+                            class="flex h-10 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            placeholder="Tracking Scan ID">
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" onclick="document.getElementById('edit-tracking-dialog').close()"
+                            class="px-4 py-2 text-sm font-semibold text-gray-500 hover:text-gray-700 transition">Cancel</button>
+                        <button type="submit"
+                            class="px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </dialog>
+    @endif
 
 @endsection

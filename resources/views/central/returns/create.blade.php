@@ -310,7 +310,7 @@
                             ...item,
                             selected: false,
                             available_qty: available,
-                            return_qty: available > 0 ? 1 : 0,
+                            return_qty: available > 0 ? available : 0,
                             condition: 'sellable',
                             product_name: item.product?.name || item.product_name || 'Unknown Item',
                             sku: item.product?.sku || item.sku || 'N/A',

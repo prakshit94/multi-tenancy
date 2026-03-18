@@ -148,4 +148,28 @@ class ShipmentController extends Controller
             return back()->with('error', 'Failed to update shipment status: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Update the carrier and tracking number of the shipment.
+     */
+    public function update(Request $request, Shipment $shipment): RedirectResponse
+    {
+        $this->authorize('orders manage');
+        
+        $validated = $request->validate([
+            'carrier' => 'required|string',
+            'tracking_number' => 'nullable|string',
+        ]);
+        
+        try {
+            $shipment->update([
+                'carrier' => $validated['carrier'],
+                'tracking_number' => $validated['tracking_number'],
+            ]);
+
+            return back()->with('success', 'Shipment tracking details updated successfully.');
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to update shipment tracking details: ' . $e->getMessage());
+        }
+    }
 }

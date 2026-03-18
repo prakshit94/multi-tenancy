@@ -18,6 +18,7 @@
                     class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
                                                                        {{ request('status') === null ? 'bg-background text-foreground shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-foreground hover:bg-background/50' }}">
                     All Invoices
+                    <span class="ml-1.5 px-1.5 py-0.5 rounded-md bg-muted/80 text-[10px]">{{ $stats['all_count'] }}</span>
                 </a>
 
                 <div class="w-px h-4 bg-border/40 mx-1"></div>
@@ -26,6 +27,7 @@
                     class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
                                                                        {{ request('status') === 'paid' ? 'bg-background text-emerald-600 shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-emerald-600 hover:bg-background/50' }}">
                     Paid
+                    <span class="ml-1.5 px-1.5 py-0.5 rounded-md bg-emerald-50 text-[10px]">{{ $stats['paid_count'] }}</span>
                 </a>
 
                 <div class="w-px h-4 bg-border/40 mx-1"></div>
@@ -34,6 +36,7 @@
                     class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
                                                                        {{ request('status') === 'pending' ? 'bg-background text-amber-600 shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-amber-600 hover:bg-background/50' }}">
                     Pending
+                    <span class="ml-1.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-[10px]">{{ $stats['pending_total_count'] }}</span>
                 </a>
 
                 <div class="w-px h-4 bg-border/40 mx-1"></div>
@@ -42,7 +45,51 @@
                     class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
                                                                        {{ request('status') === 'overdue' ? 'bg-background text-red-600 shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-red-600 hover:bg-background/50' }}">
                     Overdue
+                    <span class="ml-1.5 px-1.5 py-0.5 rounded-md bg-red-50 text-[10px]">{{ $stats['overdue_tab_count'] }}</span>
                 </a>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Total Receivable</span>
+                </div>
+                <div class="text-2xl font-black text-gray-900">₹{{ number_format($stats['total_receivable'], 2) }}</div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Collected (Month)</span>
+                </div>
+                <div class="text-2xl font-black text-gray-900">₹{{ number_format($stats['paid_this_month'], 2) }}</div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-red-50 text-red-600 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Overdue (Qty)</span>
+                </div>
+                <div class="text-2xl font-black text-gray-900">{{ $stats['overdue_count'] }}</div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-orange-50 text-orange-600 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">Overdue (Amt)</span>
+                </div>
+                <div class="text-2xl font-black text-gray-900">₹{{ number_format($stats['overdue_amount'], 2) }}</div>
             </div>
         </div>
 
@@ -86,6 +133,12 @@
                     if (event?.target?.name === 'search') {
                         url.searchParams.set('search', event.target.value);
                     }
+                    if (event?.target?.name === 'start_date') {
+                        url.searchParams.set('start_date', event.target.value);
+                    }
+                    if (event?.target?.name === 'end_date') {
+                        url.searchParams.set('end_date', event.target.value);
+                    }
 
                     if (event?.target?.name === 'per_page') {
                         url.searchParams.set('per_page', event.target.value);
@@ -117,71 +170,85 @@
 
             <!-- Toolbar -->
             <div
-                class="flex flex-col xl:flex-row items-center justify-between gap-4 py-4 px-2 bg-background/50 backdrop-blur-sm border-y border-border/40 mb-6">
-                <!-- Left: Selection & Bulk Actions -->
-                <div class="flex items-center gap-3 w-full xl:w-auto">
-                    <div class="flex items-center justify-center p-2 rounded-xl bg-white border border-input shadow-sm hover:bg-muted/50 transition-colors cursor-pointer"
-                        title="Select All on Page">
-                        <input type="checkbox" x-on:change="toggleAll()" x-model="selectAll"
-                            class="h-5 w-5 rounded-md border-input text-primary focus:ring-primary/20 bg-background cursor-pointer transition-all checked:bg-primary checked:border-primary">
+                class="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6 py-6 px-5 bg-white border border-gray-100 rounded-3xl shadow-sm mb-8 flex-wrap">
+                <!-- Left Section: Selection, Bulk Actions & Date Range -->
+                <div class="flex flex-col md:flex-row md:items-center gap-4 w-full xl:w-auto flex-wrap">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center p-2 rounded-xl bg-gray-50 border border-gray-100 shadow-sm hover:bg-gray-100 transition-colors cursor-pointer"
+                            title="Select All on Page">
+                            <input type="checkbox" x-on:change="toggleAll()" x-model="selectAll"
+                                class="h-5 w-5 rounded-md border-gray-200 text-primary focus:ring-primary/20 bg-white cursor-pointer transition-all checked:bg-primary checked:border-primary">
+                        </div>
+
+                        <div x-cloak x-show="selected.length > 0"
+                            class="flex items-center gap-2 animate-in fade-in slide-in-from-left-4">
+                            <div
+                                class="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs font-bold shadow-sm whitespace-nowrap">
+                                <span x-text="selected.length"></span> Selected
+                            </div>
+                        </div>
                     </div>
 
-                    <div x-cloak x-show="selected.length > 0"
-                        class="flex items-center gap-2 animate-in fade-in slide-in-from-left-4">
-                        <div
-                            class="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs font-bold shadow-sm whitespace-nowrap">
-                            <span x-text="selected.length"></span> Selected
-                        </div>
+                    <div class="hidden md:block h-8 w-px bg-gray-100 mx-1"></div>
+
+                    <!-- Date Range -->
+                    <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-1.5 border border-gray-100 shadow-sm w-full md:w-auto overflow-x-auto">
+                        <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <input type="date" name="start_date" @change="performSearch" value="{{ request('start_date') }}"
+                               class="border-none bg-transparent p-0 text-xs font-bold focus:ring-0 min-w-[100px]">
+                        <span class="text-gray-300">-</span>
+                        <input type="date" name="end_date" @change="performSearch" value="{{ request('end_date') }}"
+                               class="border-none bg-transparent p-0 text-xs font-bold focus:ring-0 min-w-[100px]">
                     </div>
                 </div>
 
-                <!-- Right: Filters, Search & Actions -->
-                <div class="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
-                    <!-- Per Page -->
-                    <div
-                        class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-input shadow-sm h-[42px] shrink-0">
-                        <label for="per_page"
-                            class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Show</label>
-                        <select id="per_page" name="per_page" @change="performSearch"
-                            class="border-none bg-transparent p-0 pr-8 text-sm font-semibold focus:ring-0 cursor-pointer">
-                            @foreach([5, 10, 15] as $size)
-                                <option value="{{ $size }}" {{ request('per_page', 5) == $size ? 'selected' : '' }}>
-                                    {{ $size }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Search -->
-                    <div class="relative w-full sm:w-72">
-                        <div
-                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <circle cx="11" cy="11" r="8" />
-                                <path d="m21 21-4.3-4.3" />
-                            </svg>
+                <!-- Right Section: Filters, Search & Actions -->
+                <div class="flex flex-col lg:flex-row items-center gap-4 w-full xl:w-auto flex-wrap">
+                    <!-- Per Page & Search -->
+                    <div class="flex items-center gap-3 w-full lg:w-auto">
+                        <!-- Per Page -->
+                        <div class="flex items-center gap-2 px-3 h-[42px] rounded-xl bg-white border border-gray-100 shadow-sm shrink-0">
+                            <label for="per_page" class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Show</label>
+                            <select id="per_page" name="per_page" @change="performSearch"
+                                class="border-none bg-transparent p-0 pr-8 text-sm font-bold focus:ring-0 cursor-pointer">
+                                @foreach([10, 25, 50] as $size)
+                                    <option value="{{ $size }}" {{ request('per_page', 10) == $size ? 'selected' : '' }}>
+                                        {{ $size }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search invoices..."
-                            @input.debounce.500ms="performSearch"
-                            class="flex h-[42px] w-full rounded-xl border border-input bg-white pl-9 pr-3 py-2 text-sm font-medium shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all outline-none">
+
+                        <!-- Search -->
+                        <div class="relative flex-1 lg:w-64">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.3-4.3" />
+                                </svg>
+                            </div>
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search invoices..."
+                                @input.debounce.500ms="performSearch"
+                                class="flex h-[42px] w-full rounded-xl border border-gray-100 bg-white pl-10 pr-4 py-2 text-sm font-medium shadow-sm focus:ring-2 focus:ring-primary/10 focus:border-primary/30 transition-all outline-none">
+                        </div>
                     </div>
 
-                    <!-- Action Buttons Group -->
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <!-- Action Buttons -->
+                    <div class="flex items-center gap-2 w-full lg:w-auto">
                         <button type="button" @click="exportSelected()"
-                            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 h-[42px] rounded-xl bg-orange-100/80 text-orange-700 border border-orange-200/50 shadow-sm hover:bg-orange-200 hover:shadow-md transition-all text-sm font-bold">
+                            class="flex-1 lg:flex-none inline-flex items-center justify-center gap-2.5 px-5 h-[42px] rounded-xl bg-orange-50 text-orange-700 border border-orange-100 shadow-sm hover:bg-orange-100 hover:shadow-md active:scale-[0.98] transition-all text-sm font-bold whitespace-nowrap">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                             </svg>
                             Export
                         </button>
 
                         <button type="button" @click="$dispatch('open-upload-modal')"
-                            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 h-[42px] rounded-xl border border-emerald-200/50 bg-emerald-100/50 hover:bg-emerald-100 hover:shadow-md text-sm font-bold transition-all shadow-sm text-emerald-700">
+                            class="flex-1 lg:flex-none inline-flex items-center justify-center gap-2.5 px-5 h-[42px] rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:shadow-md active:scale-[0.98] text-sm font-bold transition-all shadow-sm whitespace-nowrap">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                             Import
                         </button>

@@ -137,12 +137,17 @@ class OrderService
             | Update existing shipment or create if missing
             */
 
+            $existingShipment = $order->shipments()->first();
+
+            $finalTracking = !empty($trackingNumber) ? $trackingNumber : (is_object($existingShipment) ? $existingShipment->tracking_number : null);
+            $finalCarrier = !empty($carrier) ? $carrier : (is_object($existingShipment) ? $existingShipment->carrier : null);
+
             $order->shipments()->updateOrCreate(
                 ['order_id' => $order->id],
                 [
                     'warehouse_id' => $order->warehouse_id,
-                    'tracking_number' => $trackingNumber,
-                    'carrier' => $carrier,
+                    'tracking_number' => $finalTracking,
+                    'carrier' => $finalCarrier,
                     'status' => 'shipped',
                     'shipped_at' => now(),
                 ]
@@ -283,6 +288,24 @@ class OrderService
     }
 
     /**
+     * Mark order as returned.
+     */
+    public function returnOrder(Order $order): Order
+    {
+        return DB::transaction(function () use ($order) {
+            $order->update([
+                'status' => 'returned',
+                'updated_by' => Auth::id(),
+            ]);
+
+            // Mark associated invoices as returned
+            $order->invoices()->update(['status' => 'returned']);
+
+            return $order->fresh();
+        });
+    }
+
+    /**
      * Cancel order and release reserved stock.
      */
     public function cancelOrder(Order $order): Order
@@ -302,6 +325,9 @@ class OrderService
                 'cancelled_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
+
+            // Cancel associated invoices
+            $order->invoices()->update(['status' => 'cancelled']);
 
             return $order->fresh();
         });

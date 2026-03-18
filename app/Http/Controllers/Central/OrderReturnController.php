@@ -37,6 +37,8 @@ class OrderReturnController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', (string) $request->input('status'));
+        } else {
+            $query->where('status', 'requested');
         }
 
         $perPage = (int) $request->input('per_page', 10);
@@ -51,6 +53,7 @@ class OrderReturnController extends Controller
             'refunded' => OrderReturn::where('status', 'refunded')->count(),
             'rejected' => OrderReturn::where('status', 'rejected')->count(),
             'completed' => OrderReturn::where('status', 'completed')->count(),
+            'eligible_orders' => Order::whereIn('status', ['shipped', 'delivered'])->count(),
         ];
 
         return view('central.returns.index', compact('returns', 'stats'));
@@ -88,7 +91,7 @@ class OrderReturnController extends Controller
                         }
                     }
 
-                    $preSelectedOrder->items->transform(function ($item) use ($returnedQuantities) {
+                    collect($preSelectedOrder->items)->transform(function ($item) use ($returnedQuantities) {
                         $qtyReturned = $returnedQuantities[$item->product_id] ?? 0;
                         $item->available_quantity = max(0, $item->quantity - $qtyReturned);
                         return $item;
@@ -143,7 +146,7 @@ class OrderReturnController extends Controller
                 // Validate requested quantities against available quantities
                 foreach ($validated['items'] as $requestedItem) {
                     // Get ALL line items for this product to calculate total purchaesd qty
-                    $orderItems = $order->items->where('product_id', $requestedItem['product_id']);
+                    $orderItems = collect($order->items)->where('product_id', $requestedItem['product_id']);
 
                     if ($orderItems->isEmpty()) {
                         throw new Exception("Product ID {$requestedItem['product_id']} does not belong to this order.");
@@ -188,6 +191,9 @@ class OrderReturnController extends Controller
                         'condition' => $item['condition'],
                     ]);
                 }
+
+                // Sync Order Status
+                app(\App\Services\OrderService::class)->returnOrder($order);
             });
 
             return redirect()->route('central.returns.index')->with('success', 'RMA Requested.');
@@ -212,35 +218,20 @@ class OrderReturnController extends Controller
     public function updateStatus(Request $request, OrderReturn $orderReturn): RedirectResponse
     {
         $this->authorize('returns manage');
-        $validated = $request->validate(['status' => 'required|in:approved,received,refunded,rejected']);
+        $validated = $request->validate(['status' => 'required|in:approved,received,refunded,rejected,completed']);
 
         try {
             DB::transaction(function () use ($validated, $orderReturn) {
                 $orderReturn->update(['status' => $validated['status']]);
 
                 if ($validated['status'] === 'received') {
-                    // Restock Logic
-                    foreach ($orderReturn->items as $item) {
-                        if ($item->condition === 'sellable') {
-                            $warehouseId = $orderReturn->order->warehouse_id;
-                            if ($warehouseId) {
-                                $stock = InventoryStock::firstOrCreate(
-                                    ['warehouse_id' => $warehouseId, 'product_id' => $item->product_id],
-                                    ['quantity' => 0]
-                                );
-                                $stock->increment('quantity', $item->quantity);
+                    // Logic already handled in receiveReturn if using processing controller, 
+                    // otherwise if manually updated here without processing:
+                }
 
-                                InventoryMovement::create([
-                                    'stock_id' => $stock->id,
-                                    'type' => 'return',
-                                    'quantity' => $item->quantity,
-                                    'reference_id' => $orderReturn->id,
-                                    'reason' => 'RMA Received: ' . $orderReturn->rma_number,
-                                    'user_id' => auth()->id(),
-                                ]);
-                            }
-                        }
-                    }
+                // Sync Order Status if terminal state
+                if (in_array($validated['status'], ['approved', 'received', 'refunded'])) {
+                    app(\App\Services\OrderService::class)->returnOrder($orderReturn->order);
                 }
             });
 
@@ -378,6 +369,9 @@ class OrderReturnController extends Controller
                             // Cast to int for safety
                             $stock->increment('quantity', (int) $item->quantity);
 
+                            // Refresh Product Denormalized Stock
+                            $item->product->refreshStockOnHand();
+
                             InventoryMovement::create([
                                 'stock_id' => $stock->id,
                                 'type' => 'return',
@@ -431,22 +425,35 @@ class OrderReturnController extends Controller
         }
 
         $validated = $request->validate([
-            'refunded_amount' => 'required|numeric|min:0.01',
+            'refunded_amount' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
 
         try {
             DB::transaction(function () use ($validated, $return) {
-                // In a real system, you would call your Payment Gateway here (Stripe/PayPal)
-                // For now, we record the refund in the database.
-
+                // Record the refund in the return record
                 $return->update([
                     'status' => 'refunded',
                     'refunded_amount' => $validated['refunded_amount'],
                 ]);
+
+                // Sync Customer Balance
+                $customer = $return->order->customer;
+                if ($customer) {
+                    $customer->increment('outstanding_balance', $validated['refunded_amount']);
+                }
+
+                // Create a Payment Record (as a refund payment for tracking)
+                \App\Models\Payment::create([
+                    'order_id' => $return->order_id,
+                    'amount' => $validated['refunded_amount'], // Stored as positive as requested
+                    'method' => 'refund',
+                    'paid_at' => now(),
+                    'notes' => $validated['notes'] ?? 'Order Return Refund: ' . $return->rma_number,
+                ]);
             });
 
-            return redirect()->route('central.returns.show', $return)->with('success', 'Refund Processed Successfully.');
+            return redirect()->route('central.returns.show', $return)->with('success', 'Refund Processed Successfully and Customer Balance Updated.');
         } catch (Exception $e) {
             return back()->withInput()->with('error', 'Failed to process refund: ' . $e->getMessage());
         }

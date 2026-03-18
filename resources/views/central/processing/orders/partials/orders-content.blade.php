@@ -1,26 +1,6 @@
 <!-- Stats Grid -->
 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
-    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-center gap-3 mb-2">
-            <div class="p-2 bg-gray-50 text-gray-600 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                    <line x1="16" x2="16" y1="2" y2="6" />
-                    <line x1="8" x2="8" y1="2" y2="6" />
-                    <line x1="3" x2="21" y1="10" y2="10" />
-                    <path d="M8 14h.01" />
-                    <path d="M12 14h.01" />
-                    <path d="M16 14h.01" />
-                    <path d="M8 18h.01" />
-                    <path d="M12 18h.01" />
-                    <path d="M16 18h.01" />
-                </svg>
-            </div>
-            <span class="text-sm font-medium text-gray-500">Total Active</span>
-        </div>
-        <div class="text-2xl font-black text-gray-900">{{ $counts['active'] ?? 0 }}</div>
-    </div>
+
 
     <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
         <div class="flex items-center gap-3 mb-2">
@@ -136,14 +116,12 @@
     <div class="flex flex-wrap items-center gap-1 w-full xl:w-auto">
         @php
             $navItems = [
-                ['label' => 'Active', 'route' => route('central.processing.orders.index'), 'active' => !request('status'), 'count' => $counts['active'] ?? 0],
-                ['label' => 'Confirmed', 'route' => route('central.processing.orders.index', ['status' => 'confirmed']), 'active' => request('status') === 'confirmed', 'count' => $counts['confirmed'] ?? 0],
+                ['label' => 'Confirmed', 'route' => route('central.processing.orders.index', ['status' => 'confirmed']), 'active' => request('status') === 'confirmed' || !request('status'), 'count' => $counts['confirmed'] ?? 0],
                 ['label' => 'Processing', 'route' => route('central.processing.orders.index', ['status' => 'processing']), 'active' => request('status') === 'processing', 'count' => $counts['processing'] ?? 0],
                 ['label' => 'Ready to Ship', 'route' => route('central.processing.orders.index', ['status' => 'ready_to_ship']), 'active' => request('status') === 'ready_to_ship', 'count' => $counts['ready_to_ship'] ?? 0],
                 ['label' => 'Dispatched', 'route' => route('central.processing.orders.index', ['status' => 'shipped']), 'active' => request('status') === 'shipped', 'count' => $counts['shipped'] ?? 0],
                 ['label' => 'Delivered', 'route' => route('central.processing.orders.index', ['status' => 'delivered']), 'active' => request('status') === 'delivered', 'count' => $counts['delivered'] ?? 0],
                 ['label' => 'Cancelled', 'route' => route('central.processing.orders.index', ['status' => 'cancelled']), 'active' => request('status') === 'cancelled', 'count' => $counts['cancelled'] ?? 0],
-                ['label' => 'All History', 'route' => route('central.processing.orders.index', ['status' => 'all']), 'active' => request('status') === 'all', 'count' => $counts['all'] ?? 0],
             ];
         @endphp
 
@@ -293,6 +271,12 @@
                             class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors hover:bg-purple-50 hover:text-purple-600 text-foreground/80">
                             <span class="w-2 h-2 rounded-full bg-purple-500"></span>
                             Mark as Processing
+                        </button>
+                        <button type="submit" name="status" value="shipped" x-show="isStatusValid('shipped')"
+                            @click="if(!confirm('Are you sure you want to dispatch ' + selected.length + ' orders?')) $event.preventDefault()"
+                            class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors hover:bg-indigo-50 hover:text-indigo-600 text-foreground/80">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            Mark as Dispatched
                         </button>
                     </form>
 

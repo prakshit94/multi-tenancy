@@ -60,7 +60,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-muted-foreground">Outstanding</p>
-                    <p class="text-2xl font-bold">₹{{ number_format((float)$customer->outstanding_balance, 2) }}</p>
+                    <p class="text-2xl font-bold {{ $customer->outstanding_balance > 0 ? 'text-emerald-500' : 'text-rose-500' }}">₹{{ number_format((float)$customer->outstanding_balance, 2) }}</p>
                 </div>
             </div>
         </div>
@@ -383,7 +383,7 @@
                             </div>
                             <div class="flex justify-between border-b border-border/20 pb-2">
                                 <span class="text-sm text-muted-foreground">Outstanding</span>
-                                <span class="text-sm font-semibold text-rose-500">₹ {{ number_format($customer->outstanding_balance, 2) }}</span>
+                                <span class="text-sm font-semibold {{ $customer->outstanding_balance > 0 ? 'text-emerald-500' : 'text-rose-500' }}">₹ {{ number_format($customer->outstanding_balance, 2) }}</span>
                             </div>
                             <div class="flex justify-between border-b border-border/20 pb-2">
                                 <span class="text-sm text-muted-foreground">Credit Validity</span>

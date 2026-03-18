@@ -333,8 +333,18 @@
                         <div class="px-4 py-2 bg-purple-50 rounded-lg border border-purple-100 flex items-center gap-2">
                             <span class="text-sm text-purple-700 font-medium">Refunded:</span>
                             <span
-                                class="text-sm font-bold text-purple-900">${{ number_format($orderReturn->refunded_amount, 2) }}</span>
+                                class="text-sm font-bold text-purple-900">₹{{ number_format($orderReturn->refunded_amount, 2) }}</span>
                         </div>
+                        @can('returns manage')
+                            <form action="{{ route('central.returns.update-status', $orderReturn) }}" method="POST">
+                                @csrf @method('PATCH')
+                                <input type="hidden" name="status" value="completed">
+                                <button type="submit" 
+                                        class="inline-flex justify-center rounded-lg border border-transparent bg-emerald-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all">
+                                    Mark as Completed
+                                </button>
+                            </form>
+                        @endcan
                     @endif
                 </div>
             </div>

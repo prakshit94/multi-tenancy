@@ -123,9 +123,9 @@ class OrderProcessingController extends Controller
         $counts['active'] = $activeCount;
         $counts['all'] = array_sum(array_diff_key($counts, ['active' => 0, 'all' => 0]));
 
-        // Default: Show active processing orders if no status is selected
+        // Default: Show confirmed orders if no status is selected
         if (!$request->has('status')) {
-            $query->whereIn('status', ['confirmed', 'processing']);
+            $query->where('status', 'confirmed');
         }
         // If status is provided
         elseif ($request->input('status') !== 'all') {
@@ -290,7 +290,7 @@ class OrderProcessingController extends Controller
     // Normalize headers
     $header = array_map(fn($h) => strtolower(trim($h)), $header);
 
-    $required = ['order_number', 'courier', 'tracking_number'];
+    $required = ['order_number']; // Only order_number is required, tracking is already populated in ready to ship
     $missing = array_diff($required, $header);
 
     if (!empty($missing)) {
@@ -314,12 +314,12 @@ class OrderProcessingController extends Controller
         }
 
         $orderNumber = $row[$indices['order_number']] ?? null;
-        $courier = $row[$indices['courier']] ?? null;
-        $tracking = $row[$indices['tracking_number']] ?? null;
+        $courier = isset($indices['courier']) ? ($row[$indices['courier']] ?? null) : null;
+        $tracking = isset($indices['tracking_number']) ? ($row[$indices['tracking_number']] ?? null) : null;
 
-        if (!$orderNumber || !$courier || !$tracking) {
+        if (!$orderNumber) {
             $failCount++;
-            $errors[] = "Invalid row data for order.";
+            $errors[] = "Invalid row data for order. Missing order number.";
             continue;
         }
 
@@ -458,6 +458,9 @@ class OrderProcessingController extends Controller
                         // Increment Quantity
                         $stock->increment('quantity', $item->quantity);
 
+                        // Refresh Product Denormalized Stock
+                        $item->product->refreshStockOnHand();
+
                         // Log Movement
                         InventoryMovement::create([
                             'stock_id' => $stock->id,
@@ -472,6 +475,9 @@ class OrderProcessingController extends Controller
                         // For now, we just don't add stock.
                     }
                 }
+
+                // Sync Order Status
+                app(\App\Services\OrderService::class)->returnOrder($orderReturn->order);
             });
 
             return back()->with('success', 'Return items received. Inventory updated based on condition.');
@@ -534,7 +540,7 @@ class OrderProcessingController extends Controller
     $validated = $request->validate([
         'ids' => 'required|array',
         'ids.*' => 'exists:orders,id',
-        'status' => 'required|in:confirmed,processing,ready_to_ship,delivered,cancelled',
+        'status' => 'required|in:confirmed,processing,ready_to_ship,shipped,delivered,cancelled',
     ]);
 
     try {
@@ -589,6 +595,16 @@ class OrderProcessingController extends Controller
                             'status' => 'ready_to_ship',
                             'updated_by' => auth()->id(),
                         ]);
+
+                        break;
+
+                    case 'shipped':
+
+                        if ($order->status !== 'ready_to_ship') {
+                            throw new Exception();
+                        }
+
+                        $this->orderService->shipOrder($order);
 
                         break;
 

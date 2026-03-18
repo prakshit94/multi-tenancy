@@ -21,7 +21,7 @@
 
                 <a href="{{ route('central.orders.tracking.index', ['status' => 'shipped']) }}"
                     class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status', 'shipped') === 'shipped' ? 'bg-background text-indigo-600 shadow-sm ring-1 ring-indigo-500/10' : 'text-muted-foreground/80 hover:text-indigo-600 hover:bg-background/40' }}">
-                    En Route
+                    On the way
                 </a>
                 <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
@@ -93,9 +93,9 @@
                     </div>
 
                     <div
-                        class="grid grid-cols-1 md:grid-cols-12 gap-6 overflow-y-auto custom-scrollbar flex-1 p-6 md:p-8 pt-6">
+                        class="grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto custom-scrollbar flex-1 p-6 md:p-8 pt-6">
                         <!-- Order Details Column -->
-                        <div class="md:col-span-7 space-y-6">
+                        <div class="lg:col-span-7 space-y-6">
                             <!-- Customer Info Card -->
                             <div
                                 class="flex items-start gap-4 p-5 rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -399,7 +399,7 @@
                         </div>
 
                         <!-- Verification Form Column -->
-                        <div class="md:col-span-5 md:border-l border-border/50 md:pl-6">
+                        <div class="lg:col-span-5 lg:border-l border-border/50 lg:pl-6">
                             <!-- Locked State Message -->
                             <template
                                 x-if="['delivered'].includes(activeOrder?.shipping_status) || ['completed'].includes(activeOrder?.status)">
@@ -435,20 +435,20 @@
                                 </div>
                             </template>
 
-                            <!-- Tracking Form -->
                             <template
                                 x-if="!( ['delivered'].includes(activeOrder?.shipping_status) || ['completed'].includes(activeOrder?.status) )">
                                 <form :action="`{{ url('orders') }}/${activeOrder?.id}/tracking`" method="POST"
-                                    class="space-y-4">
+                                    class="space-y-4" x-data="{ trackingStatus: 'en_route' }"
+                                    x-on:submit.prevent="if(trackingStatus === 'return') { window.location.href = `{{ route('central.returns.create') }}?order_id=${activeOrder?.id}` } else { $el.submit() }">
                                     @csrf
 
                                     <div class="space-y-3">
                                         <label class="block text-sm font-medium text-foreground">Delivery Status</label>
-                                        <div class="grid grid-cols-1 gap-3">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">
                                             <label class="cursor-pointer relative">
-                                                <input type="radio" name="status" value="delivered" class="peer sr-only">
+                                                <input type="radio" name="status" value="delivered" class="peer sr-only" x-model="trackingStatus">
                                                 <div
-                                                    class="p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-500/5 peer-checked:ring-1 peer-checked:ring-emerald-500 flex items-center gap-3">
+                                                    class="p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-500/5 peer-checked:ring-1 peer-checked:ring-emerald-500 flex items-center gap-3 h-full">
                                                     <div
                                                         class="h-8 w-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -459,17 +459,16 @@
                                                     </div>
                                                     <div class="text-left">
                                                         <span class="text-sm font-semibold block">Delivered</span>
-                                                        <span class="text-[10px] text-muted-foreground block">Successfully
-                                                            reached the customer</span>
+                                                        <span class="text-[10px] text-muted-foreground block line-clamp-1">Successfully reached customer</span>
                                                     </div>
                                                 </div>
                                             </label>
 
                                             <label class="cursor-pointer relative">
                                                 <input type="radio" name="status" value="en_route" class="peer sr-only"
-                                                    checked>
+                                                    x-model="trackingStatus">
                                                 <div
-                                                    class="p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-all peer-checked:border-indigo-500 peer-checked:bg-indigo-500/5 peer-checked:ring-1 peer-checked:ring-indigo-500 flex items-center gap-3">
+                                                    class="p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-all peer-checked:border-indigo-500 peer-checked:bg-indigo-500/5 peer-checked:ring-1 peer-checked:ring-indigo-500 flex items-center gap-3 h-full">
                                                     <div
                                                         class="h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -482,18 +481,17 @@
                                                         </svg>
                                                     </div>
                                                     <div class="text-left">
-                                                        <span class="text-sm font-semibold block">En Route</span>
-                                                        <span class="text-[10px] text-muted-foreground block">Update from
-                                                            carrier/rider</span>
+                                                        <span class="text-sm font-semibold block">On the way</span>
+                                                        <span class="text-[10px] text-muted-foreground block line-clamp-1">Update from carrier/rider</span>
                                                     </div>
                                                 </div>
                                             </label>
 
                                             <label class="cursor-pointer relative">
                                                 <input type="radio" name="status" value="attempt_failed"
-                                                    class="peer sr-only">
+                                                    class="peer sr-only" x-model="trackingStatus">
                                                 <div
-                                                    class="p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-all peer-checked:border-amber-500 peer-checked:bg-amber-500/5 peer-checked:ring-1 peer-checked:ring-amber-500 flex items-center gap-3">
+                                                    class="p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-all peer-checked:border-amber-500 peer-checked:bg-amber-500/5 peer-checked:ring-1 peer-checked:ring-amber-500 flex items-center gap-3 h-full">
                                                     <div
                                                         class="h-8 w-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -508,23 +506,43 @@
                                                     </div>
                                                     <div class="text-left">
                                                         <span class="text-sm font-semibold block">Attempt Failed</span>
-                                                        <span class="text-[10px] text-muted-foreground block">Customer
+                                                        <span class="text-[10px] text-muted-foreground block line-clamp-1">Customer
                                                             unavailable/wrong address</span>
                                                     </div>
                                                 </div>
                                             </label>
+                                            
+                                            <label class="cursor-pointer relative">
+                                                <input type="radio" name="status" value="return"
+                                                    class="peer sr-only" x-model="trackingStatus">
+                                                <div
+                                                    class="p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-all peer-checked:border-destructive peer-checked:bg-destructive/5 peer-checked:ring-1 peer-checked:ring-destructive flex items-center gap-3 h-full">
+                                                    <div
+                                                        class="h-8 w-8 rounded-full bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                                            <path d="M3 3v5h5"/>
+                                                        </svg>
+                                                    </div>
+                                                    <div class="text-left">
+                                                        <span class="text-sm font-semibold block">Order Return</span>
+                                                        <span class="text-[10px] text-muted-foreground block line-clamp-1">Initiate RMA / return process</span>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                            
                                         </div>
                                     </div>
 
-                                    <div>
+                                    <div x-show="trackingStatus !== 'return'" x-collapse>
                                         <label class="block text-sm font-medium mb-1.5 text-foreground">Delivery
                                             Remarks</label>
                                         <textarea name="remarks" rows="2"
                                             class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none resize-none"
-                                            placeholder="Enter delivery log notes..." required></textarea>
+                                            placeholder="Enter delivery log notes..." :required="trackingStatus !== 'return'"></textarea>
                                     </div>
 
-                                    <div>
+                                    <div x-show="trackingStatus !== 'return'" x-collapse>
                                         <label class="block text-sm font-medium mb-1.5 text-foreground">Next Follow-up
                                             (Optional)</label>
                                         <div class="relative">
@@ -533,12 +551,16 @@
                                         </div>
                                     </div>
 
-                                    <div class="pt-2 flex justify-end gap-3 border-t border-border mt-auto">
+                                    <div class="pt-2 flex flex-col sm:flex-row justify-end gap-3 border-t border-border mt-auto">
                                         <button type="button" @click="trackingModalOpen = false"
-                                            class="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent transition-colors">Cancel</button>
+                                            class="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent transition-colors order-2 sm:order-1">Cancel</button>
                                         <button type="submit"
-                                            class="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-95 transition-all">
-                                            Save Status
+                                            class="w-full sm:w-auto px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-95 transition-all order-1 sm:order-2">
+                                            <span x-show="trackingStatus !== 'return'">Save Status</span>
+                                            <span x-show="trackingStatus === 'return'" style="display: none;" class="flex items-center justify-center gap-2">
+                                                Proceed to RMA 
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="translate-y-[1px]"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                            </span>
                                         </button>
                                     </div>
                                 </form>
@@ -583,7 +605,7 @@
                                                                             'text-indigo-600 dark:text-indigo-400': tracking.status === 'en_route',
                                                                             'text-foreground': !['delivered', 'attempt_failed', 'en_route'].includes(tracking.status)
                                                                         }"
-                                                                    x-text="tracking.status.replace('_', ' ')"></span>
+                                                                    x-text="tracking.status === 'en_route' ? 'On the way' : tracking.status.replace('_', ' ')"></span>
                                                                 <span
                                                                     class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="10"
@@ -793,35 +815,46 @@
                                         <span class="font-bold text-sm">Rs {{ number_format($order->grand_total, 2) }}</span>
                                     </td>
                                     <td class="p-4 px-4 align-middle">
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold rounded-full bg-muted/50 text-muted-foreground border border-border/50 uppercase tracking-wide">
-                                            {{ $order->status }}
+                                        @php
+                                            $statusClasses = match ($order->status) {
+                                                'completed' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                                'shipped', 'in_transit' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                                                'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                                'cancelled' => 'bg-red-50 text-red-700 border-red-200',
+                                                'processing', 'ready_to_ship' => 'bg-purple-50 text-purple-700 border-purple-200',
+                                                'returned' => 'bg-rose-50 text-rose-700 border-rose-200',
+                                                'scheduled' => 'bg-violet-50 text-violet-700 border-violet-200',
+                                                default => 'bg-amber-50 text-amber-700 border-amber-200',
+                                            };
+                                        @endphp
+                                        <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-bold rounded-xl border {{ $statusClasses }} uppercase tracking-wider whitespace-nowrap shadow-sm">
+                                            {{ str_replace('_', ' ', $order->status) }}
                                         </span>
                                     </td>
                                     <td class="p-4 px-4 align-middle">
                                         @if($order->shipping_status === 'delivered')
                                             <span
-                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm uppercase tracking-wider">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                                 Delivered
                                             </span>
                                         @else
                                             @php $lastTracking = $order->trackings->last(); @endphp
                                             @if($lastTracking && $lastTracking->status === 'attempt_failed')
                                                 <span
-                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 shadow-sm">
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl bg-amber-50 text-amber-700 border border-amber-200 shadow-sm uppercase tracking-wider">
                                                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                                                     Attempt Failed
                                                 </span>
                                             @elseif($lastTracking && $lastTracking->status === 'en_route')
                                                 <span
-                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 shadow-sm">
-                                                    <span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
-                                                    En Route
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm uppercase tracking-wider">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                                                    On the way
                                                 </span>
                                             @else
                                                 <span
-                                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20 shadow-sm">
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl bg-blue-50 text-blue-700 border border-blue-200 shadow-sm uppercase tracking-wider">
                                                     <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
                                                     Shipped
                                                 </span>

@@ -30,6 +30,12 @@
                                 @elseif($invoice->status === 'overdue')
                                     <span
                                         class="px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border bg-red-100 text-red-700 border-red-200">Overdue</span>
+                                @elseif($invoice->status === 'cancelled')
+                                    <span
+                                        class="px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border bg-gray-100 text-gray-700 border-gray-200">Cancelled</span>
+                                @elseif($invoice->status === 'returned')
+                                    <span
+                                        class="px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border bg-blue-100 text-blue-700 border-blue-200">Returned</span>
                                 @else
                                     <span
                                         class="px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border bg-amber-100 text-amber-700 border-amber-200">Pending</span>
@@ -42,6 +48,9 @@
                                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                     </svg>
                                     {{ $invoice->order->customer->name ?? $invoice->order->customer->first_name ?? 'Unknown Customer' }}
+                                    @if($invoice->order->customer->email)
+                                        <span class="text-[10px] opacity-70">({{ $invoice->order->customer->email }})</span>
+                                    @endif
                                 </div>
                                 <span class="w-1 h-1 rounded-full bg-border"></span>
                                 <span>Due: {{ $invoice->due_date?->format('M d, Y') ?? '-' }}</span>
@@ -61,13 +70,47 @@
                         @endif
                     </div>
                 </div>
+
+                {{-- Progress Bar --}}
+                @if($invoice->status !== 'paid')
+                <div class="mt-6">
+                    <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
+                        <span>Payment Progress</span>
+                        <span>{{ number_format(($invoice->paid_amount / $invoice->total_amount) * 100, 0) }}%</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                        <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-1000" 
+                             style="width: {{ ($invoice->paid_amount / $invoice->total_amount) * 100 }}%"></div>
+                    </div>
+                </div>
+                @endif
             </div>
 
             {{-- Action Bar --}}
-            <div class="px-6 py-4 bg-muted/10 border-t border-border/40 flex justify-end">
+            <div class="px-6 py-4 bg-gray-50/50 border-t border-border/40 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('central.invoices.pdf', $invoice) }}" 
+                       class="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                       title="Download PDF">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                    </a>
+                    
+                    @if($invoice->status !== 'paid')
+                    <a href="{{ route('central.invoices.show', $invoice) }}?action=pay" 
+                       class="p-2 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                       title="Quick Payment">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </a>
+                    @endif
+                </div>
+
                 <a href="{{ route('central.invoices.show', $invoice) }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-background text-foreground border border-border shadow-sm rounded-lg text-sm font-semibold hover:bg-muted transition-all">
-                    View Invoice
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-white text-foreground border border-border shadow-sm rounded-lg text-sm font-bold hover:bg-gray-50 transition-all">
+                    View Details
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                     </svg>
