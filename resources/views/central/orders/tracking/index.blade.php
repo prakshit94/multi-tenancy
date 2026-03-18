@@ -712,11 +712,14 @@
 
             <!-- Control Bar -->
             <div
-                class="flex flex-wrap items-center justify-between gap-4 p-2 pl-3 bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] mb-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-                <div class="flex items-center gap-3">
-                    <form id="search-form" method="GET" action="{{ url()->current() }}"
-                        class="relative transition-all duration-300 group-focus-within:w-64 w-56">
-                        <input type="hidden" name="status" value="{{ request('status', 'shipped') }}">
+                class="flex flex-wrap items-center justify-between gap-4 p-3 bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] mb-6 transition-all duration-300">
+                <form id="filter-form" method="GET" action="{{ url()->current() }}"
+                    class="flex flex-wrap items-center gap-4 w-full">
+                    <input type="hidden" name="status" value="{{ request('status', 'shipped') }}">
+                    <input type="hidden" name="per_page" value="{{ request('per_page', 10) }}">
+
+                    <!-- Search -->
+                    <div class="relative group w-full sm:w-64">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -726,20 +729,61 @@
                             </svg>
                         </div>
                         <input type="text" name="search" value="{{ request('search') }}"
-                            placeholder="Search (Order #, Name, Mobile...)"
-                            class="block w-full rounded-xl border-border/50 py-2 pl-9 pr-8 text-foreground bg-background/50 placeholder:text-muted-foreground/70 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm leading-6 transition-all shadow-sm outline-none">
-                        @if(request('search'))
+                            placeholder="Search Order, Name..."
+                            class="block w-full rounded-xl border-border/50 py-2 pl-9 pr-4 text-foreground bg-background/50 placeholder:text-muted-foreground/70 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm leading-6 transition-all shadow-sm outline-none">
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="flex items-center gap-2 bg-background/40 p-1 rounded-xl border border-border/40 shadow-sm">
+                        <input type="date" name="start_date" value="{{ request('start_date') }}"
+                            class="bg-transparent border-none text-xs font-semibold focus:ring-0 cursor-pointer text-foreground px-2 py-1 rounded-lg hover:bg-background/60 transition-colors">
+                        <span class="text-[10px] font-bold text-muted-foreground uppercase opacity-50 px-1">to</span>
+                        <input type="date" name="end_date" value="{{ request('end_date') }}"
+                            class="bg-transparent border-none text-xs font-semibold focus:ring-0 cursor-pointer text-foreground px-2 py-1 rounded-lg hover:bg-background/60 transition-colors">
+                    </div>
+
+                    <!-- Courier -->
+                    <div class="relative w-full sm:w-48">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                        </div>
+                        <select name="courier"
+                            class="block w-full rounded-xl border-border/50 py-2 pl-9 pr-8 text-foreground bg-background/50 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm appearance-none outline-none transition-all shadow-sm cursor-pointer hover:bg-background/80">
+                            <option value="">All Couriers</option>
+                            @foreach($couriers as $courier)
+                                <option value="{{ $courier }}" {{ request('courier') == $courier ? 'selected' : '' }}>{{ $courier }}</option>
+                            @endforeach
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-muted-foreground/60">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Combined Action -->
+                    <div class="flex items-center gap-2 ml-auto">
+                        <button type="submit"
+                            class="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 transition-all shadow-md shadow-primary/20 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                            Apply Filters
+                        </button>
+
+                        @if(request()->anyFilled(['search', 'start_date', 'end_date', 'courier']))
                             <a href="{{ url()->current() }}?status={{ request('status', 'shipped') }}"
-                                class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-muted-foreground hover:text-foreground">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all"
+                                title="Reset Filters">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                    <path d="M3 3v5h5" />
                                 </svg>
                             </a>
                         @endif
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
 
             <div

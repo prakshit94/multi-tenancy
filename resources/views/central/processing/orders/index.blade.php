@@ -104,8 +104,8 @@
     </div>
 
     <!-- Dispatch / Ready Modal -->
-<div x-data="{ open: false, orderId: '', orderNumber: '', actionUrl: '', modalMode: '' }"
-    x-on:open-dispatch-modal.window="open = true; orderId = $event.detail.orderId; orderNumber = $event.detail.orderNumber; actionUrl = $event.detail.actionUrl; modalMode = $event.detail.mode || 'dispatch'"
+<div x-data="{ open: false, orderId: '', orderNumber: '', actionUrl: '', modalMode: '', courier: 'India Post', trackingNumber: '' }"
+    x-on:open-dispatch-modal.window="open = true; orderId = $event.detail.orderId; orderNumber = $event.detail.orderNumber; actionUrl = $event.detail.actionUrl; modalMode = $event.detail.mode || 'dispatch'; courier = 'India Post'; trackingNumber = '';"
     x-show="open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
     style="display: none;">
 
@@ -147,36 +147,36 @@
                             </svg>
                         </div>
 
-                        <input type="text"
-                            name="courier"
-                            list="courier-list"
-                            value="India Post"
-                            style="display: block;"
+                        <select name="courier"
+                            x-model="courier"
                             :required="modalMode === 'ready'"
-                            placeholder="Select or type courier"
-                            class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all">
-
-                        <!-- Dropdown Suggestions -->
-                        <datalist id="courier-list">
-                            <option value="India Post">
-                            <option value="DTDC">
-                            <option value="Blue Dart">
-                            <option value="Delhivery">
-                            <option value="Ecom Express">
-                            <option value="XpressBees">
-                            <option value="Amazon Shipping">
-                            <option value="FedEx">
-                            <option value="DHL">
-                        </datalist>
-
+                            class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all appearance-none cursor-pointer">
+                            <option value="India Post">India Post</option>
+                            <option value="DTDC">DTDC</option>
+                            <option value="Blue Dart">Blue Dart</option>
+                            <option value="Delhivery">Delhivery</option>
+                            <option value="Ecom Express">Ecom Express</option>
+                            <option value="XpressBees">XpressBees</option>
+                            <option value="Amazon Shipping">Amazon Shipping</option>
+                            <option value="FedEx">FedEx</option>
+                            <option value="DHL">DHL</option>
+                            <option value="Vehicle">Vehicle</option>
+                            <option value="LMD">LMD</option>
+                        </select>
+                        
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Tracking Number (Only for Ready to Ship) -->
+                <!-- Tracking Number / Reference (Only for Ready to Ship) -->
                 <div>
                     <label
-                        class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tracking
-                        Number</label>
+                        class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block"
+                        x-text="courier === 'Vehicle' ? 'Vehicle Number' : (courier === 'LMD' ? 'Reference Number' : 'Tracking Number')"></label>
 
                     <div class="relative">
                         <div
@@ -191,8 +191,9 @@
 
                         <input type="text"
                             name="tracking_number"
+                            x-model="trackingNumber"
                             :required="modalMode === 'ready'"
-                            placeholder="Tracking ID"
+                            :placeholder="courier === 'Vehicle' ? 'Enter Vehicle Number' : (courier === 'LMD' ? 'Enter Reference' : 'Tracking ID')"
                             class="flex h-11 w-full rounded-xl border border-gray-200 bg-gray-50 pl-10 pr-3 text-sm focus:border-emerald-500 focus:ring-emerald-500/20 transition-all">
                     </div>
                 </div>

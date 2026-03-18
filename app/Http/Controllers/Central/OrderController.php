@@ -737,7 +737,6 @@ class OrderController extends Controller
     }
     public function export(Request $request)
     {
-        $this->authorize('orders view');
         $format = $request->input('format', 'csv');
         $filename = 'orders-' . date('Y-m-d');
 

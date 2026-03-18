@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderTracking;
+use App\Models\Shipment;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -64,9 +65,26 @@ class OrderTrackingController extends Controller
             });
         }
 
+        // Date Filters
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        // Courier Filter
+        if ($request->filled('courier')) {
+            $query->whereHas('shipments', function ($q) use ($request) {
+                $q->where('carrier', $request->courier);
+            });
+        }
+
         $orders = $query->paginate($request->get('per_page', 10))->withQueryString();
 
-        return view('tenant.orders.tracking.index', compact('orders'));
+        $couriers = Shipment::distinct()->whereNotNull('carrier')->pluck('carrier')->sort()->values();
+
+        return view('tenant.orders.tracking.index', compact('orders', 'couriers'));
     }
 
     public function store(Request $request, Order $order)
