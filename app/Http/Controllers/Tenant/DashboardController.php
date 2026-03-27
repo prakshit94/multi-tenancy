@@ -43,9 +43,8 @@ class DashboardController extends Controller
                 $endDate = now()->endOfYear();
                 break;
 
-            case '30days':
             default:
-                $startDate = now()->subDays(29)->startOfDay();
+                $startDate = now()->startOfDay();
                 $endDate = now()->endOfDay();
                 break;
         }

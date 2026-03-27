@@ -63,8 +63,7 @@
                         'yesterday' => 'Yesterday',
                         'week' => 'This Week',
                         'month' => 'This Month',
-                        'year' => 'This Year',
-                        '30days' => 'Last 30 Days'
+                        'year' => 'This Year'
                     ][$period ?? 'today'] }}
                                     </span>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -79,11 +78,11 @@
                                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
                                     class="absolute right-0 mt-2 w-48 rounded-2xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-2xl z-[100] overflow-hidden py-1 ring-1 ring-black/5"
                                     style="display: none;">
-                                    @foreach(['today' => 'Today', 'yesterday' => 'Yesterday', 'week' => 'This Week', 'month' => 'This Month', 'year' => 'This Year', '30days' => 'Last 30 Days'] as $key => $label)
+                                    @foreach(['today' => 'Today', 'yesterday' => 'Yesterday', 'week' => 'This Week', 'month' => 'This Month', 'year' => 'This Year'] as $key => $label)
                                         <a href="{{ request()->fullUrlWithQuery(['period' => $key, 'active_tab' => $activeTab ?? 'overview']) }}"
-                                            class="flex items-center px-4 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-colors {{ ($period ?? '30days') === $key ? 'bg-primary/5 text-primary' : 'text-muted-foreground' }}">
+                                            class="flex items-center px-4 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-colors {{ ($period ?? 'today') === $key ? 'bg-primary/5 text-primary' : 'text-muted-foreground' }}">
                                             {{ $label }}
-                                            @if(($period ?? '30days') === $key)
+                                            @if(($period ?? 'today') === $key)
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
                                                     stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
                                                     class="ml-auto">

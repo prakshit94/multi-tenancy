@@ -59,12 +59,11 @@ class DashboardController extends Controller
                 $compareStartDate = now()->subYear()->startOfYear();
                 $compareEndDate = now()->subYear()->endOfYear();
                 break;
-            case '30days':
             default:
-                $startDate = now()->subDays(30);
-                $compareStartDate = now()->subDays(60);
-                $compareEndDate = now()->subDays(30);
-                $period = '30days';
+                $startDate = now()->startOfDay();
+                $compareStartDate = now()->subDay()->startOfDay();
+                $compareEndDate = now()->subDay()->endOfDay();
+                $period = 'today';
                 break;
         }
 
