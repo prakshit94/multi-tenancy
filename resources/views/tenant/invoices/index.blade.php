@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div x-data="{
             selected: [],
-            allIds: {{ json_encode(isset($invoices) ? $invoices->pluck('id') : []) }},
+            get allIds() { return Array.from(document.querySelectorAll(`input[type='checkbox'][value]`)).filter(el => el.value !== 'on').map(el => parseInt(el.value, 10)); },
             selectAll: false,
             toggleAll() {
                 if (this.selectAll) {

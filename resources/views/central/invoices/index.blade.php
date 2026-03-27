@@ -95,8 +95,8 @@
 
         <div id="invoices-table-container" x-data="{
                 selected: [],
-                allIds: {{ json_encode($invoices->pluck('id')) }},
-                selectAll: false,
+            get allIds() { return Array.from(document.querySelectorAll(`input[type='checkbox'][value]`)).filter(el => el.value !== 'on').map(el => parseInt(el.value, 10)); },
+            selectAll: false,
                 showPaymentModal: false,
                 toggleAll() {
                     if (this.selectAll) {

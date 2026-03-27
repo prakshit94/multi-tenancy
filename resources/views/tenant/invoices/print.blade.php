@@ -43,7 +43,7 @@
         </div>
         <div class="invoice-details">
             <h1>INVOICE</h1>
-            <p><strong>Invoice No:</strong> #INV-{{ $order->id }}</p>
+            <p><strong>Invoice No:</strong> {{ $order->invoices->first()->invoice_number ?? '#INV-'.$order->id }}</p>
             <p><strong>Order No:</strong> {{ $order->order_number }}</p>
             @if($order->status === 'shipped' && $order->shipments->isNotEmpty())
                 <p><strong>Tracking No:</strong> {{ $order->shipments->first()->tracking_number }}</p>

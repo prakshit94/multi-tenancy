@@ -16,6 +16,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -454,7 +455,7 @@ class OrderController extends Controller
             return redirect()->route('tenant.orders.index')->with('success', 'Order updated successfully.');
 
         } catch (\Exception $e) {
-            \Log::error('Order Update Error: ' . $e->getMessage());
+            Log::error('Order Update Error: ' . $e->getMessage());
             if ($request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
@@ -573,7 +574,7 @@ class OrderController extends Controller
                 ->with('success', 'Order status updated successfully.');
 
         } catch (\Throwable $e) {
-            \Log::error('Order Status Update Error', [
+            Log::error('Order Status Update Error', [
                 'order_id' => $order->id,
                 'action' => $action,
                 'error' => $e->getMessage(),
@@ -587,7 +588,7 @@ class OrderController extends Controller
     {
         try {
             $this->authorize('orders view');
-            $order->load(['items.product', 'customer', 'billingAddress', 'shippingAddress']);
+            $order->load(['items.product', 'customer', 'billingAddress', 'shippingAddress', 'invoices']);
 
             // Use Tenant view for Invoice Print
             $view = view()->exists('tenant.invoices.print') ? 'tenant.invoices.print' : 'central.invoices.print';
@@ -595,7 +596,7 @@ class OrderController extends Controller
             $pdf = Pdf::loadView($view, compact('order'))->setPaper('a5', 'portrait');
             return $pdf->download("invoice-{$order->order_number}.pdf");
         } catch (\Exception $e) {
-            \Log::error('PDF Generation Error (Invoice): ' . $e->getMessage());
+            Log::error('PDF Generation Error (Invoice): ' . $e->getMessage());
             return back()->with('error', 'Could not generate PDF: ' . $e->getMessage());
         }
     }
@@ -612,7 +613,7 @@ class OrderController extends Controller
             $pdf = Pdf::loadView($view, compact('order'))->setPaper('a5', 'portrait');
             return $pdf->download("receipt-{$order->order_number}.pdf");
         } catch (\Exception $e) {
-            \Log::error('PDF Generation Error (Receipt): ' . $e->getMessage());
+            Log::error('PDF Generation Error (Receipt): ' . $e->getMessage());
             return back()->with('error', 'Could not generate PDF: ' . $e->getMessage());
         }
     }

@@ -3,7 +3,7 @@
 @section('content')
     <div x-data="{ 
         selected: [], 
-        allIds: @json($orders->pluck('id')),
+        get allIds() { return Array.from(document.querySelectorAll(`input[type='checkbox'][data-status]`)).map(el => el.value); },
         statusFlow: ['placed', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'],
         isStatusValid(targetStatus) {
             if (this.selected.length === 0) return false;
@@ -37,9 +37,47 @@
                 
                 return targetIndex > currentIndex;
             });
+        },
+        async loadData(urlStr) {
+            try {
+                const url = new URL(urlStr, window.location.origin);
+                url.searchParams.set('ajax', '1');
+                
+                const response = await fetch(url.toString(), { 
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+                });
+                
+                if (response.ok) { 
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.getElementById('orders-content') || doc.body;
+
+                    const container = document.getElementById('orders-content');
+                    if (container && newContent) {
+                        // Use innerHTML from matched element if possible, else the whole response
+                        container.innerHTML = newContent.id === 'orders-content' ? newContent.innerHTML : html;
+                        
+                        // Re-initialize Alpine logic for new DOM elements
+                        if (window.Alpine) {
+                            window.Alpine.initTree(container);
+                        }
+                    }
+                    
+                    // Push clean URL to state (strip ajax=1 from address bar)
+                    const pushUrl = new URL(urlStr, window.location.origin);
+                    pushUrl.searchParams.delete('ajax');
+                    window.history.pushState({}, '', pushUrl.toString());
+                    
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (error) { console.error('Request Failed:', error); }
         }
     }"
-        class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
+    @click="if ($event.target.closest('nav a')) { $event.preventDefault(); loadData($event.target.closest('nav a').href); }"
+    @pagination-click.window="loadData($event.detail.url)"
+    @refresh-orders.window="loadData(window.location.href)"
+    class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
 
         <!-- Header Area -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">

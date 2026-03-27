@@ -16,15 +16,15 @@
             </div>
 
             {{-- Card Header --}}
-            <div class="p-5 md:p-6 border-b border-gray-100 bg-white">
-                <div class="flex flex-wrap items-start justify-between gap-4">
-                    <div class="flex items-center gap-4">
+            <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50/50">
+                <div class="flex flex-wrap items-start justify-between gap-6">
+                    <div class="flex items-start gap-5">
                         {{-- Checkbox --}}
-                        <div class="flex items-center h-10 w-10 rounded-lg bg-white shadow-sm border border-border/50 justify-center">
-                            <input type="checkbox" value="{{ $order->id }}" data-status="{{ $order->status }}" x-model="selected" class="h-4 w-4 rounded border-input text-primary focus:ring-primary/20 bg-background cursor-pointer transition-all checked:bg-primary checked:border-primary">
+                        <div class="mt-1 flex items-center h-11 w-11 rounded-xl bg-white shadow-sm border border-gray-200 justify-center group-hover:border-primary/30 transition-all">
+                            <input type="checkbox" value="{{ $order->id }}" data-status="{{ $order->status }}" x-model="selected" class="h-5 w-5 rounded-md border-gray-300 text-primary focus:ring-primary/20 bg-background cursor-pointer transition-all checked:bg-primary checked:border-primary">
                         </div>
-                        <div>
-                            <div class="flex items-center gap-3">
+                        <div class="space-y-2">
+                            <div class="flex flex-wrap items-center gap-3">
                                 <div class="relative" x-data="{ 
                                     copied: false,
                                     copyText(text) {
@@ -49,69 +49,87 @@
                                         setTimeout(() => this.copied = false, 2000);
                                     }
                                 }">
-                                    <button @click="copyText('{{ $order->order_number }}')" class="text-lg font-bold text-gray-900 tracking-tight hover:text-blue-600 transition-colors flex items-center gap-2 group/copy" title="Click to copy">
+                                    <button @click="copyText('{{ $order->order_number }}')" class="text-xl font-black text-gray-900 tracking-tight hover:text-primary transition-colors flex items-center gap-2 group/copy" title="Click to copy">
+                                        <span class="text-sm font-bold text-gray-400 font-mono">#{{ $order->id }}</span>
                                         {{ $order->order_number }}
-                                        <svg x-show="!copied" class="w-3.5 h-3.5 text-gray-400 group-hover/copy:text-blue-500 opacity-0 group-hover/copy:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                        <svg x-show="copied" x-transition class="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <svg x-show="!copied" class="w-4 h-4 text-gray-300 group-hover/copy:text-primary opacity-0 group-hover/copy:opacity-100 transition-all transform group-hover/copy:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                        <svg x-show="copied" x-transition class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                     </button>
-                                    <span x-show="copied" x-transition class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 bg-gray-900 text-white text-[10px] rounded shadow-lg whitespace-nowrap z-10">Copied!</span>
+                                    <span x-show="copied" x-transition class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-[10px] font-bold rounded-lg shadow-xl whitespace-nowrap z-10">Copied to Clipboard!</span>
                                 </div>
                                 {{-- Status Badge --}}
                                 @php
-                                    $statusColors = [
-                                        'placed' => 'bg-gray-100 text-gray-700 border-gray-200',
-                                        'confirmed' => 'bg-blue-50 text-blue-700 border-blue-200',
-                                        'processing' => 'bg-purple-50 text-purple-700 border-purple-200',
-                                        'ready_to_ship' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                        'shipped' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
-                                        'delivered' => 'bg-green-50 text-green-700 border-green-200',
-                                        'cancelled' => 'bg-red-50 text-red-700 border-red-200',
+                                    $statusConfig = [
+                                        'placed' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'dot' => 'bg-gray-400'],
+                                        'confirmed' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-700', 'dot' => 'bg-blue-500'],
+                                        'processing' => ['bg' => 'bg-purple-50', 'text' => 'text-purple-700', 'dot' => 'bg-purple-500'],
+                                        'ready_to_ship' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'dot' => 'bg-emerald-500'],
+                                        'shipped' => ['bg' => 'bg-indigo-50', 'text' => 'text-indigo-700', 'dot' => 'bg-indigo-500'],
+                                        'delivered' => ['bg' => 'bg-green-50', 'text' => 'text-green-700', 'dot' => 'bg-green-500'],
+                                        'cancelled' => ['bg' => 'bg-red-50', 'text' => 'text-red-700', 'dot' => 'bg-red-500'],
                                     ];
-                                    $colorClass = $statusColors[$order->status] ?? 'bg-gray-100 text-gray-700 border-gray-200';
+                                    $config = $statusConfig[$order->status] ?? $statusConfig['placed'];
                                 @endphp
-                                <span class="px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border {{ $colorClass }}">
-                                    {{ ucfirst(str_replace('_', ' ', $order->status)) }}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest {{ $config['bg'] }} {{ $config['text'] }} ring-1 ring-inset ring-black/5 shadow-sm">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $config['dot'] }} animate-pulse"></span>
+                                    {{ str_replace('_', ' ', $order->status) }}
                                 </span>
                             </div>
-                            <div class="flex items-center gap-3 text-xs text-muted-foreground mt-1.5 font-medium">
-                                <div class="flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-gray-500 font-bold tracking-tight">
+                                <div class="flex items-center gap-2 group/info cursor-default hover:text-gray-900 transition-colors">
+                                    <div class="p-1 rounded-md bg-gray-100 group-hover/info:bg-blue-50 group-hover/info:text-blue-600 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    </div>
                                     {{ $order->customer->name }}
                                 </div>
-                                <span class="w-1 h-1 rounded-full bg-border"></span>
-                                <span>{{ $order->created_at->format('M d, Y • h:i A') }}</span>
-                                <span class="w-1 h-1 rounded-full bg-border"></span>
-                                <span class="text-foreground">{{ $order->warehouse->name ?? 'Main Warehouse' }}</span>
+                                <div class="flex items-center gap-2 group/info cursor-default hover:text-gray-900 transition-colors">
+                                    <div class="p-1 rounded-md bg-gray-100 group-hover/info:bg-purple-50 group-hover/info:text-purple-600 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </div>
+                                    {{ $order->created_at->format('M d, Y • h:i A') }}
+                                </div>
+                                <div class="flex items-center gap-2 group/info cursor-default hover:text-gray-900 transition-colors">
+                                    <div class="p-1 rounded-md bg-gray-100 group-hover/info:bg-orange-50 group-hover/info:text-orange-600 transition-colors">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                    </div>
+                                    {{ $order->warehouse->name ?? 'Main Warehouse' }}
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-xl font-extrabold text-foreground tracking-tight">Rs {{ number_format($order->grand_total, 2) }}</p>
-                        <p class="text-xs text-muted-foreground font-medium">{{ $order->items->count() }} items</p>
+                    <div class="text-right space-y-1">
+                        <div class="inline-flex flex-col items-end">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-gray-400">Grand Total</span>
+                            <p class="text-2xl font-black text-primary tracking-tighter">Rs {{ number_format($order->grand_total, 2) }}</p>
+                        </div>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{{ $order->items->count() }} specialized items</p>
                     </div>
                 </div>
             </div>
 
             {{-- Items Preview --}}
-            <div class="px-6 py-4 bg-gray-50/30">
-                <div class="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2">
+            <div class="px-6 py-5 bg-gray-50/40">
+                <div class="flex items-center gap-5 overflow-x-auto no-scrollbar pb-1">
                     @foreach($order->items as $item)
-                        <div class="group/item relative flex-shrink-0 w-16 h-16 rounded-lg bg-white border border-border/50 overflow-hidden shadow-sm" title="{{ $item->product_name }} (x{{ $item->quantity }})">
-                            @if($item->product && $item->product->image_url)
-                                <img src="{{ $item->product->image_url }}" alt="{{ $item->product_name }}" class="h-full w-full object-cover transition-transform duration-500 group-hover/item:scale-110">
-                            @else
-                                <div class="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
-                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <div class="group/item relative flex-shrink-0" title="{{ $item->product_name }} (x{{ $item->quantity }})">
+                            <div class="w-20 h-20 rounded-2xl bg-white border border-gray-200 p-1.5 overflow-hidden shadow-sm transition-all duration-300 group-hover/item:shadow-md group-hover/item:border-primary/20 group-hover/item:-translate-y-1">
+                                @if($item->product && $item->product->image_url)
+                                    <img src="{{ $item->product->image_url }}" alt="{{ $item->product_name }}" class="h-full w-full object-cover rounded-xl transition-transform duration-700 group-hover/item:scale-110">
+                                @else
+                                    <div class="h-full w-full flex items-center justify-center bg-gray-50 text-gray-300 rounded-xl">
+                                        <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </div>
+                                @endif
+                                <div class="absolute -top-2 -right-2 bg-primary text-white text-[11px] font-black px-2 py-1 rounded-lg shadow-lg shadow-primary/20 transform group-hover/item:scale-110 transition-transform ring-2 ring-white">
+                                    {{ $item->quantity }}x
                                 </div>
-                            @endif
-                            <div class="absolute bottom-0 right-0 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-tl-md backdrop-blur-sm">
-                                x{{ $item->quantity }}
                             </div>
                         </div>
                     @endforeach
-                    @if($order->items->count() > 5)
-                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-white border border-border flex items-center justify-center text-xs font-bold text-muted-foreground shadow-sm">
-                            +{{ $order->items->count() - 5 }}
+                    @if($order->items->count() > 8)
+                        <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-white border border-gray-200 border-dashed flex flex-col items-center justify-center text-gray-400 group/more cursor-pointer hover:bg-gray-50 hover:border-primary/30 transition-all">
+                            <span class="text-xs font-black text-gray-500 group-hover/more:text-primary">+{{ $order->items->count() - 8 }}</span>
+                            <span class="text-[8px] font-bold uppercase tracking-tighter">More</span>
                         </div>
                     @endif
                 </div>
@@ -119,16 +137,22 @@
 
             {{-- Dispatch Details --}}
             @if($order->shipments->isNotEmpty())
-                <div class="px-6 py-3 border-t border-border/40 bg-blue-50/50 flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center gap-2 text-sm text-blue-900">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        <span class="font-semibold">Dispatch Info:</span>
+                <div class="px-6 py-4 border-t border-gray-100 bg-blue-50/30 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/20 animate-pulse">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <div class="space-y-0.5">
+                            <span class="block text-[10px] font-black uppercase tracking-widest text-blue-900/60">Shipping Intelligence</span>
+                            <span class="block text-xs font-bold text-blue-900">Live Shipment Tracked</span>
+                        </div>
                     </div>
-                    <div class="flex flex-wrap gap-3 text-sm">
+                    <div class="flex flex-wrap gap-3">
                         @foreach($order->shipments as $shipment)
-                            <div class="flex items-center gap-2 bg-white px-3 py-1 rounded-full border border-blue-200/60 shadow-sm">
-                                <span class="font-medium text-gray-600 text-xs uppercase tracking-wider">{{ $shipment->carrier }}:</span>
-                                <span class="font-mono font-bold text-blue-700 select-all">{{ $shipment->tracking_number }}</span>
+                            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-blue-200 shadow-sm group/shipment hover:border-blue-400 transition-colors">
+                                <span class="font-black text-gray-400 text-[10px] uppercase tracking-wider group-hover/shipment:text-blue-600 transition-colors">{{ $shipment->carrier }}</span>
+                                <span class="h-3 w-px bg-gray-200"></span>
+                                <span class="font-mono font-black text-sm text-blue-900 select-all cursor-copy">{{ $shipment->tracking_number }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -136,18 +160,18 @@
             @endif
 
             {{-- Lifecycle & Actions --}}
-            <div class="px-6 py-5 border-t border-border/40 bg-white">
-                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                    <div class="flex-1 max-w-2xl">
-                        <div class="relative flex justify-between items-center w-full">
-                            <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-100 rounded-full z-0"></div>
+            <div class="px-6 py-6 border-t border-gray-100 bg-white">
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+                    <div class="flex-1 max-w-3xl">
+                        <div class="relative flex justify-between items-center w-full px-2">
+                            <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-gray-100 rounded-full z-0"></div>
                             @php
                                 $statusOrder = ['placed', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'];
                                 $orderStatus = ($order->status == 'completed') ? 'delivered' : $order->status;
                                 $currentIdx = array_search($orderStatus, $statusOrder);
                                 $currentIdx = $currentIdx === false ? -1 : $currentIdx; 
                             @endphp
-                            <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full z-0 transition-all duration-1000 ease-out" style="width: {{ max(0, min(100, $currentIdx * 20)) }}%"></div>
+                            <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-primary to-primary-foreground rounded-full z-0 transition-all duration-1000 ease-out shadow-sm" style="width: {{ max(0, min(100, $currentIdx * 20)) }}%"></div>
 
                             @foreach($statusOrder as $idx => $step)
                                 @if($step === 'placed') @continue @endif
@@ -155,23 +179,23 @@
                                     $isCompleted = $idx <= $currentIdx;
                                     $isCurrent = $idx === $currentIdx;
                                     $label = match ($step) {
-                                        'confirmed' => 'Confirmed',
-                                        'processing' => 'Processing',
+                                        'confirmed' => 'Verified',
+                                        'processing' => 'Packing',
                                         'ready_to_ship' => 'Ready',
-                                        'shipped' => 'Dispatched',
-                                        'delivered' => 'Delivered',
+                                        'shipped' => 'On Way',
+                                        'delivered' => 'Finished',
                                         default => ucfirst($step)
                                     };
                                 @endphp
                                 <div class="relative z-10 flex flex-col items-center group/step">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 {{ $isCompleted ? 'bg-white border-indigo-600 text-indigo-600 shadow-md shadow-indigo-100' : 'bg-white border-gray-200 text-gray-300' }} {{ $isCurrent ? 'ring-4 ring-indigo-50 ring-offset-2 scale-110' : '' }}">
+                                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 {{ $isCompleted ? 'bg-white border-primary text-primary shadow-xl shadow-primary/10' : 'bg-white border-gray-200 text-gray-300' }} {{ $isCurrent ? 'ring-8 ring-primary/5 scale-110' : '' }}">
                                         @if($isCompleted)
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                                         @else
-                                            <span class="text-[10px] font-bold font-mono">{{ $idx }}</span>
+                                            <span class="text-xs font-black font-mono">{{ $idx }}</span>
                                         @endif
                                     </div>
-                                    <span class="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 {{ $isCompleted ? 'text-indigo-900' : 'text-gray-400' }}">{{ $label }}</span>
+                                    <span class="mt-3 text-[10px] font-black uppercase tracking-widest transition-colors duration-300 {{ $isCompleted ? 'text-gray-900' : 'text-gray-400' }}">{{ $label }}</span>
                                 </div>
                             @endforeach
                         </div>

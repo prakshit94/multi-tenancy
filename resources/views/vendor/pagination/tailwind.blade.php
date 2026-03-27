@@ -27,18 +27,33 @@
         <!-- Desktop View -->
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
-                <p class="text-sm text-muted-foreground leading-5">
-                    {!! __('Showing') !!}
-                    @if ($paginator->firstItem())
-                        <span class="font-medium text-foreground">{{ $paginator->firstItem() }}</span>
-                        {!! __('to') !!}
-                        <span class="font-medium text-foreground">{{ $paginator->lastItem() }}</span>
-                    @else
-                        {{ $paginator->count() }}
-                    @endif
-                    {!! __('of') !!}
-                    <span class="font-medium text-foreground">{{ $paginator->total() }}</span>
-                </p>
+                <div class="flex items-center gap-4">
+                    <p class="text-sm text-muted-foreground leading-5">
+                        {!! __('Showing') !!}
+                        @if ($paginator->firstItem())
+                            <span class="font-medium text-foreground">{{ $paginator->firstItem() }}</span>
+                            {!! __('to') !!}
+                            <span class="font-medium text-foreground">{{ $paginator->lastItem() }}</span>
+                        @else
+                            {{ $paginator->count() }}
+                        @endif
+                        {!! __('of') !!}
+                        <span class="font-medium text-foreground">{{ $paginator->total() }}</span>
+                    </p>
+
+                    <div class="relative ml-4 min-w-[140px]" x-data="{}">
+                        <select name="per_page" 
+                            @change="$dispatch('per-page-change', { value: $event.target.value })"
+                            class="w-full h-8 pl-3 pr-8 bg-background border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer">
+                            @foreach([5, 10, 15, 20, 50, 100] as $v) 
+                                <option value="{{ $v }}" {{ request('per_page', 15) == $v ? 'selected' : '' }}>{{ $v }} / Page</option> 
+                            @endforeach
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div>

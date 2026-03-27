@@ -137,6 +137,7 @@
                     </td>
                     <td width="40%">
                         <strong>Invoice No:</strong> {{ $invoice->invoice_number }}<br>
+                        <strong>Order No:</strong> {{ $invoice->order->order_number ?? 'N/A' }}<br>
                         <strong>Dated:</strong> {{ $invoice->issue_date->format('d-m-Y') }}<br>
                         <strong>Payment Mode:</strong> {{ ucfirst($invoice->order->payment_method ?? 'Cash') }}<br>
                         @if(strtolower($invoice->order->payment_method) === 'cod')

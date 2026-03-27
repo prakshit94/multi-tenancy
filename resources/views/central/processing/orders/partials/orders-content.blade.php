@@ -1,108 +1,167 @@
+<!-- Navigation & Filter Hub -->
+<div class="flex flex-col space-y-4 mb-8">
+    {{-- Tabs & Regional Header --}}
+    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6 p-4 bg-gray-50/50 rounded-[40px] border border-gray-100/50 backdrop-blur-sm shadow-sm ring-1 ring-black/5">
+        <div class="flex flex-wrap items-center gap-2">
+            @php
+                $tabs = [
+                    ['label' => 'CONFIRMED', 'status' => 'confirmed', 'icon' => '<path d="m9 12 2 2 4-4"/>', 'color' => 'blue'],
+                    ['label' => 'PROCESSING', 'status' => 'processing', 'icon' => '<path d="M12 2 2 7v10l10 5 10-5V7Z"/><path d="m2 7 10 5 10-5"/><path d="M12 22V12"/>', 'color' => 'purple'],
+                    ['label' => 'READY TO SHIP', 'status' => 'ready_to_ship', 'icon' => '<path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3m18 0v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8m18 0-9 6-9-6"/>', 'color' => 'emerald'],
+                    ['label' => 'SHIPPED', 'status' => 'shipped', 'icon' => '<path d="M10 17h4V5H2v12h3m0 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0m10 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0M13 5h9l-1 7h-8z"/>', 'color' => 'indigo'],
+                    ['label' => 'DELIVERD', 'status' => 'delivered', 'icon' => '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 2z"/><path d="M9 11l3 3L22 4"/>', 'color' => 'green'],
+                    ['label' => 'CANCELLED', 'status' => 'cancelled', 'icon' => '<path d="M18 6 6 18M6 6l12 12"/>', 'color' => 'orange'],
+                ];
+            @endphp
+
+            @foreach($tabs as $tab)
+                <button 
+                    @click="activeStatus = '{{ $tab['status'] }}'; performFilter()"
+                    type="button"
+                    class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-3xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 transform hover:scale-105"
+                    :class="activeStatus === '{{ $tab['status'] }}' ? 'bg-primary text-white shadow-xl shadow-primary/20 z-10' : 'bg-white text-gray-500 hover:text-gray-900 border border-gray-100 hover:border-gray-200 shadow-sm'"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        {!! $tab['icon'] !!}
+                    </svg>
+                    {{ $tab['label'] }}
+                    <span class="inline-flex items-center justify-center px-2 py-0.5 text-[9px] font-black rounded-lg transition-colors"
+                        :class="activeStatus === '{{ $tab['status'] }}' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'">
+                        {{ $counts[$tab['status']] ?? 0 }}
+                    </span>
+                </button>
+            @endforeach
+        </div>
+
+        <div class="flex items-center gap-3">
+            <form id="filter-form" @submit.prevent="performFilter()" class="flex flex-wrap items-center gap-3">
+                <input type="hidden" name="per_page" value="{{ request('per_page', 15) }}">
+                
+                {{-- Searchable District --}}
+                <div class="relative min-w-[160px]" x-data="{ 
+                    open: false, search: '', options: @js($districts), selected: '{{ request('district') }}',
+                    get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
+                    select(val) { this.selected = val; this.open = false; this.search = ''; $nextTick(() => { $refs.districtInput.value = val; $refs.districtInput.dispatchEvent(new Event('change')); performFilter(); }); }
+                }" @click.away="open = false">
+                    <input type="hidden" name="district" x-ref="districtInput" value="{{ request('district') }}">
+                    <button type="button" @click="open = !open" class="w-full h-11 px-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2 shadow-sm hover:border-primary transition-all">
+                        <span x-text="selected || 'District'" class="truncate"></span>
+                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div x-show="open" x-transition.origin.top class="absolute z-[110] left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-72 flex flex-col">
+                        <input type="text" x-model="search" placeholder="Search..." class="w-full px-3 py-2 text-[10px] font-bold border-b border-gray-50 bg-gray-50/50 outline-none uppercase">
+                        <div class="overflow-y-auto flex-1 custom-scrollbar py-1">
+                            <button type="button" @click="select('')" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50">All Districts</button>
+                            <template x-for="opt in filteredOptions" :key="opt">
+                                <button type="button" @click="select(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected === opt ? 'bg-primary/10 text-primary' : ''">
+                                    <span x-text="opt"></span>
+                                    <svg x-show="selected === opt" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Searchable Taluka --}}
+                <div class="relative min-w-[160px]" x-data="{ 
+                    open: false, search: '', options: @js($talukas), selected: '{{ request('taluka') }}',
+                    get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
+                    select(val) { this.selected = val; this.open = false; this.search = ''; $nextTick(() => { $refs.talukaInput.value = val; $refs.talukaInput.dispatchEvent(new Event('change')); performFilter(); }); }
+                }" @click.away="open = false">
+                    <input type="hidden" name="taluka" x-ref="talukaInput" value="{{ request('taluka') }}">
+                    <button type="button" @click="open = !open" class="w-full h-11 px-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2 shadow-sm hover:border-primary transition-all">
+                        <span x-text="selected || 'Taluka'" class="truncate"></span>
+                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div x-show="open" x-transition.origin.top class="absolute z-[110] left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-72 flex flex-col">
+                        <input type="text" x-model="search" placeholder="Search..." class="w-full px-3 py-2 text-[10px] font-bold border-b border-gray-50 bg-gray-50/50 outline-none uppercase">
+                        <div class="overflow-y-auto flex-1 custom-scrollbar py-1">
+                            <button type="button" @click="select('')" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50">All Talukas</button>
+                            <template x-for="opt in filteredOptions" :key="opt">
+                                <button type="button" @click="select(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected === opt ? 'bg-primary/10 text-primary' : ''">
+                                    <span x-text="opt"></span>
+                                    <svg x-show="selected === opt" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Stats Grid -->
 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
+    @php
+        $stats = [
+            ['label' => 'Confirmed', 'count' => $counts['confirmed'] ?? 0, 'color' => 'blue', 'icon' => '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'],
+            ['label' => 'Processing', 'count' => $counts['processing'] ?? 0, 'color' => 'purple', 'icon' => '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>'],
+            ['label' => 'Ready to Ship', 'count' => $counts['ready_to_ship'] ?? 0, 'color' => 'emerald', 'icon' => '<path d="M2 9h20"/><path d="M4 9h2V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4h2"/><path d="M22 9v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9Z"/><path d="M12 12v3"/><path d="M12 15h3"/>'],
+            ['label' => 'Dispatched', 'count' => $counts['shipped'] ?? 0, 'color' => 'indigo', 'icon' => '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-5l-4-4h-4"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>'],
+            ['label' => 'Deliverd', 'count' => $counts['delivered'] ?? 0, 'color' => 'green', 'icon' => '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'],
+        ];
+    @endphp
 
-
-    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-center gap-3 mb-2">
-            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
+    @foreach($stats as $s)
+        <div class="group bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-{{ $s['color'] }}-500/5 transition-all duration-300 transform hover:-translate-y-1">
+            <div class="flex items-center gap-4 mb-3">
+                <div class="p-3 bg-{{ $s['color'] }}-50 text-{{ $s['color'] }}-600 rounded-2xl group-hover:scale-110 transition-transform duration-500 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        {!! $s['icon'] !!}
+                    </svg>
+                </div>
+                <span class="text-[11px] font-black uppercase tracking-widest text-gray-400 group-hover:text-{{ $s['color'] }}-600 transition-colors">{{ $s['label'] }}</span>
             </div>
-            <span class="text-sm font-medium text-gray-500">Confirmed</span>
-        </div>
-        <div class="text-2xl font-black text-gray-900">{{ $counts['confirmed'] ?? 0 }}</div>
-    </div>
-
-    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-center gap-3 mb-2">
-            <div class="p-2 bg-purple-50 text-purple-600 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                    <polyline points="3.29 7 12 12 20.71 7" />
-                    <line x1="12" x2="12" y1="22" y2="12" />
-                </svg>
+            <div class="text-3xl font-black text-gray-900 tracking-tighter">{{ number_format($s['count']) }}</div>
+            <div class="mt-2 h-1 w-full bg-gray-50 rounded-full overflow-hidden">
+                <div class="h-full bg-{{ $s['color'] }}-500 transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(var(--{{ $s['color'] }}-500),0.4)]" style="width: {{ $s['count'] > 0 ? '65%' : '0%' }}"></div>
             </div>
-            <span class="text-sm font-medium text-gray-500">Processing</span>
         </div>
-        <div class="text-2xl font-black text-gray-900">{{ $counts['processing'] ?? 0 }}</div>
-    </div>
-
-    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-center gap-3 mb-2">
-            <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-                    <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" />
-                    <path d="M7 21h10" />
-                    <path d="M12 3v18" />
-                    <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" />
-                </svg>
-            </div>
-            <span class="text-sm font-medium text-gray-500">Ready to Ship</span>
-        </div>
-        <div class="text-2xl font-black text-gray-900">{{ $counts['ready_to_ship'] ?? 0 }}</div>
-    </div>
-
-    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-        <div class="flex items-center gap-3 mb-2">
-            <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11" />
-                    <path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2" />
-                    <circle cx="7" cy="18" r="2" />
-                    <circle cx="17" cy="18" r="2" />
-                </svg>
-            </div>
-            <span class="text-sm font-medium text-gray-500">Dispatched</span>
-        </div>
-        <div class="text-2xl font-black text-gray-900">{{ $counts['shipped'] ?? 0 }}</div>
-    </div>
+    @endforeach
 </div>
 
 <!-- District Insights -->
 @if($districtCounts->count() > 0)
-    <div class="flex flex-col gap-2 mt-6" x-data="{ showDistricts: false }">
-        <div class="flex items-center justify-between px-1">
-            <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                </svg>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">District Insights</span>
+    <div class="flex flex-col gap-3 mt-8" x-data="{ showDistricts: false }">
+        <div class="flex items-center justify-between px-2">
+            <div class="flex items-center gap-3">
+                <div class="p-1.5 rounded-lg bg-primary/10 text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                    </svg>
+                </div>
+                <span class="text-[11px] font-black uppercase tracking-widest text-gray-500">Regional Performance</span>
             </div>
             <button @click="showDistricts = !showDistricts" 
-                    class="text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
-                <span x-text="showDistricts ? 'Hide' : 'Show Full List'"></span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-                     class="transition-transform duration-300" :class="showDistricts ? 'rotate-180' : ''">
+                    class="text-[11px] font-black uppercase tracking-widest text-primary hover:text-primary-foreground bg-primary/5 hover:bg-primary px-4 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 group/btn shadow-sm">
+                <span x-text="showDistricts ? 'Collapse Insights' : 'Expand All Regions'"></span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" 
+                     class="transition-transform duration-500" :class="showDistricts ? 'rotate-180' : ''">
                     <path d="m6 9 6 6 6-6"/>
                 </svg>
             </button>
         </div>
         <div x-show="showDistricts" 
              style="display: none;"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter="transition ease-out duration-500"
+             x-transition:enter-start="opacity-0 -translate-y-4"
              x-transition:enter-end="opacity-100 translate-y-0"
-             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave="transition ease-in duration-300"
              x-transition:leave-start="opacity-100 translate-y-0"
-             x-transition:leave-end="opacity-0 -translate-y-2"
-             class="flex flex-wrap items-center gap-2 pb-2">
+             x-transition:leave-end="opacity-0 -translate-y-4"
+             class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 pb-4">
             @foreach($districtCounts as $stat)
                 @php
+                    $isActive = request('district') == $stat->district;
                     $districtUrl = request()->fullUrlWithQuery(['district' => $stat->district]);
                 @endphp
                 <a href="{{ $districtUrl }}" 
                    @click.prevent="loadData('{{ $districtUrl }}')"
-                   class="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.02] group whitespace-nowrap {{ request('district') == $stat->district ? 'ring-2 ring-primary/20 border-primary/50 bg-primary/5' : '' }}">
-                    <span class="text-xs font-semibold text-foreground/80 group-hover:text-primary transition-colors">{{ $stat->district ?: 'Unknown' }}</span>
-                    <span class="px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-bold ring-1 ring-primary/20">{{ $stat->total }}</span>
+                   class="flex flex-col gap-2 p-4 rounded-3xl border transition-all duration-300 hover:scale-[1.05] group {{ $isActive ? 'bg-primary text-white border-primary shadow-xl shadow-primary/20 scale-105 z-10' : 'bg-white border-gray-100 hover:border-primary/20 text-gray-600 hover:shadow-lg' }}">
+                    <span class="text-[10px] font-black uppercase tracking-widest truncate {{ $isActive ? 'text-white/70' : 'text-gray-400' }}">{{ $stat->district ?: 'Global' }}</span>
+                    <span class="text-xl font-black tracking-tight">{{ $stat->total }}</span>
                 </a>
             @endforeach
         </div>
@@ -110,112 +169,7 @@
 @endif
 
 
-<!-- Filters & Navigation Tabs -->
-<div
-    class="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 sticky top-0 z-30 bg-gray-50/95 backdrop-blur-xl p-2 rounded-2xl border border-gray-200/60 shadow-sm mt-4">
-    <div class="flex flex-wrap items-center gap-1 w-full xl:w-auto">
-        @php
-            $navItems = [
-                ['label' => 'Confirmed', 'route' => route('central.processing.orders.index', ['status' => 'confirmed']), 'active' => request('status') === 'confirmed' || !request('status'), 'count' => $counts['confirmed'] ?? 0],
-                ['label' => 'Processing', 'route' => route('central.processing.orders.index', ['status' => 'processing']), 'active' => request('status') === 'processing', 'count' => $counts['processing'] ?? 0],
-                ['label' => 'Ready to Ship', 'route' => route('central.processing.orders.index', ['status' => 'ready_to_ship']), 'active' => request('status') === 'ready_to_ship', 'count' => $counts['ready_to_ship'] ?? 0],
-                ['label' => 'Dispatched', 'route' => route('central.processing.orders.index', ['status' => 'shipped']), 'active' => request('status') === 'shipped', 'count' => $counts['shipped'] ?? 0],
-                ['label' => 'Delivered', 'route' => route('central.processing.orders.index', ['status' => 'delivered']), 'active' => request('status') === 'delivered', 'count' => $counts['delivered'] ?? 0],
-                ['label' => 'Cancelled', 'route' => route('central.processing.orders.index', ['status' => 'cancelled']), 'active' => request('status') === 'cancelled', 'count' => $counts['cancelled'] ?? 0],
-            ];
-        @endphp
 
-        @foreach($navItems as $item)
-            <a href="{{ $item['route'] }}"
-                class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap {{ $item['active'] ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50' }}">
-                {{ $item['label'] }}
-                <span
-                    class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full {{ $item['active'] ? 'bg-primary/10 text-primary' : 'bg-gray-200 text-gray-600' }}">
-                    {{ $item['count'] }}
-                </span>
-            </a>
-        @endforeach
-    </div>
-
-    <!-- Regional Filters & Search -->
-    <div class="flex items-center gap-3 w-full xl:w-auto py-1">
-                <form action="{{ url()->current() }}" method="GET" id="filter-form" class="flex flex-wrap items-center gap-3" x-data="{
-                        performFilter() {
-                            const url = new URL(window.location.href);
-                            url.searchParams.delete('page');
-                            
-                            // Collect all form values
-                            const formData = new FormData($refs.filterForm);
-                            for (let [key, value] of formData.entries()) {
-                                if (value) {
-                                    url.searchParams.set(key, value);
-                                } else {
-                                    url.searchParams.delete(key);
-                                }
-                            }
-                            
-                            this.loadData(url.toString());
-                        }
-                    }" x-ref="filterForm" @submit.prevent="performFilter" @pagination-click.window="loadData($event.detail.url)">
-
-            @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
-            @if(request('date_filter'))
-                <input type="hidden" name="date_filter" value="{{ request('date_filter') }}">
-                @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
-                @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
-            @endif
-
-            <!-- District Filter -->
-            <div class="relative min-w-[140px]">
-                <select name="district" @change="performFilter"
-                    class="w-full h-10 pl-3 pr-8 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none appearance-none">
-                    <option value="">All Districts</option>
-                    @foreach($districts as $d)
-                        <option value="{{ $d }}" {{ request('district') == $d ? 'selected' : '' }}>{{ $d }}</option>
-                    @endforeach
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
-                </div>
-            </div>
-
-            <!-- Taluka Filter -->
-            <div class="relative min-w-[140px]">
-                <select name="taluka" @change="performFilter"
-                    class="w-full h-10 pl-3 pr-8 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none appearance-none">
-                    <option value="">All Talukas</option>
-                    @foreach($talukas as $t)
-                        <option value="{{ $t }}" {{ request('taluka') == $t ? 'selected' : '' }}>{{ $t }}</option>
-                    @endforeach
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
-                </div>
-            </div>
-
-            <!-- Village Filter -->
-            <div class="relative min-w-[140px]">
-                <input type="text" name="village" value="{{ request('village') }}" placeholder="Village..."
-                    @input.debounce.500ms="performFilter"
-                    class="w-full h-10 pl-3 pr-4 bg-white border border-gray-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none">
-            </div>
-
-            <!-- Search -->
-            <div class="relative w-full xl:w-64">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-                    </svg>
-                </div>
-                <input type="text" name="search" value="{{ request('search') }}"
-                    placeholder="Search orders..." @refresh-orders.window="performFilter()"
-                    @input.debounce.500ms="performFilter"
-                    class="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm outline-none">
-            </div>
-        </form>
-    </div>
-
-</div>
 
 <!-- Toolbar -->
 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-2">
@@ -348,27 +302,13 @@
                                     }
 
                                     const url = new URL(window.location.href);
-                                    
                                     for (const [key, value] of formData.entries()) {
-                                        if (value) {
-                                            url.searchParams.set(key, value);
-                                        } else {
-                                            url.searchParams.delete(key);
-                                        }
+                                        if (value) url.searchParams.set(key, value);
+                                        else url.searchParams.delete(key);
                                     }
-                                    
                                     url.searchParams.delete('page'); 
-                                    
-                                    const urlStr = url.toString();
-                                    
-                                    fetch(urlStr, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                                        .then(response => response.ok ? response.text() : Promise.reject(response))
-                                        .then(html => {
-                                            document.getElementById('orders-content').innerHTML = html;
-                                            window.history.pushState({}, '', urlStr);
-                                            open = false; 
-                                        })
-                                        .catch(err => console.error('Filter Failed:', err));
+                                    loadData(url.toString());
+                                    open = false; 
                                 }
                             }" @submit="submitFilter">
                     @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}">
@@ -441,8 +381,7 @@
     </div>
 </div>
 
-<!-- Orders Grid -->
-<div id="orders-list-container"
-    @click="if ($event.target.closest('nav a')) { $event.preventDefault(); $dispatch('pagination-click', { url: $event.target.closest('nav a').href }); }">
+<!-- Orders Grid Container -->
+<div id="orders-list-container" class="mt-4">
     @include('central.processing.orders.partials.orders-list')
 </div>

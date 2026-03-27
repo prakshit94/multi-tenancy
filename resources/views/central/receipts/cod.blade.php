@@ -119,6 +119,7 @@
         </div>
 
         <div class="center muted" style="margin-top:4px;">
+            <strong>Order No: {{ $order->order_number }}</strong><br>
             Payment Office : Rajkot H.O. <br>
             Register No / E-Biller ID : 1211658094<br>
             Order Date: {{ $order->created_at->format('d-m-Y H:i') }}

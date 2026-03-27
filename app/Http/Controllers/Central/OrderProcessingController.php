@@ -43,6 +43,7 @@ class OrderProcessingController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
+                    ->orWhere('id', $search)
                     ->orWhereHas('customer', function ($c) use ($search) {
                         $c->search($search);
                     });
@@ -81,10 +82,10 @@ class OrderProcessingController extends Controller
             $district = trim($request->district);
             $query->where(function ($q) use ($district) {
                 $q->whereHas('shippingAddress', function ($sub) use ($district) {
-                    $sub->where('district', 'like', "%{$district}%");
+                    $sub->where('district', $district);
                 })
                     ->orWhereHas('billingAddress', function ($sub) use ($district) {
-                        $sub->where('district', 'like', "%{$district}%");
+                        $sub->where('district', $district);
                     });
             });
         }
@@ -93,10 +94,10 @@ class OrderProcessingController extends Controller
             $taluka = trim($request->taluka);
             $query->where(function ($q) use ($taluka) {
                 $q->whereHas('shippingAddress', function ($sub) use ($taluka) {
-                    $sub->where('taluka', 'like', "%{$taluka}%");
+                    $sub->where('taluka', $taluka);
                 })
                     ->orWhereHas('billingAddress', function ($sub) use ($taluka) {
-                        $sub->where('taluka', 'like', "%{$taluka}%");
+                        $sub->where('taluka', $taluka);
                     });
             });
         }
@@ -123,16 +124,15 @@ class OrderProcessingController extends Controller
         $counts['active'] = $activeCount;
         $counts['all'] = array_sum(array_diff_key($counts, ['active' => 0, 'all' => 0]));
 
-        // Default: Show confirmed orders if no status is selected
+        // Status Filtering (Symmetric with Browse)
         if (!$request->has('status')) {
             $query->where('status', 'confirmed');
-        }
-        // If status is provided
-        elseif ($request->input('status') !== 'all') {
+        } elseif ($request->input('status') !== 'all') {
             $query->where('status', $request->input('status'));
         }
 
-        $orders = $query->paginate(50)->withQueryString();
+        $perPage = $request->input('per_page', 15);
+        $orders = $query->paginate((int)$perPage)->withQueryString();
 
 
         $districtCounts = Order::query()
@@ -152,7 +152,7 @@ class OrderProcessingController extends Controller
             return $q->where('district_name', $request->district);
         })->distinct()->pluck('taluka_name')->filter()->sort()->values();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->has('ajax')) {
             return view('central.processing.orders.partials.orders-content', compact('orders', 'counts', 'districtCounts', 'districts', 'talukas'));
         }
 
