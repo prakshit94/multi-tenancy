@@ -211,11 +211,13 @@
                                             <div x-show="open"
                                                 class="absolute right-0 top-10 z-50 min-w-[160px] bg-white border border-border rounded-lg shadow-xl p-1"
                                                 style="display: none;">
-                                                <a href="{{ route('tenant.orders.invoice', $order) }}" target="_blank"
+                                                <a href="{{ route('tenant.orders.invoice', $order) }}"
+                                                    @click="$dispatch('notify', { type: 'success', message: 'Invoice download started' })"
                                                     class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                                                     Print Invoice
                                                 </a>
-                                                <a href="{{ route('tenant.orders.receipt', $order) }}" target="_blank"
+                                                <a href="{{ route('tenant.orders.receipt', $order) }}"
+                                                    @click="$dispatch('notify', { type: 'success', message: 'Receipt download started' })"
                                                     class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
                                                     Print Receipt
                                                 </a>

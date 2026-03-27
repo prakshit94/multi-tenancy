@@ -34,7 +34,9 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <form id="filter-form" @submit.prevent="performFilter()" class="flex flex-wrap items-center gap-3">
+            <form id="filter-form" @submit.prevent="performFilter()" 
+                @per-page-change.window="$el.querySelector('input[name=per_page]').value = $event.detail.value; performFilter()"
+                class="flex flex-wrap items-center gap-3">
                 <input type="hidden" name="per_page" value="{{ request('per_page', 15) }}">
                 
                 {{-- Searchable District --}}
@@ -238,13 +240,14 @@
                     <div class="px-2 py-1 text-xs font-semibold text-muted-foreground/60 uppercase tracking-wider">
                         Printing</div>
 
-                    <form action="{{ route('central.processing.orders.bulk-print') }}" method="POST" target="_blank">
+                    <form action="{{ route('central.processing.orders.bulk-print') }}" method="POST">
                         @csrf
                         <template x-for="id in selected" :key="id">
                             <input type="hidden" name="ids[]" :value="id">
                         </template>
 
                         <button type="submit" name="type" value="invoice"
+                            @click="$dispatch('notify', { type: 'success', message: 'Invoices download started' })"
                             class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground text-foreground/80">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -256,6 +259,7 @@
                             Print Invoices
                         </button>
                         <button type="submit" name="type" value="cod"
+                            @click="$dispatch('notify', { type: 'success', message: 'COD Receipts download started' })"
                             class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground text-foreground/80">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"

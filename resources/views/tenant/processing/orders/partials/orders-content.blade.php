@@ -154,7 +154,7 @@
                         </button>
                     </form>
                     <div class="h-px bg-gray-50 my-2 mx-2"></div>
-                    <form action="{{ route('tenant.processing.orders.bulk-print') }}" method="POST" target="_blank" class="p-1 space-y-1">
+                    <form action="{{ route('tenant.processing.orders.bulk-print') }}" method="POST" class="p-1 space-y-1">
                         @csrf
                         <template x-for="id in selected" :key="id"><input type="hidden" name="ids[]" :value="id"></template>
                         <button type="submit" name="type" value="invoice" class="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 rounded-xl transition-all">

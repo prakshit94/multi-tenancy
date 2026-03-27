@@ -177,11 +177,15 @@
 
                         @if($order->status === 'processing')
                             <div class="flex items-center gap-3">
-                                <div class="flex bg-gray-100 rounded-xl p-1 shadow-inner">
-                                    <a href="{{ $order->invoices->isNotEmpty() ? route('central.orders.invoice', $order) : '#' }}" target="{{ $order->invoices->isNotEmpty() ? '_blank' : '_self' }}" class="p-2.5 text-gray-500 hover:text-primary hover:bg-white rounded-lg transition-all" title="Invoice">
+                                <div class="flex bg-gray-100 rounded-xl p-1 shadow-inner" x-data="{}">
+                                    <a href="{{ $order->invoices->isNotEmpty() ? route('central.orders.invoice', $order) : '#' }}" 
+                                       @click="if('{{ $order->invoices->isEmpty() }}' === '1') { $dispatch('notify', { type: 'error', message: 'Invoice not found' }); $event.preventDefault(); } else { $dispatch('notify', { type: 'success', message: 'Invoice download started' }); }"
+                                       class="p-2.5 text-gray-500 hover:text-primary hover:bg-white rounded-lg transition-all" title="Invoice">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                     </a>
-                                    <a href="{{ route('central.orders.receipt', $order) }}" target="_blank" class="p-2.5 text-gray-500 hover:text-orange-600 hover:bg-white rounded-lg transition-all border-l border-gray-200/50" title="COD Receipt">
+                                    <a href="{{ route('central.orders.receipt', $order) }}" 
+                                       @click="$dispatch('notify', { type: 'success', message: 'Receipt download started' })"
+                                       class="p-2.5 text-gray-500 hover:text-orange-600 hover:bg-white rounded-lg transition-all border-l border-gray-200/50" title="COD Receipt">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                     </a>
                                 </div>

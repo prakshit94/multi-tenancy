@@ -218,11 +218,15 @@
 
                         @if($order->status === 'processing')
                             <div class="flex items-center gap-2">
-                                <div class="flex bg-gray-100 rounded-lg p-0.5">
-                                    <a href="{{ $order->invoices->isNotEmpty() ? route('tenant.orders.invoice', $order) : '#' }}" target="{{ $order->invoices->isNotEmpty() ? '_blank' : '_self' }}" class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print Invoice">
+                                <div class="flex bg-gray-100 rounded-lg p-0.5" x-data="{}">
+                                    <a href="{{ $order->invoices->isNotEmpty() ? route('tenant.orders.invoice', $order) : '#' }}" 
+                                       @click="if('{{ $order->invoices->isEmpty() }}' === '1') { $dispatch('notify', { type: 'error', message: 'Invoice not found' }); $event.preventDefault(); } else { $dispatch('notify', { type: 'success', message: 'Invoice download started' }); }"
+                                       class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print Invoice">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </a>
-                                    <a href="{{ route('tenant.orders.receipt', $order) }}" target="_blank" class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print COD Receipt">
+                                    <a href="{{ route('tenant.orders.receipt', $order) }}" 
+                                       @click="$dispatch('notify', { type: 'success', message: 'Receipt download started' })"
+                                       class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print COD Receipt">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                     </a>
                                 </div>
@@ -238,11 +242,15 @@
 
                         @if($order->status === 'ready_to_ship')
                             <div class="flex items-center gap-2">
-                                <div class="flex bg-gray-100 rounded-lg p-0.5">
-                                    <a href="{{ $order->invoices->isNotEmpty() ? route('tenant.orders.invoice', $order) : '#' }}" target="{{ $order->invoices->isNotEmpty() ? '_blank' : '_self' }}" class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print Invoice">
+                                <div class="flex bg-gray-100 rounded-lg p-0.5" x-data="{}">
+                                    <a href="{{ $order->invoices->isNotEmpty() ? route('tenant.orders.invoice', $order) : '#' }}" 
+                                       @click="if('{{ $order->invoices->isEmpty() }}' === '1') { $dispatch('notify', { type: 'error', message: 'Invoice not found' }); $event.preventDefault(); } else { $dispatch('notify', { type: 'success', message: 'Invoice download started' }); }"
+                                       class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print Invoice">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </a>
-                                    <a href="{{ route('tenant.orders.receipt', $order) }}" target="_blank" class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print COD Receipt">
+                                    <a href="{{ route('tenant.orders.receipt', $order) }}" 
+                                       @click="$dispatch('notify', { type: 'success', message: 'Receipt download started' })"
+                                       class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-white rounded-md transition-all shadow-sm" title="Print COD Receipt">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                     </a>
                                 </div>

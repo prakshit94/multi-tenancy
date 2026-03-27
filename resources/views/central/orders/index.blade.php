@@ -165,7 +165,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <form id="bulk-print-form" action="{{ route('central.orders.bulk-print') }}" method="POST" target="_blank" class="flex gap-2">
+                <form id="bulk-print-form" action="{{ route('central.orders.bulk-print') }}" method="POST" class="flex gap-2">
                     @csrf
                     <template x-for="id in selected" :key="id">
                         <input type="hidden" name="ids[]" :value="id">
@@ -482,7 +482,7 @@
 
                                            @if($order->invoices->isNotEmpty())
                                                <a href="{{ route('central.invoices.pdf', $order->invoices->first()) }}"
-                                                  target="_blank"
+                                                  @click="$dispatch('notify', { type: 'success', message: 'Invoice download started' })"
                                                   class="flex items-center gap-2 px-2 py-1.5 text-xs font-medium hover:bg-accent rounded-lg transition-colors">
                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                                                    Print Invoice
@@ -490,7 +490,7 @@
                                            @endif
 
                                            <a href="{{ route('central.orders.receipt', $order) }}"
-                                              target="_blank"
+                                              @click="$dispatch('notify', { type: 'success', message: 'Receipt download started' })"
                                               class="flex items-center gap-2 px-2 py-1.5 text-xs font-medium hover:bg-accent rounded-lg transition-colors">
                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17V7"/></svg>
                                                Print Receipt
