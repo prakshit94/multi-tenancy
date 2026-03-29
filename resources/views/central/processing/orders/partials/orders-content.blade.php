@@ -88,6 +88,42 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Courier Filter (Dispatch Details) --}}
+                <div class="relative min-w-[160px]" x-data="{ 
+                    open: false, search: '', options: @js($couriers), selected: '{{ request('courier') }}',
+                    get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
+                    select(val) { this.selected = val; this.open = false; this.search = ''; $nextTick(() => { $refs.courierInput.value = val; $refs.courierInput.dispatchEvent(new Event('change')); performFilter(); }); }
+                }" @click.away="open = false">
+                    <input type="hidden" name="courier" x-ref="courierInput" value="{{ request('courier') }}">
+                    <button type="button" @click="open = !open" class="w-full h-11 px-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2 shadow-sm hover:border-primary transition-all">
+                        <span x-text="selected || 'Courier'" class="truncate"></span>
+                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div x-show="open" x-transition.origin.top class="absolute z-[110] left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-72 flex flex-col">
+                        <input type="text" x-model="search" placeholder="Search..." class="w-full px-3 py-2 text-[10px] font-bold border-b border-gray-50 bg-gray-50/50 outline-none uppercase">
+                        <div class="overflow-y-auto flex-1 custom-scrollbar py-1">
+                            <button type="button" @click="select('')" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50">All Couriers</button>
+                            <template x-for="opt in filteredOptions" :key="opt">
+                                <button type="button" @click="select(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected === opt ? 'bg-primary/10 text-primary' : ''">
+                                    <span x-text="opt"></span>
+                                    <svg x-show="selected === opt" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Tracking Number Filter --}}
+                <div class="relative min-w-[200px]">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <input type="text" name="tracking_number" value="{{ request('tracking_number') }}" 
+                        @input.debounce.500ms="performFilter()"
+                        placeholder="TRACKING ID"
+                        class="w-full h-11 pl-11 pr-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-primary transition-all shadow-sm placeholder:text-gray-300">
+                </div>
             </form>
         </div>
     </div>

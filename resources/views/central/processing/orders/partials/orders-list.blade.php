@@ -125,6 +125,27 @@
                 </div>
             </div>
 
+            {{-- Dispatch Details --}}
+            @if($order->shipments->isNotEmpty())
+                <div class="px-6 py-4 border-t border-gray-100 bg-blue-50/30 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 rounded-xl bg-blue-100 text-blue-600">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <span class="text-[11px] font-black uppercase tracking-widest text-blue-900/70">Dispatch Details</span>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        @foreach($order->shipments as $shipment)
+                            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-blue-200 shadow-sm group/shipment hover:border-blue-400 transition-colors">
+                                <span class="font-black text-gray-400 text-[10px] uppercase tracking-wider group-hover/shipment:text-blue-600 transition-colors">{{ $shipment->carrier }}</span>
+                                <span class="h-3 w-px bg-gray-200"></span>
+                                <span class="font-mono font-black text-sm text-blue-900 select-all cursor-copy">{{ $shipment->tracking_number }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             {{-- Lifecycle & Actions --}}
             <div class="px-6 py-6 border-t border-gray-100 bg-white">
                 <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-8">

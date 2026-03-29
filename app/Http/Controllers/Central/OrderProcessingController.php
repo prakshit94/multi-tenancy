@@ -114,6 +114,19 @@ class OrderProcessingController extends Controller
             });
         }
 
+        // Dispatch Details Filtering
+        if ($request->filled('courier')) {
+            $query->whereHas('shipments', function ($q) use ($request) {
+                $q->where('carrier', $request->courier);
+            });
+        }
+
+        if ($request->filled('tracking_number')) {
+            $query->whereHas('shipments', function ($q) use ($request) {
+                $q->where('tracking_number', 'like', "%{$request->tracking_number}%");
+            });
+        }
+
         $countsQuery = clone $query;
         $counts = $countsQuery->reorder()->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
@@ -152,11 +165,13 @@ class OrderProcessingController extends Controller
             return $q->where('district_name', $request->district);
         })->distinct()->pluck('taluka_name')->filter()->sort()->values();
 
+        $couriers = \App\Models\Shipment::distinct()->whereNotNull('carrier')->pluck('carrier')->sort()->values();
+
         if ($request->ajax() || $request->has('ajax')) {
-            return view('central.processing.orders.partials.orders-content', compact('orders', 'counts', 'districtCounts', 'districts', 'talukas'));
+            return view('central.processing.orders.partials.orders-content', compact('orders', 'counts', 'districtCounts', 'districts', 'talukas', 'couriers'));
         }
 
-        return view('central.processing.orders.index', compact('orders', 'counts', 'states', 'districts', 'talukas', 'districtCounts'));
+        return view('central.processing.orders.index', compact('orders', 'counts', 'states', 'districts', 'talukas', 'districtCounts', 'couriers'));
     }
 
     /**

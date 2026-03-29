@@ -877,8 +877,15 @@
                                             </a>
                                             <span
                                                 class="text-[10px] font-mono text-muted-foreground">{{ $order->created_at->format('M d, H:i') }}</span>
+                                            @if($order->shipments->isNotEmpty())
+                                                @php $shipment = $order->shipments->first(); @endphp
+                                                <div class="flex items-center gap-1.5 mt-1.5">
+                                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{{ $shipment->carrier }}</span>
+                                                    <span class="text-[10px] font-mono font-bold text-indigo-500 bg-indigo-50/50 px-1.5 py-0.5 rounded">{{ $shipment->tracking_number }}</span>
+                                                </div>
+                                            @endif
                                             @if($order->shipments->first()?->shipped_at)
-                                                <span class="text-[9px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded w-fit">
+                                                <span class="text-[9px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded w-fit mt-1.5">
                                                     🚀 {{ $order->shipments->first()->shipped_at->format('M d, H:i') }}
                                                 </span>
                                             @endif
