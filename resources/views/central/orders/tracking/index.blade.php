@@ -1,50 +1,72 @@
 @extends('layouts.app')
 
 @section('content')
-    <div id="tracking-page-wrapper"
+    <div id="orders-table-container" x-data="{ selected: [], trackingModalOpen: false, activeOrder: null }"
         class="flex flex-1 flex-col space-y-6 p-4 md:p-8 animate-in fade-in duration-500 bg-background/50">
 
         <!-- Header Area -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-            <div class="space-y-1.5">
+        <div class="flex flex-col gap-6">
+            <div class="space-y-1.5 pt-2">
                 <h1
                     class="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
                     Order Delivery Tracking</h1>
                 <p class="text-muted-foreground text-sm font-medium">Log delivery attempts and verify final delivery status.
                 </p>
             </div>
-
+            
             <!-- Status Tabs -->
-            <div
-                class="flex items-center p-1 bg-muted/60 rounded-xl border border-border/40 backdrop-blur-sm self-start sm:self-auto overflow-x-auto max-w-full no-scrollbar shadow-inner">
+            <div class="w-full">
+                <nav
+                    class="flex items-center p-1 bg-white/50 dark:bg-muted/60 rounded-xl border border-border/40 backdrop-blur-sm overflow-x-auto max-w-fit shadow-inner relative z-0">
+                    
+                    <a href="{{ route('central.orders.tracking.index', array_merge(request()->query(), ['status' => 'shipped'])) }}"
+                        class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2 group status-tab {{ request('status', 'shipped') === 'shipped' ? 'bg-background text-indigo-600 shadow-sm ring-1 ring-indigo-500/10' : 'text-muted-foreground/80 hover:text-indigo-600 hover:bg-background/40' }}">
+                        <span>On the way</span>
+                        <span class="inline-flex items-center justify-center text-[10px] font-bold px-1.5 h-4.5 min-w-[20px] rounded-md transition-colors {{ request('status', 'shipped') === 'shipped' ? 'bg-indigo-100/80 text-indigo-700' : 'bg-muted group-hover:bg-indigo-100/50 group-hover:text-indigo-600 text-muted-foreground' }}">
+                            {{ $counts['shipped'] ?? 0 }}
+                        </span>
+                    </a>
+                    <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
+                    <a href="{{ route('central.orders.tracking.index', array_merge(request()->query(), ['status' => 'attempt_failed'])) }}"
+                        class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2 group status-tab {{ request('status') === 'attempt_failed' ? 'bg-background text-amber-600 shadow-sm ring-1 ring-amber-500/10' : 'text-muted-foreground/80 hover:text-amber-600 hover:bg-background/40' }}">
+                        <span>Attempt Failed</span>
+                        <span class="inline-flex items-center justify-center text-[10px] font-bold px-1.5 h-4.5 min-w-[20px] rounded-md transition-colors {{ request('status') === 'attempt_failed' ? 'bg-amber-100/80 text-amber-700' : 'bg-muted group-hover:bg-amber-100/50 group-hover:text-amber-600 text-muted-foreground' }}">
+                            {{ $counts['attempt_failed'] ?? 0 }}
+                        </span>
+                    </a>
+                    <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
-                <a href="{{ route('central.orders.tracking.index', ['status' => 'shipped']) }}"
-                    class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status', 'shipped') === 'shipped' ? 'bg-background text-indigo-600 shadow-sm ring-1 ring-indigo-500/10' : 'text-muted-foreground/80 hover:text-indigo-600 hover:bg-background/40' }}">
-                    On the way
-                </a>
-                <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
+                    <a href="{{ route('central.orders.tracking.index', array_merge(request()->query(), ['status' => 'delivered'])) }}"
+                        class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2 group status-tab {{ request('status') === 'delivered' ? 'bg-background text-emerald-600 shadow-sm ring-1 ring-emerald-500/10' : 'text-muted-foreground/80 hover:text-emerald-600 hover:bg-background/40' }}">
+                        <span>Delivered</span>
+                        <span class="inline-flex items-center justify-center text-[10px] font-bold px-1.5 h-4.5 min-w-[20px] rounded-md transition-colors {{ request('status') === 'delivered' ? 'bg-emerald-100/80 text-emerald-700' : 'bg-muted group-hover:bg-emerald-100/50 group-hover:text-emerald-600 text-muted-foreground' }}">
+                            {{ $counts['delivered'] ?? 0 }}
+                        </span>
+                    </a>
+                    <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
-                <a href="{{ route('central.orders.tracking.index', ['status' => 'attempt_failed']) }}"
-                    class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'attempt_failed' ? 'bg-background text-amber-600 shadow-sm ring-1 ring-amber-500/10' : 'text-muted-foreground/80 hover:text-amber-600 hover:bg-background/40' }}">
-                    Attempt Failed
-                </a>
-                <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
+                    <a href="{{ route('central.orders.tracking.index', array_merge(request()->query(), ['status' => 'cancelled'])) }}"
+                        class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2 group status-tab {{ request('status') === 'cancelled' ? 'bg-background text-red-600 shadow-sm ring-1 ring-red-500/10' : 'text-muted-foreground/80 hover:text-red-600 hover:bg-background/40' }}">
+                        <span>Cancelled</span>
+                        <span class="inline-flex items-center justify-center text-[10px] font-bold px-1.5 h-4.5 min-w-[20px] rounded-md transition-colors {{ request('status') === 'cancelled' ? 'bg-red-100/80 text-red-700' : 'bg-muted group-hover:bg-red-100/50 group-hover:text-red-600 text-muted-foreground' }}">
+                            {{ $counts['cancelled'] ?? 0 }}
+                        </span>
+                    </a>
+                    <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
-                <a href="{{ route('central.orders.tracking.index', ['status' => 'delivered']) }}"
-                    class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'delivered' ? 'bg-background text-emerald-600 shadow-sm ring-1 ring-emerald-500/10' : 'text-muted-foreground/80 hover:text-emerald-600 hover:bg-background/40' }}">
-                    Delivered
-                </a>
-                <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
-
-                <a href="{{ route('central.orders.tracking.index', ['status' => 'all']) }}"
-                    class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'all' ? 'bg-background text-primary shadow-sm ring-1 ring-primary/10' : 'text-muted-foreground/80 hover:text-primary hover:bg-background/40' }}">
-                    All Dispatched
-                </a>
+                    <a href="{{ route('central.orders.tracking.index', array_merge(request()->query(), ['status' => 'all'])) }}"
+                        class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2 group status-tab {{ request('status') === 'all' ? 'bg-background text-primary shadow-sm ring-1 ring-primary/10' : 'text-muted-foreground/80 hover:text-primary hover:bg-background/40' }}">
+                        <span>All Dispatched</span>
+                        <span class="inline-flex items-center justify-center text-[10px] font-bold px-1.5 h-4.5 min-w-[20px] rounded-md transition-colors {{ request('status') === 'all' ? 'bg-primary/10 text-primary' : 'bg-muted group-hover:bg-primary/20 group-hover:text-primary text-muted-foreground' }}">
+                            {{ $counts['all'] ?? 0 }}
+                        </span>
+                    </a>
+                    <div class="w-2 shrink-0"></div>
+                </nav>
             </div>
-        </div>
 
-        <div id="orders-table-container" x-data="{ selected: [], trackingModalOpen: false, activeOrder: null }">
+        <div class="flex-1">
 
             <!-- Tracking Modal -->
             <div x-show="trackingModalOpen" style="display: none;"
@@ -733,7 +755,7 @@
                                 <path d="m21 21-4.3-4.3" />
                             </svg>
                         </div>
-                        <input type="text" name="search" value="{{ request('search') }}"
+                        <input type="text" name="search" id="search-input" value="{{ request('search') }}"
                             placeholder="Search Order, Name..."
                             class="block w-full rounded-xl border-border/50 py-2 pl-9 pr-4 text-foreground bg-background/50 placeholder:text-muted-foreground/70 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm leading-6 transition-all shadow-sm outline-none">
                     </div>
@@ -778,7 +800,7 @@
 
                         @if(request()->anyFilled(['search', 'start_date', 'end_date', 'courier']))
                             <a href="{{ url()->current() }}?status={{ request('status', 'shipped') }}"
-                                class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all"
+                                class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all reset-filter"
                                 title="Reset Filters">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -811,8 +833,10 @@
                         <form id="per-page-form" method="GET" action="{{ url()->current() }}"
                             class="flex items-center gap-2">
                             <input type="hidden" name="status" value="{{ request('status', 'shipped') }}">
-                            @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}">
-                            @endif
+                            @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
+                            @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif
+                            @if(request('end_date')) <input type="hidden" name="end_date" value="{{ request('end_date') }}"> @endif
+                            @if(request('courier')) <input type="hidden" name="courier" value="{{ request('courier') }}"> @endif
                             <label for="per_page"
                                 class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">Show</label>
                             <div class="relative">
@@ -1035,6 +1059,20 @@
 
             async function loadContent(url, pushState = true) {
                 if (loading) loading.style.opacity = '1';
+
+                const activeEl = document.activeElement;
+                const focusedElementId = activeEl ? activeEl.id : null;
+                const selectionSupport = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') && 
+                                        ['text', 'search', 'tel', 'url', 'password', null, ''].includes(activeEl.getAttribute('type'));
+                
+                let selectionStart = null, selectionEnd = null;
+                if (selectionSupport) {
+                    try {
+                        selectionStart = activeEl.selectionStart;
+                        selectionEnd = activeEl.selectionEnd;
+                    } catch (e) {}
+                }
+
                 try {
                     const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                     if (!res.ok) throw new Error('Network response was not ok');
@@ -1045,6 +1083,19 @@
                     if (newContent) {
                         container.innerHTML = newContent.innerHTML;
                         if (pushState) window.history.pushState({}, '', url);
+
+                        if (focusedElementId) {
+                            const elementToFocus = document.getElementById(focusedElementId);
+                            if (elementToFocus) {
+                                elementToFocus.focus();
+                                if (selectionSupport && selectionStart !== null && selectionEnd !== null) {
+                                    try {
+                                        elementToFocus.setSelectionRange(selectionStart, selectionEnd);
+                                    } catch (e) {}
+                                }
+                            }
+                        }
+
                         if (typeof Alpine !== 'undefined') Alpine.initTree(container);
                     } else {
                         window.location.href = url;
@@ -1059,7 +1110,7 @@
             window.addEventListener('popstate', () => loadContent(window.location.href, false));
 
             container.addEventListener('click', (e) => {
-                const link = e.target.closest('a.page-link') || e.target.closest('nav[role="navigation"] a') || e.target.closest('.pagination a');
+                const link = e.target.closest('a.page-link') || e.target.closest('nav[role="navigation"] a') || e.target.closest('.pagination a') || e.target.closest('.reset-filter') || e.target.closest('.status-tab');
                 if (link && container.contains(link) && link.href) {
                     e.preventDefault();
                     loadContent(link.href);
@@ -1068,34 +1119,35 @@
 
             // Event Delegation for Search Input (Auto-search)
             container.addEventListener('input', (e) => {
-                if (e.target.name === 'search') {
-                    const form = e.target.closest('form');
+                const target = e.target;
+                if (target.getAttribute('name') === 'search') {
+                    const form = target.closest('form');
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(() => {
-                        const url = new URL(form.action);
+                        const baseUrl = form.getAttribute('action') || window.location.pathname;
                         const params = new URLSearchParams(new FormData(form));
-                        loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+                        loadContent(`${baseUrl}?${params.toString()}`);
                     }, 400);
                 }
             });
 
             // Event Delegation for Form Submits (Search & Pagination)
             container.addEventListener('submit', (e) => {
-                if (e.target.id === 'per-page-form' || e.target.id === 'search-form') {
+                if (e.target.id === 'per-page-form' || e.target.id === 'filter-form') {
                     e.preventDefault();
                     const form = e.target;
-                    const url = new URL(form.action);
+                    const baseUrl = form.getAttribute('action') || window.location.pathname;
                     const params = new URLSearchParams(new FormData(form));
-                    loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+                    loadContent(`${baseUrl}?${params.toString()}`);
                 }
             });
 
             container.addEventListener('change', (e) => {
                 if (e.target.id === 'per_page') {
                     const form = e.target.closest('form');
-                    const url = new URL(form.action);
+                    const baseUrl = form.getAttribute('action') || window.location.pathname;
                     const params = new URLSearchParams(new FormData(form));
-                    loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+                    loadContent(`${baseUrl}?${params.toString()}`);
                 }
             });
         });

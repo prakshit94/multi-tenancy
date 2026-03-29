@@ -27,63 +27,95 @@ class OrderTrackingController extends Controller
         // Default to 'shipped' if no status is provided
         $status = $request->input('status', 'shipped');
 
-        $query = Order::with(['customer', 'items', 'trackings.user', 'shippingAddress', 'billingAddress', 'shipments'])
+        $baseQuery = Order::query();
+
+        // Search Filter
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $baseQuery->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($c) use ($search) {
+                        $c->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%")
+                            ->orWhere('mobile', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('shipments', function ($s) use ($search) {
+                        $s->where('tracking_number', 'like', "%{$search}%");
+                    });
+            });
+        }
+        // Date Filters
+        if ($request->filled('start_date')) {
+            $baseQuery->whereDate('created_at', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $baseQuery->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        // Courier Filter
+        if ($request->filled('courier')) {
+            $baseQuery->whereHas('shipments', function ($q) use ($request) {
+                $q->where('carrier', $request->courier);
+            });
+        }
+
+        // Tab Counts
+        $counts = [
+            'shipped' => (clone $baseQuery)->where('status', 'shipped')->where('shipping_status', 'shipped')
+                ->whereDoesntHave('trackings', function ($q) {
+                    $q->where('status', 'attempt_failed')
+                        ->whereRaw('id = (select max(id) from order_trackings where order_id = orders.id)');
+                })->count(),
+            'attempt_failed' => (clone $baseQuery)->where('status', 'shipped')
+                ->whereHas('trackings', function ($q) {
+                    $q->where('status', 'attempt_failed')
+                        ->whereRaw('id = (select max(id) from order_trackings where order_id = orders.id)');
+                })->count(),
+            'delivered' => (clone $baseQuery)->where(function ($q) {
+                $q->where('shipping_status', 'delivered')->orWhere('status', 'completed');
+            })->count(),
+            'cancelled' => (clone $baseQuery)->where('status', 'returned')->count(),
+            'all' => (clone $baseQuery)->where(function ($q) {
+                $q->whereIn('shipping_status', ['shipped', 'partially_shipped', 'delivered'])
+                    ->orWhere('status', 'completed');
+            })->count(),
+        ];
+
+        $query = (clone $baseQuery)->with(['customer', 'items', 'trackings.user', 'shippingAddress', 'billingAddress', 'shipments'])
             ->latest();
 
         // Apply Shipping Status Filter
         if ($status === 'shipped') {
-            // Orders that have left the warehouse but are not yet delivered
-            $query->whereIn('shipping_status', ['shipped', 'partially_shipped'])
-                ->where('status', '!=', 'completed');
+            $query->where('status', 'shipped')->where('shipping_status', 'shipped')
+                ->whereDoesntHave('trackings', function ($q) {
+                    $q->where('status', 'attempt_failed')
+                        ->whereRaw('id = (select max(id) from order_trackings where order_id = orders.id)');
+                });
         } elseif ($status === 'delivered') {
             // Orders that have successfully reached the customer
             $query->where('shipping_status', 'delivered')
                 ->orWhere('status', 'completed');
         } elseif ($status === 'attempt_failed') {
-            // Orders where a delivery was attempted but failed
-            $query->whereHas('trackings', function ($q) {
-                $q->where('status', 'attempt_failed');
-            })->where('status', '!=', 'completed');
+            // Orders where the MOST RECENT delivery attempt failed
+            $query->where('status', 'shipped')
+                ->whereHas('trackings', function ($q) {
+                    $q->where('status', 'attempt_failed')
+                        ->whereRaw('id = (select max(id) from order_trackings where order_id = orders.id)');
+                });
+        } elseif ($status === 'cancelled') {
+            $query->where('status', 'returned');
         } elseif ($status === 'all') {
             // All orders that have at least started shipping (or are already completed)
             $query->whereIn('shipping_status', ['shipped', 'partially_shipped', 'delivered'])
                 ->orWhere('status', 'completed');
         }
 
-        // Search Filter
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhere('grand_total', 'like', "%{$search}%")
-                    ->orWhereHas('customer', function ($c) use ($search) {
-                        $c->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%")
-                            ->orWhere('mobile', 'like', "%{$search}%");
-                    });
-            });
-        }
-        // Date Filters
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
-
-        // Courier Filter
-        if ($request->filled('courier')) {
-            $query->whereHas('shipments', function ($q) use ($request) {
-                $q->where('carrier', $request->courier);
-            });
-        }
-
         $orders = $query->paginate($request->get('per_page', 10))->withQueryString();
 
         $couriers = Shipment::distinct()->whereNotNull('carrier')->pluck('carrier')->sort()->values();
 
-        return view('central.orders.tracking.index', compact('orders', 'couriers'));
+        return view('central.orders.tracking.index', compact('orders', 'couriers', 'counts'));
     }
 
     public function store(Request $request, Order $order)
@@ -113,8 +145,7 @@ class OrderTrackingController extends Controller
                 }
             });
 
-            return redirect()->route('central.orders.tracking.index')
-                ->with('success', 'Order tracking status updated successfully.');
+            return back()->with('success', 'Order tracking status updated successfully.');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Error updating tracking status: ' . $e->getMessage());
