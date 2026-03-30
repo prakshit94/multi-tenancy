@@ -48,7 +48,7 @@
 
                     <a href="{{ route('central.orders.tracking.index', array_merge(request()->query(), ['status' => 'cancelled'])) }}"
                         class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-2 group status-tab {{ request('status') === 'cancelled' ? 'bg-background text-red-600 shadow-sm ring-1 ring-red-500/10' : 'text-muted-foreground/80 hover:text-red-600 hover:bg-background/40' }}">
-                        <span>Cancelled</span>
+                        <span>Returned</span>
                         <span class="inline-flex items-center justify-center text-[10px] font-bold px-1.5 h-4.5 min-w-[20px] rounded-md transition-colors {{ request('status') === 'cancelled' ? 'bg-red-100/80 text-red-700' : 'bg-muted group-hover:bg-red-100/50 group-hover:text-red-600 text-muted-foreground' }}">
                             {{ $counts['cancelled'] ?? 0 }}
                         </span>

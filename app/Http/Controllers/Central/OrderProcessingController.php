@@ -128,14 +128,23 @@ class OrderProcessingController extends Controller
         }
 
         $countsQuery = clone $query;
-        $counts = $countsQuery->reorder()->select('status', DB::raw('count(*) as total'))
+        $stats = $countsQuery->reorder()->select('status', 
+                DB::raw('count(*) as total'),
+                DB::raw('sum(grand_total) as amount')
+            )
             ->groupBy('status')
-            ->pluck('total', 'status')
-            ->toArray();
+            ->get();
+            
+        $counts = $stats->pluck('total', 'status')->toArray();
+        $amounts = $stats->pluck('amount', 'status')->toArray();
 
         $activeCount = ($counts['confirmed'] ?? 0) + ($counts['processing'] ?? 0);
         $counts['active'] = $activeCount;
         $counts['all'] = array_sum(array_diff_key($counts, ['active' => 0, 'all' => 0]));
+        
+        $activeAmount = ($amounts['confirmed'] ?? 0) + ($amounts['processing'] ?? 0);
+        $amounts['active'] = $activeAmount;
+        $amounts['all'] = array_sum(array_diff_key($amounts, ['active' => 0, 'all' => 0]));
 
         // Status Filtering (Symmetric with Browse)
         if (!$request->has('status')) {
@@ -168,10 +177,10 @@ class OrderProcessingController extends Controller
         $couriers = \App\Models\Shipment::distinct()->whereNotNull('carrier')->pluck('carrier')->sort()->values();
 
         if ($request->ajax() || $request->has('ajax')) {
-            return view('central.processing.orders.partials.orders-content', compact('orders', 'counts', 'districtCounts', 'districts', 'talukas', 'couriers'));
+            return view('central.processing.orders.partials.orders-content', compact('orders', 'counts', 'amounts', 'districtCounts', 'districts', 'talukas', 'couriers'));
         }
 
-        return view('central.processing.orders.index', compact('orders', 'counts', 'states', 'districts', 'talukas', 'districtCounts', 'couriers'));
+        return view('central.processing.orders.index', compact('orders', 'counts', 'amounts', 'states', 'districts', 'talukas', 'districtCounts', 'couriers'));
     }
 
     /**

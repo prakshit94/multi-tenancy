@@ -25,10 +25,16 @@
                         {!! $tab['icon'] !!}
                     </svg>
                     {{ $tab['label'] }}
-                    <span class="inline-flex items-center justify-center px-2 py-0.5 text-[9px] font-black rounded-lg transition-colors"
-                        :class="activeStatus === '{{ $tab['status'] }}' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'">
-                        {{ $counts[$tab['status']] ?? 0 }}
-                    </span>
+                    <div class="flex flex-col items-center">
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 text-[9px] font-black rounded-lg transition-colors"
+                            :class="activeStatus === '{{ $tab['status'] }}' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'">
+                            {{ $counts[$tab['status']] ?? 0 }}
+                        </span>
+                        <span class="text-[8px] font-bold mt-0.5 opacity-80"
+                            :class="activeStatus === '{{ $tab['status'] }}' ? 'text-white' : 'text-gray-500'">
+                            ₹{{ number_format($amounts[$tab['status']] ?? 0, 0) }}
+                        </span>
+                    </div>
                 </button>
             @endforeach
         </div>
@@ -133,11 +139,11 @@
 <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
     @php
         $stats = [
-            ['label' => 'Confirmed', 'count' => $counts['confirmed'] ?? 0, 'color' => 'blue', 'icon' => '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'],
-            ['label' => 'Processing', 'count' => $counts['processing'] ?? 0, 'color' => 'purple', 'icon' => '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>'],
-            ['label' => 'Ready to Ship', 'count' => $counts['ready_to_ship'] ?? 0, 'color' => 'emerald', 'icon' => '<path d="M2 9h20"/><path d="M4 9h2V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4h2"/><path d="M22 9v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9Z"/><path d="M12 12v3"/><path d="M12 15h3"/>'],
-            ['label' => 'Dispatched', 'count' => $counts['shipped'] ?? 0, 'color' => 'indigo', 'icon' => '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-5l-4-4h-4"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>'],
-            ['label' => 'Deliverd', 'count' => $counts['delivered'] ?? 0, 'color' => 'green', 'icon' => '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'],
+            ['label' => 'Confirmed', 'status' => 'confirmed', 'count' => $counts['confirmed'] ?? 0, 'color' => 'blue', 'icon' => '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'],
+            ['label' => 'Processing', 'status' => 'processing', 'count' => $counts['processing'] ?? 0, 'color' => 'purple', 'icon' => '<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>'],
+            ['label' => 'Ready to Ship', 'status' => 'ready_to_ship', 'count' => $counts['ready_to_ship'] ?? 0, 'color' => 'emerald', 'icon' => '<path d="M2 9h20"/><path d="M4 9h2V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4h2"/><path d="M22 9v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9Z"/><path d="M12 12v3"/><path d="M12 15h3"/>'],
+            ['label' => 'Dispatched', 'status' => 'shipped', 'count' => $counts['shipped'] ?? 0, 'color' => 'indigo', 'icon' => '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-5l-4-4h-4"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>'],
+            ['label' => 'Deliverd', 'status' => 'delivered', 'count' => $counts['delivered'] ?? 0, 'color' => 'green', 'icon' => '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'],
         ];
     @endphp
 
@@ -152,7 +158,10 @@
                 </div>
                 <span class="text-[11px] font-black uppercase tracking-widest text-gray-400 group-hover:text-{{ $s['color'] }}-600 transition-colors">{{ $s['label'] }}</span>
             </div>
-            <div class="text-3xl font-black text-gray-900 tracking-tighter">{{ number_format($s['count']) }}</div>
+            <div class="flex flex-col">
+                <div class="text-3xl font-black text-gray-900 tracking-tighter">{{ number_format($s['count']) }}</div>
+                <div class="text-sm font-bold text-gray-500 -mt-1">₹{{ number_format($amounts[$s['status']] ?? 0, 0) }}</div>
+            </div>
             <div class="mt-2 h-1 w-full bg-gray-50 rounded-full overflow-hidden">
                 <div class="h-full bg-{{ $s['color'] }}-500 transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(var(--{{ $s['color'] }}-500),0.4)]" style="width: {{ $s['count'] > 0 ? '65%' : '0%' }}"></div>
             </div>
