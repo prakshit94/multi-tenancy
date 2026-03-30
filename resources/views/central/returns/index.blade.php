@@ -6,6 +6,7 @@
         currentReturn: null,
         items: [],
         actionUrl: '',
+        selectedIds: [],
         
         inspect(rma) {
             this.currentReturn = rma;
@@ -30,6 +31,14 @@
         
         get canSubmit() {
             return this.items.length > 0 && this.items.every(i => i.verified);
+        },
+
+        toggleSelectAll() {
+            if (this.selectedIds.length === {{ count($returns->pluck('id')) }}) {
+                this.selectedIds = [];
+            } else {
+                this.selectedIds = {{ json_encode($returns->pluck('id')) }};
+            }
         }
     }" 
     class="flex flex-col space-y-8 p-8 max-w-[1600px] mx-auto w-full animate-in fade-in duration-500">
@@ -43,13 +52,34 @@
                 <p class="text-muted-foreground text-sm font-medium">Process RMAs, inspect items, and issue refunds.</p>
             </div>
             
-            @can('returns create')
-            <a href="{{ route('central.returns.create') }}" 
-               class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl shadow-lg shadow-gray-900/10 transition-all hover:-translate-y-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                Process New Return
-            </a>
-            @endcan
+            <div class="flex items-center gap-3">
+                <!-- Bulk Action Bar -->
+                <div x-show="selectedIds.length > 0" x-cloak x-transition
+                     class="flex items-center gap-2 p-1.5 bg-white rounded-2xl border border-gray-200 shadow-xl animate-in slide-in-from-right-4">
+                    <span class="px-3 text-xs font-bold text-gray-400 uppercase border-r border-gray-100 mr-1" x-text="selectedIds.length + ' selected'"></span>
+                    
+                    <form action="{{ route('central.returns.bulk-action') }}" method="POST" class="flex items-center gap-2">
+                        @csrf
+                        <template x-for="id in selectedIds" :key="id">
+                            <input type="hidden" name="ids[]" :value="id">
+                        </template>
+
+                        @if(request('status', 'requested') === 'requested')
+                            <button name="action" value="approve" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-all shadow-sm">Approve</button>
+                            <button name="action" value="reject" class="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-700 transition-all shadow-sm">Reject</button>
+                        @endif
+                        <button name="action" value="delete" onclick="return confirm('Delete selected returns?')" class="px-4 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all">Delete</button>
+                    </form>
+                </div>
+
+                @can('returns create')
+                <a href="{{ route('central.returns.create') }}" 
+                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white text-sm font-semibold rounded-xl shadow-lg shadow-gray-900/10 transition-all hover:-translate-y-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    Process New Return
+                </a>
+                @endcan
+            </div>
         </div>
 
         <!-- Stats Grid -->
@@ -96,8 +126,13 @@
         </div>
 
         <!-- Filters & Toolbar -->
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4 sticky top-0 z-30 bg-gray-50/95 backdrop-blur-xl p-2 rounded-2xl border border-gray-200/60 shadow-sm">
-            <div class="flex items-center gap-1 overflow-x-auto no-scrollbar w-full md:w-auto">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sticky top-4 z-30 bg-white/80 backdrop-blur-xl p-3 rounded-2xl border border-gray-200/60 shadow-xl">
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full lg:w-auto pb-2 lg:pb-0">
+                <div class="flex items-center px-4 py-2 border-r border-gray-100">
+                    <input type="checkbox" @click="toggleSelectAll" 
+                           :checked="selectedIds.length === {{ count($returns->pluck('id')) }} && {{ count($returns->pluck('id')) }} > 0"
+                           class="h-5 w-5 rounded border-gray-300 text-gray-900 shadow-sm focus:ring-gray-900 focus:ring-offset-0 cursor-pointer">
+                </div>
                 @php
                     $filters = [
                         ['label' => 'Requested', 'value' => 'requested', 'key' => 'requested'],
@@ -111,32 +146,32 @@
                 @endphp
                 @foreach($filters as $filter)
                     <a href="{{ route('central.returns.index', ['status' => $filter['value']]) }}" 
-                       class="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2 {{ $currentStatus == $filter['value'] ? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-900 hover:bg-white/50' }}">
+                       class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-2.5 {{ $currentStatus == $filter['value'] ? 'bg-gray-900 text-white shadow-lg shadow-gray-900/20' : 'text-gray-400 hover:text-gray-900' }}">
                         {{ $filter['label'] }}
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-bold {{ $currentStatus == $filter['value'] ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400' }}">
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-black {{ $currentStatus == $filter['value'] ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200' }}">
                             {{ $stats[$filter['key']] ?? 0 }}
                         </span>
                     </a>
                 @endforeach
 
-                <div class="h-6 w-px bg-gray-200 mx-2 hidden md:block"></div>
+                <div class="h-8 w-px bg-gray-100 mx-2 hidden lg:block"></div>
 
                 <a href="{{ route('central.returns.create') }}" 
-                   class="px-4 py-2 rounded-xl text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-all whitespace-nowrap flex items-center gap-2">
+                   class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-indigo-600 hover:bg-indigo-50 transition-all whitespace-nowrap flex items-center gap-2.5">
                     Available Orders
-                    <span class="px-1.5 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-bold">
+                    <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-black">
                         {{ $stats['eligible_orders'] ?? 0 }}
                     </span>
                 </a>
             </div>
 
-            <form action="{{ url()->current() }}" method="GET" class="relative group w-full md:w-72">
+            <form action="{{ url()->current() }}" method="GET" class="relative group w-full lg:w-80">
                 @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-gray-900 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </div>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Search RMA, Order, Customer..." 
-                       class="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm">
+                       class="w-full h-12 pl-12 pr-4 bg-gray-50/50 border border-gray-100 rounded-2xl text-sm font-medium focus:ring-4 focus:ring-gray-900/5 focus:bg-white focus:border-gray-200 transition-all">
             </form>
         </div>
 
@@ -152,7 +187,14 @@
                           ($rma->status === 'refunded' || $rma->status === 'completed' ? 'bg-emerald-500' : 
                           ($rma->status === 'rejected' ? 'bg-red-500' : 'bg-gray-300')))) }}"></div>
 
-                    <div class="p-6">
+                    <div class="p-6 flex items-start gap-4">
+                        <!-- Bulk Checkbox -->
+                        <div class="flex items-center h-5 pt-1">
+                            <input type="checkbox" value="{{ $rma->id }}" x-model="selectedIds"
+                                   class="h-5 w-5 rounded border-gray-300 text-primary shadow-sm focus:ring-primary focus:ring-offset-0 cursor-pointer transition-all">
+                        </div>
+
+                        <div class="flex-1">
                         <div class="flex flex-col lg:flex-row gap-8">
                             <!-- Left: Info -->
                             <div class="flex-1 space-y-6">
@@ -308,6 +350,7 @@
                                     @endforeach
                                 </div>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>

@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Central;
 use App\Http\Controllers\Controller;
 use App\Models\OrderReturn;
 use App\Models\Order;
+use App\Models\ReturnItem;
+use App\Models\Payment;
 use App\Models\InventoryStock;
 use App\Models\InventoryMovement;
 use Illuminate\Http\Request;
@@ -15,6 +17,7 @@ use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Exception;
 
 class OrderReturnController extends Controller
@@ -73,7 +76,7 @@ class OrderReturnController extends Controller
         if ($preSelectedOrderId) {
             $preSelectedOrder = Order::with(['items.product', 'returns.items'])->find($preSelectedOrderId);
             if ($preSelectedOrder) {
-                if (!in_array($preSelectedOrder->status, ['shipped', 'delivered'])) {
+                if (!in_array($preSelectedOrder->status, ['shipped', 'delivered', 'completed', 'attempt_failed'])) {
                     $status = $preSelectedOrder->status;
                     $preSelectedOrder = null;
                     session()->flash('error', 'Selected order is not eligible for return (Status: ' . ucfirst($status ?? 'Unknown') . ')');
@@ -123,7 +126,7 @@ class OrderReturnController extends Controller
             DB::transaction(function () use ($validated) {
                 $order = Order::with('items.product')->findOrFail($validated['order_id']);
 
-                if (!in_array($order->status, ['shipped', 'delivered'])) {
+                if (!in_array($order->status, ['shipped', 'delivered', 'completed', 'attempt_failed'])) {
                     throw new Exception("Returns are only allowed for Shipped or Delivered orders. Current status: " . ucfirst($order->status));
                 }
 
@@ -238,6 +241,46 @@ class OrderReturnController extends Controller
             return back()->with('success', 'RMA Status Updated.');
         } catch (Exception $e) {
             return back()->with('error', 'Failed to update RMA status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle bulk actions on returns.
+     */
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $this->authorize('returns manage');
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['exists:returns,id'],
+            'action' => ['required', 'string', 'in:approve,reject,delete'],
+        ]);
+
+        $ids = $validated['ids'];
+        $action = $validated['action'];
+
+        try {
+            DB::transaction(function () use ($ids, $action) {
+                $returns = OrderReturn::whereIn('id', $ids)->get();
+
+                foreach ($returns as $return) {
+                    if ($action === 'approve' && $return->status === 'requested') {
+                        $return->update(['status' => 'approved']);
+                        // Sync Order Status
+                        app(\App\Services\OrderService::class)->returnOrder($return->order);
+                    } elseif ($action === 'reject' && $return->status === 'requested') {
+                        $return->update(['status' => 'rejected']);
+                    } elseif ($action === 'delete') {
+                        $return->delete();
+                    }
+                }
+            });
+
+            $message = "Selected returns processed successfully.";
+            return back()->with('success', $message);
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to perform bulk action: ' . $e->getMessage());
         }
     }
     /**
@@ -396,6 +439,7 @@ class OrderReturnController extends Controller
             return back()->withInput()->with('error', 'Failed to process inspection: ' . $e->getMessage());
         }
     }
+
     /**
      * Show the form for processing the refund.
      */
@@ -444,9 +488,9 @@ class OrderReturnController extends Controller
                 }
 
                 // Create a Payment Record (as a refund payment for tracking)
-                \App\Models\Payment::create([
+                Payment::create([
                     'order_id' => $return->order_id,
-                    'amount' => $validated['refunded_amount'], // Stored as positive as requested
+                    'amount' => $validated['refunded_amount'],
                     'method' => 'refund',
                     'paid_at' => now(),
                     'notes' => $validated['notes'] ?? 'Order Return Refund: ' . $return->rma_number,
@@ -457,5 +501,149 @@ class OrderReturnController extends Controller
         } catch (Exception $e) {
             return back()->withInput()->with('error', 'Failed to process refund: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Preview bulk returns from CSV.
+     */
+    public function bulkPreview(Request $request): JsonResponse
+    {
+        $this->authorize('returns edit');
+        $request->validate(['csv_file' => 'required|file|mimes:csv,txt|max:4096']);
+
+        try {
+            $file = $request->file('csv_file');
+            $data = array_map('str_getcsv', file($file->getRealPath()));
+            $header = array_shift($data);
+            $rows = [];
+            
+            foreach ($data as $index => $row) {
+                if (count($header) !== count($row)) continue;
+                
+                $mappedRow = array_combine($header, $row);
+                $status = 'valid';
+                $message = 'Ready to process';
+                
+                // Perform validation for preview
+                $order = Order::with('items')->where('order_number', $mappedRow['order_number'])->first();
+                if (!$order) {
+                    $status = 'error';
+                    $message = "Order not found";
+                } elseif (!in_array($order->status, ['shipped', 'delivered', 'completed', 'attempt_failed'])) {
+                    $status = 'error';
+                    $message = "Ineligible status: " . ucfirst($order->status);
+                } else {
+                    $orderItem = $order->items->where('sku', $mappedRow['sku'])->first();
+                    if (!$orderItem) {
+                        $status = 'error';
+                        $message = "SKU not in order";
+                    } else {
+                        $returnedQty = ReturnItem::whereHas('returnOrder', function ($q) use ($order) {
+                            $q->where('order_id', $order->id)->where('status', '!=', 'rejected');
+                        })->where('product_id', $orderItem->product_id)->sum('quantity');
+
+                        $availableQty = max(0, $orderItem->quantity - $returnedQty);
+                        if ($availableQty < ($mappedRow['quantity'] ?? 0)) {
+                            $status = 'error';
+                            $message = "Only $availableQty available";
+                        }
+                    }
+                }
+
+                $rows[] = array_merge($mappedRow, [
+                    'preview_status' => $status,
+                    'preview_message' => $message,
+                    'order_id' => $order ? $order->id : null,
+                    'product_id' => isset($orderItem) ? $orderItem->product_id : null,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'rows' => $rows
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Process confirmed bulk returns.
+     */
+    public function bulkUpload(Request $request): RedirectResponse
+    {
+        $this->authorize('returns edit');
+        
+        $validated = $request->validate([
+            'rows' => 'required|array|min:1',
+            'rows.*.order_id' => 'required|exists:orders,id',
+            'rows.*.order_number' => 'required',
+            'rows.*.sku' => 'required',
+            'rows.*.quantity' => 'required|numeric|min:1',
+            'rows.*.condition' => 'nullable|string',
+            'rows.*.reason' => 'nullable|string',
+            'rows.*.preview_status' => 'required|in:valid',
+        ]);
+
+        try {
+            $errors = [];
+            DB::transaction(function () use ($validated, &$errors) {
+                foreach ($validated['rows'] as $row) {
+                    $order = Order::findOrFail($row['order_id']);
+                    $orderItem = $order->items->where('sku', $row['sku'])->first();
+
+                    // One last check
+                    $returnedQty = ReturnItem::whereHas('returnOrder', function ($q) use ($order) {
+                        $q->where('order_id', $order->id)->where('status', '!=', 'rejected');
+                    })->where('product_id', $orderItem->product_id)->sum('quantity');
+
+                    $availableQty = max(0, $orderItem->quantity - $returnedQty);
+                    if ($availableQty < $row['quantity']) {
+                        $errors[] = "Order #{$row['order_number']} - insufficient quantity.";
+                        continue;
+                    }
+
+                    $rma = OrderReturn::create([
+                        'rma_number' => $this->generateRmaNumber(),
+                        'order_id' => $order->id,
+                        'customer_id' => $order->customer_id,
+                        'status' => 'requested',
+                        'reason' => $row['reason'] ?? 'Bulk uploaded return',
+                        'refund_method' => 'credit',
+                    ]);
+
+                    $rma->items()->create([
+                        'product_id' => $orderItem->product_id,
+                        'quantity' => $row['quantity'],
+                        'condition' => strtolower($row['condition'] ?? 'sellable'),
+                    ]);
+                }
+            });
+
+            if (count($errors) > 0) {
+                return back()->with('error', 'Processed with errors: ' . implode(', ', $errors));
+            }
+
+            return redirect()->route('central.returns.index')->with('success', 'Bulk RMAs created successfully.');
+
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to store bulk returns: ' . $e->getMessage());
+        }
+    }
+
+    private function generateRmaNumber()
+    {
+        $prefix = 'RMA-' . date('Ymd');
+        $lastReturn = OrderReturn::whereDate('created_at', date('Y-m-d'))
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $sequence = 1;
+        if ($lastReturn && preg_match('/-(\d+)$/', $lastReturn->rma_number, $matches)) {
+            $sequence = intval($matches[1]) + 1;
+        }
+
+        return $prefix . '-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
     }
 }

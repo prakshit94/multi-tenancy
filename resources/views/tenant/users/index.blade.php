@@ -16,26 +16,38 @@
             <!-- Tab Navigation (Pills) - Manual Links (Could be AJAXified too but kept simple for now) -->
             <div class="flex items-center p-1 bg-muted/50 rounded-xl border border-border/50 backdrop-blur-sm">
                 <a href="{{ route($routePrefix . '.users.index') }}"
-                    class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') === null && request('trashed') === null ? 'bg-background text-foreground shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-foreground hover:bg-background/50' }}">
-                    All Users
+                    class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') === null && request('trashed') === null ? 'bg-background text-foreground shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-foreground hover:bg-background/50' }}">
+                    <span>All Users</span>
+                    <span
+                        class="flex items-center justify-center h-5 px-1.5 rounded-md bg-muted text-[10px] font-bold text-muted-foreground">
+                        {{ $counts['all'] }}
+                    </span>
                 </a>
                 <div class="w-px h-4 bg-border/40 mx-1"></div>
                 <a href="{{ route($routePrefix . '.users.index', ['status' => 'active']) }}"
-                    class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') === 'active' ? 'bg-background text-emerald-600 shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-emerald-600 hover:bg-background/50' }}">
-                    Active
+                    class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') === 'active' ? 'bg-background text-emerald-600 shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-emerald-600 hover:bg-background/50' }}">
+                    <span>Active</span>
+                    <span
+                        class="flex items-center justify-center h-5 px-1.5 rounded-md bg-muted text-[10px] font-bold text-muted-foreground">
+                        {{ $counts['active'] }}
+                    </span>
                 </a>
                 <div class="w-px h-4 bg-border/40 mx-1"></div>
                 <a href="{{ route($routePrefix . '.users.index', ['status' => 'inactive']) }}"
-                    class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') === 'inactive' ? 'bg-background text-amber-600 shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-amber-600 hover:bg-background/50' }}">
-                    Inactive
+                    class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') === 'inactive' ? 'bg-background text-amber-600 shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-amber-600 hover:bg-background/50' }}">
+                    <span>Inactive</span>
+                    <span
+                        class="flex items-center justify-center h-5 px-1.5 rounded-md bg-muted text-[10px] font-bold text-muted-foreground">
+                        {{ $counts['inactive'] }}
+                    </span>
                 </a>
                 <div class="w-px h-4 bg-border/40 mx-1"></div>
                 <a href="{{ route($routePrefix . '.users.index', ['trashed' => 'only']) }}"
                     class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 {{ request('trashed') === 'only' ? 'bg-background text-destructive shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-destructive hover:bg-background/50' }}">
-                    Trash
+                    <span>Trash</span>
                     <span
                         class="flex items-center justify-center h-5 px-1.5 rounded-md bg-muted text-[10px] font-bold text-muted-foreground">
-                        {{ \App\Models\User::onlyTrashed()->count() }}
+                        {{ $counts['trashed'] }}
                     </span>
                 </a>
             </div>

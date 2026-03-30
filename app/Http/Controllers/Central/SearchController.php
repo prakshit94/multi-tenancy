@@ -300,12 +300,15 @@ class SearchController extends Controller
         if (!empty($term)) {
             $query->where(function ($q) use ($term) {
                 $q->where('order_number', 'like', "%{$term}%")
-                    ->orWhere('id', $term)
                     ->orWhereHas('customer', function ($subQ) use ($term) {
                         $subQ->where('first_name', 'like', "%{$term}%")
                             ->orWhere('last_name', 'like', "%{$term}%")
                             ->orWhere('mobile', 'like', "%{$term}%");
                     });
+                
+                if (is_numeric($term)) {
+                    $q->orWhere('id', $term);
+                }
             });
         }
 
@@ -326,7 +329,7 @@ class SearchController extends Controller
             return [
                 'id' => $order->id,
                 'order_number' => $order->order_number ?? 'ORD-' . $order->id,
-                'customer_name' => $order->customer->first_name . ' ' . $order->customer->last_name,
+                'customer_name' => $order->customer ? ($order->customer->first_name . ' ' . $order->customer->last_name) : 'Guest/Missing',
                 'placed_at' => $order->placed_at ? $order->placed_at->format('d M Y') : $order->created_at->format('d M Y'),
                 'grand_total' => (float) $order->grand_total,
                 'status' => ucfirst($order->status),

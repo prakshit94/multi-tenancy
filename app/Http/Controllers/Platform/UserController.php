@@ -60,8 +60,17 @@ class UserController extends Controller
         $users = $query->latest()->paginate($perPage)->withQueryString();
         $routePrefix = $this->getRoutePrefix();
 
+        // Counts for tabs (independent of filters)
+        $counts = [
+            'all' => User::count(),
+            'active' => User::where('status', 'active')->count(),
+            'inactive' => User::where('status', 'inactive')->count(),
+            'trashed' => User::onlyTrashed()->count(),
+        ];
+
         return view('tenant.users.index', [
             'users' => $users,
+            'counts' => $counts,
             'routePrefix' => $routePrefix,
             'createUrl' => route($routePrefix . '.users.create'),
         ]);

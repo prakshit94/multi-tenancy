@@ -27,11 +27,11 @@
         <div class="h-1 w-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20"></div>
 
         <form action="{{ $actionUrl }}" method="POST" class="p-6 md:p-8 space-y-8"
-              x-data="{ 
+              x-data='{ 
                   showPassword: false, 
                   showConfirm: false,
-                  selectedRoles: @json(old('roles', isset($user) ? $user->roles->pluck('name') : []))
-              }">
+                  selectedRoles: @json(old("roles", isset($user) ? $user->roles->pluck("name")->toArray() : []))
+              }'>
             @csrf
             @if(isset($user))
                 @method('PUT')

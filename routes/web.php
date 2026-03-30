@@ -178,6 +178,13 @@ Route::middleware('auth')->group(function () {
     Route::resource('shipments', \App\Http\Controllers\Central\ShipmentController::class)
         ->names('central.shipments');
 
+    Route::post('returns/bulk-action', [\App\Http\Controllers\Central\OrderReturnController::class, 'bulkAction'])
+        ->name('central.returns.bulk-action');
+    Route::post('returns/bulk-upload', [\App\Http\Controllers\Central\OrderReturnController::class, 'bulkUpload'])
+        ->name('central.returns.bulk-upload');
+    Route::post('returns/bulk-preview', [\App\Http\Controllers\Central\OrderReturnController::class, 'bulkPreview'])
+        ->name('central.returns.bulk-preview');
+
     Route::patch('returns/{orderReturn}/status', [\App\Http\Controllers\Central\OrderReturnController::class, 'updateStatus'])
         ->name('central.returns.update-status');
 
