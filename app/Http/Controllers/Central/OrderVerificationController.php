@@ -25,7 +25,7 @@ class OrderVerificationController extends Controller
         $this->authorize('orders view');
 
         $states = Village::distinct()->pluck('state_name')->filter()->sort()->values();
-        
+
         $districts = Village::when($request->filled('state'), function ($q) use ($request) {
             return $q->where('state_name', $request->state);
         })->distinct()->pluck('district_name')->filter()->sort()->values();
@@ -65,10 +65,15 @@ class OrderVerificationController extends Controller
                     })->where('status', 'pending');
                 });
             } elseif ($status === 'pending_followup') {
-                $query->where('verification_status', 'pending_followup');
+                $query->where('verification_status', 'pending_followup')
+                    ->where('status', 'pending');
             } elseif ($status === 'verified') {
-                $query->where('verification_status', 'verified')
-                    ->where('status', 'confirmed');
+                $query->where('status', 'confirmed')
+                    ->where(function ($q) {
+                        $q->where('verification_status', 'verified')
+                            ->orWhere('verification_status', 'unverified')
+                            ->orWhereNull('verification_status');
+                    });
             } elseif ($status === 'cancelled') {
                 $query->where('status', 'cancelled');
             }
