@@ -259,7 +259,7 @@
                         <p class="text-sm text-gray-500 font-bold uppercase tracking-widest mt-0.5 opacity-60">Process hundreds of returns at once</p>
                     </div>
                 </div>
-                <a href="data:text/csv;charset=utf-8,order_number,sku,quantity,reason,condition%0AORD-1001,SKU-001,1,Defective,sellable" 
+                <a href="data:text/csv;charset=utf-8,order_id,reason%0AORD-1001,Defective product%0AORD-1002,Not what I expected" 
                    download="returns_template.csv"
                    class="px-6 py-3 bg-white text-amber-700 text-xs font-black rounded-xl border border-amber-200 hover:bg-amber-50 transition-all shadow-sm">
                     Download CSV Template
@@ -299,24 +299,43 @@
 
                     <div class="overflow-hidden border border-gray-100 rounded-3xl mb-8">
                         <table class="min-w-full divide-y divide-gray-50">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-gray-50/80">
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Order #</th>
-                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">SKU</th>
-                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Qty</th>
-                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Validation</th>
+                                    <th class="px-5 py-3.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Order</th>
+                                    <th class="px-5 py-3.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">SKU / Item</th>
+                                    <th class="px-5 py-3.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Qty</th>
+                                    <th class="px-5 py-3.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Reason</th>
+                                    <th class="px-5 py-3.5 text-left text-[11px] font-bold text-gray-500 uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-50">
                                 <template x-for="(row, idx) in bulkPreviewRows" :key="idx">
-                                    <tr :class="row.preview_status === 'error' ? 'bg-red-50/20' : ''">
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-gray-900" x-text="row.order_number"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-500 uppercase" x-text="row.sku"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-gray-900" x-text="row.quantity"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider"
-                                                  :class="row.preview_status === 'valid' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'"
-                                                  x-text="row.preview_message"></span>
+                                    <tr :class="{
+                                        'bg-red-50/20': row.preview_status === 'error',
+                                        'hover:bg-gray-50/50 transition-colors': row.preview_status !== 'error',
+                                        'border-t-4 border-gray-200/60': idx > 0 && bulkPreviewRows[idx-1].order_id !== row.order_id
+                                    }">
+                                        <td class="px-5 py-4 whitespace-nowrap align-top">
+                                            <div x-show="idx === 0 || bulkPreviewRows[idx-1].order_id !== row.order_id" 
+                                                 class="text-sm font-black text-gray-900 bg-gray-100/80 inline-flex px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm" 
+                                                 x-text="(row.order_number || row.order_id) ? '#' + (row.order_number || row.order_id) : 'Unknown'"></div>
+                                        </td>
+                                        <td class="px-5 py-4 whitespace-nowrap max-w-[200px] truncate">
+                                            <div class="text-sm font-semibold text-gray-900 truncate" x-text="row.product_name || row.sku"></div>
+                                            <div class="text-[10px] font-medium text-gray-500 uppercase" x-text="row.sku"></div>
+                                        </td>
+                                        <td class="px-5 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-bold text-gray-900" x-text="row.quantity"></div>
+                                        </td>
+                                        <td class="px-5 py-4 whitespace-nowrap max-w-[150px] truncate">
+                                            <div class="text-xs font-medium text-gray-700 capitalize truncate" x-text="row.reason || 'No specific reason'"></div>
+                                            <div class="text-[10px] font-medium text-gray-500 capitalize" x-text="row.condition || 'Sellable'"></div>
+                                        </td>
+                                        <td class="px-5 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border shadow-sm"
+                                                  :class="row.preview_status === 'valid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'">
+                                                <span x-text="row.preview_message"></span>
+                                            </span>
                                         </td>
                                     </tr>
                                 </template>
@@ -324,19 +343,18 @@
                         </table>
                     </div>
 
-                    <form action="{{ route('central.returns.bulk-upload') }}" method="POST">
-                        @csrf
-                        <template x-for="(row, idx) in validBulkRows" :key="'valid-' + idx">
-                            <div>
-                                <input type="hidden" :name="'rows['+idx+'][order_id]'" :value="row.order_id">
-                                <input type="hidden" :name="'rows['+idx+'][order_number]'" :value="row.order_number">
-                                <input type="hidden" :name="'rows['+idx+'][sku]'" :value="row.sku">
-                                <input type="hidden" :name="'rows['+idx+'][quantity]'" :value="row.quantity">
-                                <input type="hidden" :name="'rows['+idx+'][condition]'" :value="row.condition">
-                                <input type="hidden" :name="'rows['+idx+'][reason]'" :value="row.reason">
-                                <input type="hidden" :name="'rows['+idx+'][preview_status]'" :value="row.preview_status">
-                            </div>
-                        </template>
+                        <form action="{{ route('central.returns.bulk-upload') }}" method="POST">
+                            @csrf
+                            <template x-for="(row, idx) in validBulkRows" :key="'valid-' + idx">
+                                <div>
+                                    <input type="hidden" :name="'rows['+idx+'][order_id]'" :value="row.order_id">
+                                    <input type="hidden" :name="'rows['+idx+'][product_id]'" :value="row.product_id">
+                                    <input type="hidden" :name="'rows['+idx+'][quantity]'" :value="row.quantity">
+                                    <input type="hidden" :name="'rows['+idx+'][condition]'" :value="row.condition">
+                                    <input type="hidden" :name="'rows['+idx+'][reason]'" :value="row.reason">
+                                    <input type="hidden" :name="'rows['+idx+'][preview_status]'" :value="row.preview_status">
+                                </div>
+                            </template>
 
                         <div class="p-8 bg-gray-50 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6">
                             <div class="flex items-center gap-6">
@@ -381,11 +399,12 @@
                 async uploadPreview() {
                     const fileInput = this.$refs.csvInput;
                     if (!fileInput.files || fileInput.files.length === 0) {
-                        alert('Please select a CSV file first.');
+                        window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'warning', message: 'Please select a CSV file first.' } }));
                         return;
                     }
 
                     this.isUploading = true;
+                    this.bulkPreviewRows = [];
                     const formData = new FormData();
                     formData.append('csv_file', fileInput.files[0]);
                     formData.append('_token', '{{ csrf_token() }}');
@@ -393,19 +412,32 @@
                     try {
                         const response = await fetch('{{ route('central.returns.bulk-preview') }}', {
                             method: 'POST',
-                            body: formData
+                            body: formData,
+                            headers: {
+                                'Accept': 'application/json'
+                            }
                         });
-                        const result = await response.json();
-                        if (result.success) {
-                            this.bulkPreviewRows = result.rows;
+                        
+                        // Parse JSON safely
+                        let result;
+                        try {
+                            result = await response.json();
+                        } catch (e) {
+                            throw new Error('Server returned invalid JSON. It might be an error page.');
+                        }
+
+                        if (response.ok && result.success) {
+                            this.bulkPreviewRows = result.rows || [];
+                            window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'success', message: 'CSV preview loaded successfully.' } }));
                         } else {
-                            alert(result.message || 'Failed to parse CSV.');
+                            window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'error', message: result.message || 'Failed to parse CSV due to an error.' } }));
                         }
                     } catch (error) {
                         console.error('Preview error:', error);
-                        alert('Error uploading file for preview.');
+                        window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'error', message: 'Error uploading file for preview. Please check console for details.' } }));
                     } finally {
                         this.isUploading = false;
+                        fileInput.value = ''; // Reset input to allow same file re-upload
                     }
                 },
 

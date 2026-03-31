@@ -513,8 +513,22 @@ class OrderReturnController extends Controller
 
         try {
             $file = $request->file('csv_file');
-            $data = array_map('str_getcsv', file($file->getRealPath()));
+            $content = file_get_contents($file->getRealPath());
+            
+            // Handle different line endings
+            $lines = preg_split('/\r\n|\r|\n/', trim($content));
+            if (empty($lines)) {
+                throw new \Exception("Empty file");
+            }
+
+            $data = array_map('str_getcsv', $lines);
             $header = array_shift($data);
+            
+            // Normalize header (lowercase, remove spaces)
+            $header = array_map(function($h) {
+                return strtolower(trim($h));
+            }, $header);
+
             $rows = [];
             
             foreach ($data as $index => $row) {
@@ -524,38 +538,119 @@ class OrderReturnController extends Controller
                 $status = 'valid';
                 $message = 'Ready to process';
                 
-                // Perform validation for preview
-                $order = Order::with('items')->where('order_number', $mappedRow['order_number'])->first();
-                if (!$order) {
-                    $status = 'error';
-                    $message = "Order not found";
-                } elseif (!in_array($order->status, ['shipped', 'delivered', 'completed', 'attempt_failed'])) {
-                    $status = 'error';
-                    $message = "Ineligible status: " . ucfirst($order->status);
-                } else {
-                    $orderItem = $order->items->where('sku', $mappedRow['sku'])->first();
-                    if (!$orderItem) {
-                        $status = 'error';
-                        $message = "SKU not in order";
-                    } else {
-                        $returnedQty = ReturnItem::whereHas('returnOrder', function ($q) use ($order) {
-                            $q->where('order_id', $order->id)->where('status', '!=', 'rejected');
-                        })->where('product_id', $orderItem->product_id)->sum('quantity');
-
-                        $availableQty = max(0, $orderItem->quantity - $returnedQty);
-                        if ($availableQty < ($mappedRow['quantity'] ?? 0)) {
-                            $status = 'error';
-                            $message = "Only $availableQty available";
+                // Find order by ID or Number
+                $orderQuery = Order::with(['items.product', 'returns.items']);
+                $orderIdentifier = $mappedRow['order_id'] ?? ($mappedRow['order_number'] ?? null);
+                
+                if (!empty($orderIdentifier)) {
+                    $order = $orderQuery->where(function($q) use ($orderIdentifier) {
+                        if (is_numeric($orderIdentifier)) {
+                            $q->where('id', $orderIdentifier)->orWhere('order_number', $orderIdentifier);
+                        } else {
+                            $q->where('order_number', $orderIdentifier);
                         }
-                    }
+                    })->first();
+                } else {
+                    $status = 'error';
+                    $message = "Order ID or Number missing";
+                    $order = null;
                 }
 
-                $rows[] = array_merge($mappedRow, [
-                    'preview_status' => $status,
-                    'preview_message' => $message,
-                    'order_id' => $order ? $order->id : null,
-                    'product_id' => isset($orderItem) ? $orderItem->product_id : null,
-                ]);
+                if ($order && $status === 'valid') {
+                    if (!in_array($order->status, ['shipped', 'delivered', 'completed', 'attempt_failed'])) {
+                        $rows[] = array_merge($mappedRow, [
+                            'preview_status' => 'error',
+                            'preview_message' => "Ineligible status: " . ucfirst($order->status),
+                            'order_id' => clone $order->id,
+                        ]);
+                    } else {
+                        // Support full order fetch if no specific SKU was requested
+                        $sku = $mappedRow['sku'] ?? null;
+                        $itemsToProcess = current(array_filter([$sku])) ? $order->items->where('sku', $sku) : $order->items;
+
+                        if ($itemsToProcess->isEmpty()) {
+                            $rows[] = array_merge($mappedRow, [
+                                'preview_status' => 'error',
+                                'preview_message' => current(array_filter([$sku])) ? "SKU not in order" : "No items found in order",
+                                'order_id' => $order->id,
+                            ]);
+                        } else {
+                            $addedAny = false;
+                            foreach ($itemsToProcess as $orderItem) {
+                                // Calculate available qty
+                                $returnedQty = 0;
+                                foreach ($order->returns as $rma) {
+                                    if ($rma->status === 'rejected') continue;
+                                    $returnedQty += $rma->items->where('product_id', $orderItem->product_id)->sum('quantity');
+                                }
+
+                                $availableQty = max(0, $orderItem->quantity - $returnedQty);
+                                
+                                // Auto-fetch logic: Skip already returned items unless a specific SKU & Qty was requested explicitly
+                                if (!current(array_filter([$sku])) && $availableQty <= 0) {
+                                    continue;
+                                }
+
+                                $requestedQty = (isset($mappedRow['quantity']) && trim($mappedRow['quantity']) !== '') 
+                                    ? (float)$mappedRow['quantity'] 
+                                    : $availableQty;
+
+                                $itemStatus = 'valid';
+                                $itemMessage = 'Ready to process';
+
+                                if ($requestedQty <= 0) {
+                                    $itemStatus = 'error';
+                                    $itemMessage = "Invalid quantity";
+                                } elseif ($requestedQty > $availableQty) {
+                                    $itemStatus = 'error';
+                                    $itemMessage = "Only $availableQty available (Ordered: {$orderItem->quantity}, Returned: $returnedQty)";
+                                }
+
+                                $rows[] = array_merge($mappedRow, [
+                                    'preview_status' => $itemStatus,
+                                    'preview_message' => $itemMessage,
+                                    'order_id' => $order->id,
+                                    'order_number' => $order->order_number,
+                                    'product_id' => $orderItem->product_id,
+                                    'product_name' => $orderItem->product->name ?? $orderItem->sku,
+                                    'sku' => $orderItem->sku,
+                                    'quantity' => $requestedQty,
+                                    'reason' => !empty($mappedRow['reason']) ? $mappedRow['reason'] : 'Bulk Auto Fetch',
+                                    'condition' => !empty($mappedRow['condition']) ? $mappedRow['condition'] : 'sellable',
+                                ]);
+                                $addedAny = true;
+                            }
+                            
+                            // If auto-fetch returned nothing (all items returned)
+                            if (!$addedAny) {
+                                $rows[] = array_merge($mappedRow, [
+                                    'preview_status' => 'error',
+                                    'preview_message' => "All items in this order have already been returned",
+                                    'order_id' => $order->id,
+                                    'order_number' => $order->order_number,
+                                ]);
+                            }
+                        }
+                    }
+                } elseif (!$order && $status === 'valid') {
+                    $rows[] = array_merge($mappedRow, [
+                        'preview_status' => 'error',
+                        'preview_message' => "Order not found",
+                        'order_id' => null,
+                        'order_number' => $mappedRow['order_id'] ?? ($mappedRow['order_number'] ?? null),
+                        'product_id' => null,
+                        'product_name' => null,
+                    ]);
+                } else {
+                    $rows[] = array_merge($mappedRow, [
+                        'preview_status' => $status,
+                        'preview_message' => $message,
+                        'order_id' => null,
+                        'order_number' => null,
+                        'product_id' => null,
+                        'product_name' => null,
+                    ]);
+                }
             }
 
             return response()->json([
@@ -578,9 +673,8 @@ class OrderReturnController extends Controller
         $validated = $request->validate([
             'rows' => 'required|array|min:1',
             'rows.*.order_id' => 'required|exists:orders,id',
-            'rows.*.order_number' => 'required',
-            'rows.*.sku' => 'required',
-            'rows.*.quantity' => 'required|numeric|min:1',
+            'rows.*.product_id' => 'required|exists:products,id',
+            'rows.*.quantity' => 'required|numeric|min:0.001',
             'rows.*.condition' => 'nullable|string',
             'rows.*.reason' => 'nullable|string',
             'rows.*.preview_status' => 'required|in:valid',
@@ -588,33 +682,51 @@ class OrderReturnController extends Controller
 
         try {
             $errors = [];
-            DB::transaction(function () use ($validated, &$errors) {
+            $createdCount = 0;
+
+            $createdRMAs = [];
+
+            DB::transaction(function () use ($validated, &$errors, &$createdCount, &$createdRMAs) {
                 foreach ($validated['rows'] as $row) {
-                    $order = Order::findOrFail($row['order_id']);
-                    $orderItem = $order->items->where('sku', $row['sku'])->first();
+                    $order = Order::with(['items', 'returns.items'])->findOrFail($row['order_id']);
+                    $productId = $row['product_id'];
 
-                    // One last check
-                    $returnedQty = ReturnItem::whereHas('returnOrder', function ($q) use ($order) {
-                        $q->where('order_id', $order->id)->where('status', '!=', 'rejected');
-                    })->where('product_id', $orderItem->product_id)->sum('quantity');
-
-                    $availableQty = max(0, $orderItem->quantity - $returnedQty);
-                    if ($availableQty < $row['quantity']) {
-                        $errors[] = "Order #{$row['order_number']} - insufficient quantity.";
+                    // Final validation check
+                    $orderItem = $order->items->where('product_id', $productId)->first();
+                    if (!$orderItem) {
+                        $errors[] = "Order #{$order->order_number}: Product not found in order.";
                         continue;
                     }
 
-                    $rma = OrderReturn::create([
-                        'rma_number' => $this->generateRmaNumber(),
-                        'order_id' => $order->id,
-                        'customer_id' => $order->customer_id,
-                        'status' => 'requested',
-                        'reason' => $row['reason'] ?? 'Bulk uploaded return',
-                        'refund_method' => 'credit',
-                    ]);
+                    $returnedQty = 0;
+                    foreach ($order->returns as $rma) {
+                        if ($rma->status === 'rejected') continue;
+                        $returnedQty += $rma->items->where('product_id', $productId)->sum('quantity');
+                    }
+
+                    $availableQty = max(0, $orderItem->quantity - $returnedQty);
+                    if ($row['quantity'] > $availableQty) {
+                        $errors[] = "Order #{$order->order_number}: Insufficient quantity available.";
+                        continue;
+                    }
+
+                    if (!isset($createdRMAs[$order->id])) {
+                        $rma = OrderReturn::create([
+                            'rma_number' => 'RMA-' . strtoupper(Str::random(8)),
+                            'order_id' => $order->id,
+                            'customer_id' => $order->customer_id,
+                            'status' => 'requested',
+                            'reason' => $row['reason'] ?? 'Bulk CSV Upload',
+                            'refund_method' => 'credit',
+                        ]);
+                        $createdRMAs[$order->id] = $rma;
+                        $createdCount++;
+                    } else {
+                        $rma = $createdRMAs[$order->id];
+                    }
 
                     $rma->items()->create([
-                        'product_id' => $orderItem->product_id,
+                        'product_id' => $productId,
                         'quantity' => $row['quantity'],
                         'condition' => strtolower($row['condition'] ?? 'sellable'),
                     ]);
@@ -622,10 +734,10 @@ class OrderReturnController extends Controller
             });
 
             if (count($errors) > 0) {
-                return back()->with('error', 'Processed with errors: ' . implode(', ', $errors));
+                return redirect()->route('central.returns.index')->with('warning', "Created $createdCount RMAs. Some errors occurred: " . implode(', ', $errors));
             }
 
-            return redirect()->route('central.returns.index')->with('success', 'Bulk RMAs created successfully.');
+            return redirect()->route('central.returns.index')->with('success', "Successfully created $createdCount bulk RMA requests.");
 
         } catch (Exception $e) {
             return back()->with('error', 'Failed to store bulk returns: ' . $e->getMessage());

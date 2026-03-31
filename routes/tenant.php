@@ -64,7 +64,10 @@ Route::middleware(['auth', 'tenant.session', 'tenant.access'])->group(function (
     Route::resource('shipments', \App\Http\Controllers\Tenant\ShipmentController::class)->names('tenant.shipments');
 
     Route::patch('returns/{orderReturn}/status', [\App\Http\Controllers\Tenant\OrderReturnController::class, 'updateStatus'])->name('tenant.returns.update-status');
+    Route::post('returns/bulk-preview', [\App\Http\Controllers\Tenant\OrderReturnController::class, 'bulkPreview'])->name('tenant.returns.bulk-preview');
+    Route::post('returns/bulk-upload', [\App\Http\Controllers\Tenant\OrderReturnController::class, 'bulkUpload'])->name('tenant.returns.bulk-upload');
     Route::resource('returns', \App\Http\Controllers\Tenant\OrderReturnController::class)->names('tenant.returns');
+
 
     Route::get('invoices/export', [\App\Http\Controllers\Tenant\InvoiceController::class, 'export'])->name('tenant.invoices.export');
     Route::get('invoices/download-template', [\App\Http\Controllers\Tenant\InvoiceController::class, 'downloadTemplate'])->name('tenant.invoices.download-template');
