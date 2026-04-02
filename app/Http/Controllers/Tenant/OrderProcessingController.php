@@ -315,11 +315,19 @@ class OrderProcessingController extends Controller
         $query = OrderReturn::with(['order.customer', 'order.shipments', 'items.product'])
             ->whereIn('status', ['approved', 'received']);
 
-        // Stats Calculation (Before filtering)
+        // Stats Calculation (Before filtering, but respecting Courier if selected)
+        $statsQuery = OrderReturn::whereIn('status', ['approved', 'received']);
+        if ($request->filled('courier') && $request->courier !== 'all') {
+            $courier = $request->input('courier');
+            $statsQuery->whereIn('order_id', function ($q) use ($courier) {
+                $q->select('order_id')->from('shipments')->where('carrier', $courier);
+            });
+        }
+
         $stats = [
-            'total' => OrderReturn::whereIn('status', ['approved', 'received'])->count(),
-            'approved' => OrderReturn::where('status', 'approved')->count(),
-            'received' => OrderReturn::where('status', 'received')->count(),
+            'total' => (clone $statsQuery)->count(),
+            'approved' => (clone $statsQuery)->where('status', 'approved')->count(),
+            'received' => (clone $statsQuery)->where('status', 'received')->count(),
         ];
 
         // Filter by Status
@@ -341,8 +349,22 @@ class OrderProcessingController extends Controller
             });
         }
 
+        // Filter by Courier (Subquery for maximum reliability)
+        if ($request->filled('courier') && $request->courier !== 'all') {
+            $courier = $request->input('courier');
+            $query->whereIn('order_id', function ($q) use ($courier) {
+                $q->select('order_id')
+                  ->from('shipments')
+                  ->where('carrier', $courier);
+            });
+        }
+
         $perPage = $request->input('per_page', 10);
         $returns = $query->latest()->paginate((int)$perPage)->withQueryString();
+
+        $couriers = \App\Models\Shipment::whereHas('order.returns', function($q) {
+            $q->whereIn('status', ['approved', 'received']);
+        })->distinct()->whereNotNull('carrier')->pluck('carrier')->sort()->values();
 
         if ($request->ajax() || $request->has('ajax')) {
             return response()->json([
@@ -351,8 +373,9 @@ class OrderProcessingController extends Controller
             ]);
         }
 
-        return view('tenant.processing.returns.index', compact('returns', 'stats'));
+        return view('tenant.processing.returns.index', compact('returns', 'stats', 'couriers'));
     }
+
 
 
     /**
