@@ -27,6 +27,12 @@
                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Customer</p>
                             <p class="text-sm font-bold text-gray-900 dark:text-white">{{ $return->order->customer->first_name }} {{ $return->order->customer->last_name }}</p>
                             <p class="text-xs text-gray-500">Order #{{ $return->order->order_number }}</p>
+                            @if($return->order->shipments->isNotEmpty())
+                                <div class="mt-2 flex items-center gap-2">
+                                    <span class="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 text-[10px] font-bold rounded uppercase tracking-tight text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700">{{ $return->order->shipments->first()->carrier }}</span>
+                                    <span class="text-[10px] font-mono text-gray-400">{{ $return->order->shipments->first()->tracking_number }}</span>
+                                </div>
+                            @endif
                         </div>
                         <div>
                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Requested On</p>

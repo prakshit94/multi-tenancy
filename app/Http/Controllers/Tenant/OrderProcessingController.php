@@ -312,7 +312,7 @@ class OrderProcessingController extends Controller
      */
     public function indexReturns(Request $request): View|JsonResponse
     {
-        $query = OrderReturn::with(['order.customer', 'items.product'])
+        $query = OrderReturn::with(['order.customer', 'order.shipments', 'items.product'])
             ->whereIn('status', ['approved', 'received']);
 
         // Stats Calculation (Before filtering)
@@ -333,7 +333,10 @@ class OrderProcessingController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('rma_number', 'like', "%{$search}%")
                     ->orWhereHas('order', function ($o) use ($search) {
-                        $o->where('order_number', 'like', "%{$search}%");
+                        $o->where('order_number', 'like', "%{$search}%")
+                          ->orWhereHas('shipments', function ($s) use ($search) {
+                              $s->where('tracking_number', 'like', "%{$search}%");
+                          });
                     });
             });
         }

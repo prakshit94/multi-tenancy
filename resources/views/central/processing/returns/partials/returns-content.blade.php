@@ -21,8 +21,14 @@
                                     {{ $return->created_at->format('M d, H:i') }}
                                 </div>
                             </td>
-                            <td class="px-8 py-5 font-mono text-gray-600 font-medium">
-                                {{ $return->order->order_number }}
+                            <td class="px-8 py-5">
+                                <div class="font-mono text-gray-900 font-bold">{{ $return->order->order_number }}</div>
+                                @if($return->order->shipments->isNotEmpty())
+                                    <div class="mt-1 flex flex-col gap-0.5">
+                                        <div class="text-[10px] uppercase font-black text-indigo-600 tracking-tight">{{ $return->order->shipments->first()->carrier }}</div>
+                                        <div class="text-[10px] font-mono text-gray-400">{{ $return->order->shipments->first()->tracking_number }}</div>
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-8 py-5">
                                 <div class="flex items-center gap-3">
