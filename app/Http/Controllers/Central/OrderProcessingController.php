@@ -78,6 +78,18 @@ class OrderProcessingController extends Controller
         }
 
         // Regional Filtering
+        if ($request->filled('state')) {
+            $state = trim($request->state);
+            $query->where(function ($q) use ($state) {
+                $q->whereHas('shippingAddress', function ($sub) use ($state) {
+                    $sub->where('state', $state);
+                })
+                    ->orWhereHas('billingAddress', function ($sub) use ($state) {
+                        $sub->where('state', $state);
+                    });
+            });
+        }
+
         if ($request->filled('district')) {
             $district = trim($request->district);
             $query->where(function ($q) use ($district) {
@@ -177,7 +189,7 @@ class OrderProcessingController extends Controller
         $couriers = \App\Models\Shipment::distinct()->whereNotNull('carrier')->pluck('carrier')->sort()->values();
 
         if ($request->ajax() || $request->has('ajax')) {
-            return view('central.processing.orders.partials.orders-content', compact('orders', 'counts', 'amounts', 'districtCounts', 'districts', 'talukas', 'couriers'));
+            return view('central.processing.orders.partials.orders-content', compact('orders', 'counts', 'amounts', 'districtCounts', 'districts', 'talukas', 'couriers', 'states'));
         }
 
         return view('central.processing.orders.index', compact('orders', 'counts', 'amounts', 'states', 'districts', 'talukas', 'districtCounts', 'couriers'));

@@ -45,6 +45,31 @@
                 class="flex flex-wrap items-center gap-3">
                 <input type="hidden" name="per_page" value="{{ request('per_page', 15) }}">
                 
+                {{-- Searchable State --}}
+                <div class="relative min-w-[160px]" x-data="{ 
+                    open: false, search: '', options: @js($states ?? []), selected: '{{ request('state') }}',
+                    get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
+                    select(val) { this.selected = val; this.open = false; this.search = ''; $nextTick(() => { $refs.stateInput.value = val; $refs.stateInput.dispatchEvent(new Event('change')); performFilter(); }); }
+                }" @click.away="open = false">
+                    <input type="hidden" name="state" x-ref="stateInput" value="{{ request('state') }}">
+                    <button type="button" @click="open = !open" class="w-full h-11 px-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2 shadow-sm hover:border-primary transition-all">
+                        <span x-text="selected || 'State'" class="truncate"></span>
+                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div x-show="open" x-transition.origin.top class="absolute z-[110] left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-72 flex flex-col">
+                        <input type="text" x-model="search" placeholder="Search..." class="w-full px-3 py-2 text-[10px] font-bold border-b border-gray-50 bg-gray-50/50 outline-none uppercase">
+                        <div class="overflow-y-auto flex-1 custom-scrollbar py-1">
+                            <button type="button" @click="select('')" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50">All States</button>
+                            <template x-for="opt in filteredOptions" :key="opt">
+                                <button type="button" @click="select(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected === opt ? 'bg-primary/10 text-primary' : ''">
+                                    <span x-text="opt"></span>
+                                    <svg x-show="selected === opt" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Searchable District --}}
                 <div class="relative min-w-[160px]" x-data="{ 
                     open: false, search: '', options: @js($districts), selected: '{{ request('district') }}',
