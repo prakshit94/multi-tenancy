@@ -79,37 +79,37 @@ class OrderProcessingController extends Controller
 
         // Regional Filtering
         if ($request->filled('state')) {
-            $state = trim($request->state);
-            $query->where(function ($q) use ($state) {
-                $q->whereHas('shippingAddress', function ($sub) use ($state) {
-                    $sub->where('state', $state);
+            $stateArray = array_map('trim', explode(',', $request->state));
+            $query->where(function ($q) use ($stateArray) {
+                $q->whereHas('shippingAddress', function ($sub) use ($stateArray) {
+                    $sub->whereIn('state', $stateArray);
                 })
-                    ->orWhereHas('billingAddress', function ($sub) use ($state) {
-                        $sub->where('state', $state);
+                    ->orWhereHas('billingAddress', function ($sub) use ($stateArray) {
+                        $sub->whereIn('state', $stateArray);
                     });
             });
         }
 
         if ($request->filled('district')) {
-            $district = trim($request->district);
-            $query->where(function ($q) use ($district) {
-                $q->whereHas('shippingAddress', function ($sub) use ($district) {
-                    $sub->where('district', $district);
+            $districtArray = array_map('trim', explode(',', $request->district));
+            $query->where(function ($q) use ($districtArray) {
+                $q->whereHas('shippingAddress', function ($sub) use ($districtArray) {
+                    $sub->whereIn('district', $districtArray);
                 })
-                    ->orWhereHas('billingAddress', function ($sub) use ($district) {
-                        $sub->where('district', $district);
+                    ->orWhereHas('billingAddress', function ($sub) use ($districtArray) {
+                        $sub->whereIn('district', $districtArray);
                     });
             });
         }
 
         if ($request->filled('taluka')) {
-            $taluka = trim($request->taluka);
-            $query->where(function ($q) use ($taluka) {
-                $q->whereHas('shippingAddress', function ($sub) use ($taluka) {
-                    $sub->where('taluka', $taluka);
+            $talukaArray = array_map('trim', explode(',', $request->taluka));
+            $query->where(function ($q) use ($talukaArray) {
+                $q->whereHas('shippingAddress', function ($sub) use ($talukaArray) {
+                    $sub->whereIn('taluka', $talukaArray);
                 })
-                    ->orWhereHas('billingAddress', function ($sub) use ($taluka) {
-                        $sub->where('taluka', $taluka);
+                    ->orWhereHas('billingAddress', function ($sub) use ($talukaArray) {
+                        $sub->whereIn('taluka', $talukaArray);
                     });
             });
         }
@@ -128,8 +128,9 @@ class OrderProcessingController extends Controller
 
         // Dispatch Details Filtering
         if ($request->filled('courier')) {
-            $query->whereHas('shipments', function ($q) use ($request) {
-                $q->where('carrier', $request->courier);
+            $courierArray = array_map('trim', explode(',', $request->courier));
+            $query->whereHas('shipments', function ($q) use ($courierArray) {
+                $q->whereIn('carrier', $courierArray);
             });
         }
 
@@ -179,11 +180,13 @@ class OrderProcessingController extends Controller
         $states = Village::distinct()->pluck('state_name')->filter()->sort()->values();
 
         $districts = Village::when($request->filled('state'), function ($q) use ($request) {
-            return $q->where('state_name', $request->state);
+            $stateArray = array_map('trim', explode(',', $request->state));
+            return $q->whereIn('state_name', $stateArray);
         })->distinct()->pluck('district_name')->filter()->sort()->values();
 
         $talukas = Village::when($request->filled('district'), function ($q) use ($request) {
-            return $q->where('district_name', $request->district);
+            $districtArray = array_map('trim', explode(',', $request->district));
+            return $q->whereIn('district_name', $districtArray);
         })->distinct()->pluck('taluka_name')->filter()->sort()->values();
 
         $couriers = \App\Models\Shipment::distinct()->whereNotNull('carrier')->pluck('carrier')->sort()->values();

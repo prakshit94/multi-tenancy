@@ -47,23 +47,39 @@
                 
                 {{-- Searchable State --}}
                 <div class="relative min-w-[160px]" x-data="{ 
-                    open: false, search: '', options: @js($states ?? []), selected: '{{ request('state') }}',
+                    open: false, search: '', options: @js($states ?? []), selected: '{{ request('state') }}' ? '{{ request('state') }}'.split(',') : [],
                     get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
-                    select(val) { this.selected = val; this.open = false; this.search = ''; $nextTick(() => { $refs.stateInput.value = val; $refs.stateInput.dispatchEvent(new Event('change')); performFilter(); }); }
+                    toggle(val) { 
+                        if(this.selected.includes(val)) {
+                            this.selected = this.selected.filter(i => i !== val);
+                        } else {
+                            this.selected.push(val);
+                        }
+                        $nextTick(() => { $refs.stateInput.value = this.selected.join(','); $refs.stateInput.dispatchEvent(new Event('change')); performFilter(); }); 
+                    },
+                    clear() {
+                        this.selected = [];
+                        $nextTick(() => { $refs.stateInput.value = ''; $refs.stateInput.dispatchEvent(new Event('change')); performFilter(); });
+                    }
                 }" @click.away="open = false">
                     <input type="hidden" name="state" x-ref="stateInput" value="{{ request('state') }}">
                     <button type="button" @click="open = !open" class="w-full h-11 px-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2 shadow-sm hover:border-primary transition-all">
-                        <span x-text="selected || 'State'" class="truncate"></span>
+                        <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'State'" class="truncate"></span>
                         <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
                     </button>
                     <div x-show="open" x-transition.origin.top class="absolute z-[110] left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-72 flex flex-col">
                         <input type="text" x-model="search" placeholder="Search..." class="w-full px-3 py-2 text-[10px] font-bold border-b border-gray-50 bg-gray-50/50 outline-none uppercase">
                         <div class="overflow-y-auto flex-1 custom-scrollbar py-1">
-                            <button type="button" @click="select('')" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50">All States</button>
+                            <button type="button" @click="clear()" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50 flex justify-between items-center bg-gray-50/30">
+                                All States
+                                <span x-show="selected.length > 0" x-text="selected.length" class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded text-[9px] font-bold"></span>
+                            </button>
                             <template x-for="opt in filteredOptions" :key="opt">
-                                <button type="button" @click="select(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected === opt ? 'bg-primary/10 text-primary' : ''">
+                                <button type="button" @click="toggle(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected.includes(opt) ? 'bg-primary/10 text-primary' : ''">
                                     <span x-text="opt"></span>
-                                    <svg x-show="selected === opt" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                                    <div class="w-3 h-3 rounded-sm border flex items-center justify-center transition-colors" :class="selected.includes(opt) ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white'">
+                                        <svg x-show="selected.includes(opt)" class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
                                 </button>
                             </template>
                         </div>
@@ -72,23 +88,39 @@
 
                 {{-- Searchable District --}}
                 <div class="relative min-w-[160px]" x-data="{ 
-                    open: false, search: '', options: @js($districts), selected: '{{ request('district') }}',
+                    open: false, search: '', options: @js($districts), selected: '{{ request('district') }}' ? '{{ request('district') }}'.split(',') : [],
                     get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
-                    select(val) { this.selected = val; this.open = false; this.search = ''; $nextTick(() => { $refs.districtInput.value = val; $refs.districtInput.dispatchEvent(new Event('change')); performFilter(); }); }
+                    toggle(val) { 
+                        if(this.selected.includes(val)) {
+                            this.selected = this.selected.filter(i => i !== val);
+                        } else {
+                            this.selected.push(val);
+                        }
+                        $nextTick(() => { $refs.districtInput.value = this.selected.join(','); $refs.districtInput.dispatchEvent(new Event('change')); performFilter(); }); 
+                    },
+                    clear() {
+                        this.selected = [];
+                        $nextTick(() => { $refs.districtInput.value = ''; $refs.districtInput.dispatchEvent(new Event('change')); performFilter(); });
+                    }
                 }" @click.away="open = false">
                     <input type="hidden" name="district" x-ref="districtInput" value="{{ request('district') }}">
                     <button type="button" @click="open = !open" class="w-full h-11 px-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2 shadow-sm hover:border-primary transition-all">
-                        <span x-text="selected || 'District'" class="truncate"></span>
+                        <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'District'" class="truncate"></span>
                         <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
                     </button>
                     <div x-show="open" x-transition.origin.top class="absolute z-[110] left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-72 flex flex-col">
                         <input type="text" x-model="search" placeholder="Search..." class="w-full px-3 py-2 text-[10px] font-bold border-b border-gray-50 bg-gray-50/50 outline-none uppercase">
                         <div class="overflow-y-auto flex-1 custom-scrollbar py-1">
-                            <button type="button" @click="select('')" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50">All Districts</button>
+                            <button type="button" @click="clear()" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50 flex justify-between items-center bg-gray-50/30">
+                                All Districts
+                                <span x-show="selected.length > 0" x-text="selected.length" class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded text-[9px] font-bold"></span>
+                            </button>
                             <template x-for="opt in filteredOptions" :key="opt">
-                                <button type="button" @click="select(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected === opt ? 'bg-primary/10 text-primary' : ''">
+                                <button type="button" @click="toggle(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected.includes(opt) ? 'bg-primary/10 text-primary' : ''">
                                     <span x-text="opt"></span>
-                                    <svg x-show="selected === opt" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                                    <div class="w-3 h-3 rounded-sm border flex items-center justify-center transition-colors" :class="selected.includes(opt) ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white'">
+                                        <svg x-show="selected.includes(opt)" class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
                                 </button>
                             </template>
                         </div>
@@ -97,23 +129,39 @@
 
                 {{-- Searchable Taluka --}}
                 <div class="relative min-w-[160px]" x-data="{ 
-                    open: false, search: '', options: @js($talukas), selected: '{{ request('taluka') }}',
+                    open: false, search: '', options: @js($talukas), selected: '{{ request('taluka') }}' ? '{{ request('taluka') }}'.split(',') : [],
                     get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
-                    select(val) { this.selected = val; this.open = false; this.search = ''; $nextTick(() => { $refs.talukaInput.value = val; $refs.talukaInput.dispatchEvent(new Event('change')); performFilter(); }); }
+                    toggle(val) { 
+                        if(this.selected.includes(val)) {
+                            this.selected = this.selected.filter(i => i !== val);
+                        } else {
+                            this.selected.push(val);
+                        }
+                        $nextTick(() => { $refs.talukaInput.value = this.selected.join(','); $refs.talukaInput.dispatchEvent(new Event('change')); performFilter(); }); 
+                    },
+                    clear() {
+                        this.selected = [];
+                        $nextTick(() => { $refs.talukaInput.value = ''; $refs.talukaInput.dispatchEvent(new Event('change')); performFilter(); });
+                    }
                 }" @click.away="open = false">
                     <input type="hidden" name="taluka" x-ref="talukaInput" value="{{ request('taluka') }}">
                     <button type="button" @click="open = !open" class="w-full h-11 px-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2 shadow-sm hover:border-primary transition-all">
-                        <span x-text="selected || 'Taluka'" class="truncate"></span>
+                        <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'Taluka'" class="truncate"></span>
                         <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
                     </button>
                     <div x-show="open" x-transition.origin.top class="absolute z-[110] left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-72 flex flex-col">
                         <input type="text" x-model="search" placeholder="Search..." class="w-full px-3 py-2 text-[10px] font-bold border-b border-gray-50 bg-gray-50/50 outline-none uppercase">
                         <div class="overflow-y-auto flex-1 custom-scrollbar py-1">
-                            <button type="button" @click="select('')" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50">All Talukas</button>
+                            <button type="button" @click="clear()" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50 flex justify-between items-center bg-gray-50/30">
+                                All Talukas
+                                <span x-show="selected.length > 0" x-text="selected.length" class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded text-[9px] font-bold"></span>
+                            </button>
                             <template x-for="opt in filteredOptions" :key="opt">
-                                <button type="button" @click="select(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected === opt ? 'bg-primary/10 text-primary' : ''">
+                                <button type="button" @click="toggle(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected.includes(opt) ? 'bg-primary/10 text-primary' : ''">
                                     <span x-text="opt"></span>
-                                    <svg x-show="selected === opt" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                                    <div class="w-3 h-3 rounded-sm border flex items-center justify-center transition-colors" :class="selected.includes(opt) ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white'">
+                                        <svg x-show="selected.includes(opt)" class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
                                 </button>
                             </template>
                         </div>
@@ -122,23 +170,39 @@
 
                 {{-- Courier Filter (Dispatch Details) --}}
                 <div class="relative min-w-[160px]" x-data="{ 
-                    open: false, search: '', options: @js($couriers), selected: '{{ request('courier') }}',
+                    open: false, search: '', options: @js($couriers), selected: '{{ request('courier') }}' ? '{{ request('courier') }}'.split(',') : [],
                     get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
-                    select(val) { this.selected = val; this.open = false; this.search = ''; $nextTick(() => { $refs.courierInput.value = val; $refs.courierInput.dispatchEvent(new Event('change')); performFilter(); }); }
+                    toggle(val) { 
+                        if(this.selected.includes(val)) {
+                            this.selected = this.selected.filter(i => i !== val);
+                        } else {
+                            this.selected.push(val);
+                        }
+                        $nextTick(() => { $refs.courierInput.value = this.selected.join(','); $refs.courierInput.dispatchEvent(new Event('change')); performFilter(); }); 
+                    },
+                    clear() {
+                        this.selected = [];
+                        $nextTick(() => { $refs.courierInput.value = ''; $refs.courierInput.dispatchEvent(new Event('change')); performFilter(); });
+                    }
                 }" @click.away="open = false">
                     <input type="hidden" name="courier" x-ref="courierInput" value="{{ request('courier') }}">
                     <button type="button" @click="open = !open" class="w-full h-11 px-4 bg-white border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-between gap-2 shadow-sm hover:border-primary transition-all">
-                        <span x-text="selected || 'Courier'" class="truncate"></span>
+                        <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'Courier'" class="truncate"></span>
                         <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="m6 9 6 6 6-6"/></svg>
                     </button>
                     <div x-show="open" x-transition.origin.top class="absolute z-[110] left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-72 flex flex-col">
                         <input type="text" x-model="search" placeholder="Search..." class="w-full px-3 py-2 text-[10px] font-bold border-b border-gray-50 bg-gray-50/50 outline-none uppercase">
                         <div class="overflow-y-auto flex-1 custom-scrollbar py-1">
-                            <button type="button" @click="select('')" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50">All Couriers</button>
+                            <button type="button" @click="clear()" class="w-full px-4 py-2 text-left text-[10px] font-black uppercase text-gray-400 hover:bg-gray-50 flex justify-between items-center bg-gray-50/30">
+                                All Couriers
+                                <span x-show="selected.length > 0" x-text="selected.length" class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded text-[9px] font-bold"></span>
+                            </button>
                             <template x-for="opt in filteredOptions" :key="opt">
-                                <button type="button" @click="select(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected === opt ? 'bg-primary/10 text-primary' : ''">
+                                <button type="button" @click="toggle(opt)" class="w-full px-4 py-2 text-left text-[10px] font-bold uppercase text-gray-600 hover:bg-primary/5 hover:text-primary transition-all flex items-center justify-between" :class="selected.includes(opt) ? 'bg-primary/10 text-primary' : ''">
                                     <span x-text="opt"></span>
-                                    <svg x-show="selected === opt" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z"/></svg>
+                                    <div class="w-3 h-3 rounded-sm border flex items-center justify-center transition-colors" :class="selected.includes(opt) ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white'">
+                                        <svg x-show="selected.includes(opt)" class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
                                 </button>
                             </template>
                         </div>

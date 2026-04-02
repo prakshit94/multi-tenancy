@@ -14,9 +14,9 @@
             <div class="p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl border border-primary/10 shadow-inner">
                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary drop-shadow-sm"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             </div>
-            Orders Hub
+            All Orders
          </h1>
-         <p class="text-muted-foreground text-sm font-medium ml-1 max-w-xl leading-relaxed">Manage customer orders, track fulfillment states in real-time, and seamlessly handle payments.</p>
+         <!-- <p class="text-muted-foreground text-sm font-medium ml-1 max-w-xl leading-relaxed">Manage customer orders, track fulfillment states in real-time, and seamlessly handle payments.</p> -->
       </div>
 
 
