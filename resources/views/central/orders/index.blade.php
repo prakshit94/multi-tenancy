@@ -1,141 +1,108 @@
 @extends('layouts.app')
 
 @section('content')
-<div id="orders-page-wrapper" class="flex flex-1 flex-col space-y-6 p-4 md:p-8 animate-in fade-in duration-500 bg-background/50">
+<div id="orders-page-wrapper" class="flex flex-1 flex-col space-y-8 p-4 md:p-8 animate-in fade-in zoom-in-[0.98] duration-700 bg-background/30 relative overflow-hidden">
+   <!-- Premium Animated Background Elements -->
+   <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/15 rounded-full blur-[100px] pointer-events-none z-0 animate-pulse" style="animation-duration: 7s;"></div>
+   <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-indigo-500/15 rounded-full blur-[120px] pointer-events-none z-0 animate-pulse" style="animation-duration: 10s;"></div>
+   <div class="absolute top-[30%] left-[50%] w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none z-0 animate-pulse" style="animation-duration: 12s;"></div>
    
    <!-- Header Area -->
-   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-      <div class="space-y-1.5">
-         <h1 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">Orders</h1>
-         <p class="text-muted-foreground text-sm font-medium">Manage customer orders, track fulfillment, and handle payments.</p>
+   <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6 z-10 relative mt-2">
+      <div class="space-y-3">
+         <h1 class="text-4xl font-black tracking-tighter bg-gradient-to-br from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent flex items-center gap-4">
+            <div class="p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl border border-primary/10 shadow-inner">
+               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary drop-shadow-sm"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            Orders Hub
+         </h1>
+         <p class="text-muted-foreground text-sm font-medium ml-1 max-w-xl leading-relaxed">Manage customer orders, track fulfillment states in real-time, and seamlessly handle payments.</p>
       </div>
 
-      <!-- Status Tabs (Segmented Control) -->
-      <div class="flex items-center p-1 bg-muted/60 rounded-xl border border-border/40 backdrop-blur-sm self-start sm:self-auto overflow-x-auto max-w-full no-scrollbar shadow-inner">
-         <a href="{{ route('central.orders.index') }}" 
-            class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 {{ request('status') === null ? 'bg-background text-foreground shadow-sm ring-1 ring-border/5' : 'text-muted-foreground/80 hover:text-foreground hover:bg-background/40' }}">
-            All
-         </a>
-         <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
-         
-         <a href="{{ route('central.orders.index', ['status' => 'pending']) }}" 
-            class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'pending' ? 'bg-background text-amber-600 shadow-sm ring-1 ring-amber-500/10' : 'text-muted-foreground/80 hover:text-amber-600 hover:bg-background/40' }}">
-            Pending
-         </a>
-         <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
 
-         <a href="{{ route('central.orders.index', ['status' => 'confirmed']) }}" 
-            class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'confirmed' ? 'bg-background text-blue-600 shadow-sm ring-1 ring-blue-500/10' : 'text-muted-foreground/80 hover:text-blue-600 hover:bg-background/40' }}">
-            Confirmed
-         </a>
-         <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
-
-         <a href="{{ route('central.orders.index', ['status' => 'ready_to_ship']) }}" 
-            class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'ready_to_ship' ? 'bg-background text-sky-600 shadow-sm ring-1 ring-sky-500/10' : 'text-muted-foreground/80 hover:text-sky-600 hover:bg-background/40' }}">
-            Ready To Ship
-         </a>
-         <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
-
-         <a href="{{ route('central.orders.index', ['status' => 'shipped']) }}" 
-            class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'shipped' ? 'bg-background text-indigo-600 shadow-sm ring-1 ring-indigo-500/10' : 'text-muted-foreground/80 hover:text-indigo-600 hover:bg-background/40' }}">
-            Dispatched
-         </a>
-         <div class="w-px h-4 bg-border/40 mx-1 shrink-0"></div>
-
-         <a href="{{ route('central.orders.index', ['status' => 'completed']) }}" 
-            class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap {{ request('status') === 'completed' ? 'bg-background text-emerald-600 shadow-sm ring-1 ring-emerald-500/10' : 'text-muted-foreground/80 hover:text-emerald-600 hover:bg-background/40' }}">
-            Completed
-         </a>
-      </div>
    </div>
 
    <div id="orders-table-container" x-data="{ selected: [] }">
       
       <!-- Control Bar (Glassmorphism) -->
-      <div class="flex flex-wrap items-center justify-between gap-4 p-2 pl-3 bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] mb-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+      <div class="flex flex-wrap items-center justify-between gap-5 p-3 pl-4 bg-white/60 dark:bg-black/30 border border-white/50 dark:border-white/10 backdrop-blur-3xl rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] mb-8 transition-all duration-500 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] group/control relative z-20">
          
-         <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+         <div class="flex flex-wrap items-center gap-4 flex-1 min-w-[280px]">
             <!-- Filters Form -->
-            <form id="search-form" method="GET" action="{{ url()->current() }}" class="flex flex-wrap items-center gap-2 w-full sm:w-auto relative z-10">
-               @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
-               @if(request('per_page')) <input type="hidden" name="per_page" value="{{ request('per_page') }}"> @endif
-
+            <form id="search-form" method="GET" action="{{ url()->current() }}" class="flex flex-wrap items-center gap-3 w-full xl:w-auto relative z-10 w-full">
+               
                <!-- Date Range (Joined) -->
-               <div class="flex items-center rounded-lg border border-border/50 bg-background/50 overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all hover:bg-background/80">
-                   <input type="date" name="start_date" value="{{ request('start_date') }}" class="h-9 border-none bg-transparent text-xs px-2 focus:ring-0 outline-none w-28 text-muted-foreground uppercase tracking-wide font-medium cursor-pointer" placeholder="Start">
-                   <div class="w-px h-4 bg-border/50"></div>
-                   <input type="date" name="end_date" value="{{ request('end_date') }}" class="h-9 border-none bg-transparent text-xs px-2 focus:ring-0 outline-none w-28 text-muted-foreground uppercase tracking-wide font-medium cursor-pointer" placeholder="End">
+               <div class="flex items-center rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-black/40 overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/30 transition-all hover:bg-white/80 dark:hover:bg-black/60 group">
+                   <div class="pl-3 pr-1 text-muted-foreground/60 group-focus-within:text-primary transition-colors">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                   </div>
+                   <input type="date" name="start_date" value="{{ request('start_date') }}" class="h-10 border-none bg-transparent text-[13px] px-2 focus:ring-0 outline-none w-32 text-foreground font-semibold cursor-pointer placeholder-muted-foreground/50" placeholder="Start Date">
+                   <div class="w-px h-5 bg-border/50"></div>
+                   <input type="date" name="end_date" value="{{ request('end_date') }}" class="h-10 border-none bg-transparent text-[13px] px-2 focus:ring-0 outline-none w-32 text-foreground font-semibold cursor-pointer placeholder-muted-foreground/50" placeholder="End Date">
                </div>
 
                <!-- Status Dropdowns -->
-               <div class="flex items-center gap-2">
-                   {{-- Status dropdown is redundant with tabs but good for mobile/specific filtering if tabs overflow --}}
-                   <select name="payment_status" class="h-9 rounded-lg border-border/50 bg-background/50 text-xs font-medium cursor-pointer shadow-sm hover:bg-background transition-colors focus:ring-2 focus:ring-primary/20 outline-none pl-3 pr-8 min-w-[110px]">
+               <div class="flex flex-wrap items-center gap-3">
+                   @php 
+                       $bgStr = "bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]"; 
+                       
+                       $oQ = \App\Models\Order::query();
+                       if (!auth()->user()->hasRole('Super Admin')) {
+                           $oQ->where('created_by', auth()->id());
+                       }
+                       $statusCounts = clone $oQ;
+                       $statusMap = $statusCounts->select('status', \DB::raw('count(*) as count'))->groupBy('status')->pluck('count', 'status');
+                       $totalOrders = $statusMap->sum();
+                   @endphp
+                   
+                   <select name="status" class="appearance-none h-10 rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-black/40 text-[13px] font-bold text-foreground cursor-pointer shadow-sm hover:bg-white/80 dark:hover:bg-black/60 transition-colors focus:ring-2 focus:ring-primary/30 outline-none pl-4 pr-9 min-w-[160px] max-w-[200px] text-ellipsis {!! $bgStr !!} bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat">
+                       <option value="">Order: All ({{ $totalOrders }})</option>
+                       <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending ({{ $statusMap['pending'] ?? 0 }})</option>
+                       <option value="scheduled" {{ request('status') === 'scheduled' ? 'selected' : '' }}>Scheduled ({{ $statusMap['scheduled'] ?? 0 }})</option>
+                       <option value="confirmed" {{ request('status') === 'confirmed' ? 'selected' : '' }}>Confirmed ({{ $statusMap['confirmed'] ?? 0 }})</option>
+                       <option value="processing" {{ request('status') === 'processing' ? 'selected' : '' }}>Processing ({{ $statusMap['processing'] ?? 0 }})</option>
+                       <option value="ready_to_ship" {{ request('status') === 'ready_to_ship' ? 'selected' : '' }}>Ready To Ship ({{ $statusMap['ready_to_ship'] ?? 0 }})</option>
+                       <option value="shipped" {{ request('status') === 'shipped' ? 'selected' : '' }}>Dispatched ({{ $statusMap['shipped'] ?? 0 }})</option>
+                       <option value="delivered" {{ request('status') === 'delivered' ? 'selected' : '' }}>Delivered ({{ $statusMap['delivered'] ?? 0 }})</option>
+                       <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed ({{ $statusMap['completed'] ?? 0 }})</option>
+                       <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled ({{ $statusMap['cancelled'] ?? 0 }})</option>
+                       <option value="returned" {{ request('status') === 'returned' ? 'selected' : '' }}>Returned ({{ $statusMap['returned'] ?? 0 }})</option>
+                   </select>
+
+                   <select name="payment_status" class="appearance-none h-10 rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-black/40 text-[13px] font-bold text-foreground cursor-pointer shadow-sm hover:bg-white/80 dark:hover:bg-black/60 transition-colors focus:ring-2 focus:ring-primary/30 outline-none pl-4 pr-9 min-w-[120px] {!! $bgStr !!} bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat">
                        <option value="">Payment: All</option>
                        <option value="paid" {{ request('payment_status') === 'paid' ? 'selected' : '' }}>Paid</option>
                        <option value="unpaid" {{ request('payment_status') === 'unpaid' ? 'selected' : '' }}>Unpaid</option>
                        <option value="partial" {{ request('payment_status') === 'partial' ? 'selected' : '' }}>Partial</option>
                    </select>
 
-                   <select name="shipping_status" class="h-9 rounded-lg border-border/50 bg-background/50 text-xs font-medium cursor-pointer shadow-sm hover:bg-background transition-colors focus:ring-2 focus:ring-primary/20 outline-none pl-3 pr-8 min-w-[110px]">
+                   <select name="shipping_status" class="appearance-none h-10 rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-black/40 text-[13px] font-bold text-foreground cursor-pointer shadow-sm hover:bg-white/80 dark:hover:bg-black/60 transition-colors focus:ring-2 focus:ring-primary/30 outline-none pl-4 pr-9 min-w-[120px] {!! $bgStr !!} bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat">
                        <option value="">Shipping: All</option>
                        <option value="pending" {{ request('shipping_status') === 'pending' ? 'selected' : '' }}>Pending</option>
                        <option value="shipped" {{ request('shipping_status') === 'shipped' ? 'selected' : '' }}>Dispatched</option>
                        <option value="delivered" {{ request('shipping_status') === 'delivered' ? 'selected' : '' }}>Delivered</option>
                    </select>
+
                </div>
 
                <!-- Search -->
-               <div class="relative transition-all duration-300 group-focus-within:w-64 w-56">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground group-focus-within:text-primary transition-colors">
+               <div class="relative transition-all duration-500 group-focus-within:w-[320px] w-64 lg:w-72">
+                  <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground/60 group-focus-within:text-primary transition-colors">
                         <circle cx="11" cy="11" r="8"/>
                         <path d="m21 21-4.3-4.3"/>
                      </svg>
                   </div>
-                  <input type="text" name="search" value="{{ request('search') }}" placeholder="Search orders..." 
-                     class="block w-full rounded-xl border-border/50 py-2 pl-9 pr-3 text-foreground bg-background/50 placeholder:text-muted-foreground/70 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm leading-6 transition-all shadow-sm outline-none">
+                  <input type="text" name="search" value="{{ request('search') }}" placeholder="Search orders by ID, Name..." 
+                     class="block w-full h-10 rounded-xl border border-white/60 dark:border-white/10 py-2 pl-10 pr-10 text-foreground font-semibold bg-white/70 dark:bg-black/50 placeholder:text-muted-foreground/50 placeholder:font-medium focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-primary/30 focus:border-primary/30 text-[13px] leading-6 transition-all shadow-[0_2px_10px_rgba(0,0,0,0.02)] outline-none backdrop-blur-md">
+                  <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                      <kbd class="hidden sm:inline-flex h-5 items-center gap-1 rounded bg-muted/40 px-1.5 font-mono text-[10px] font-bold text-muted-foreground/80 ring-1 ring-border/20"><span class="text-xs">/</span></kbd>
+                  </div>
                </div>
             </form>
          </div>
 
-         <!-- Right Actions -->
-         <div class="flex items-center gap-3 relative z-20 shrink-0 ml-auto">
-            <div x-data="{ open: false }" class="relative">
-               <x-ui.button variant="outline" @click="open = !open" class="gap-2 h-9 text-xs font-semibold rounded-lg bg-background/50 hover:bg-background">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                  </svg>
-                  Export
-               </x-ui.button>
-               <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-48 rounded-xl border border-border bg-popover p-1 shadow-xl z-50">
-                  <form action="{{ route('central.orders.export') }}" method="POST">
-                     @csrf
-                     <button name="format" value="csv" class="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-accent transition-colors flex items-center gap-2">
-                        <svg class="w-3.5 h-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Export CSV
-                     </button>
-                     <button name="format" value="xlsx" class="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-accent transition-colors flex items-center gap-2">
-                        <svg class="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Export Excel
-                     </button>
-                     <button name="format" value="pdf" class="w-full text-left px-3 py-2 text-xs font-medium rounded-lg hover:bg-accent transition-colors flex items-center gap-2">
-                        <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        Export PDF
-                     </button>
-                  </form>
-               </div>
-            </div>
-            <a href="{{ route('central.orders.create', ['reset' => 1]) }}" 
-               onclick="localStorage.removeItem('order_wizard_state')"
-               class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 hover:scale-[1.02] active:scale-95 transition-all duration-200">
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 12h14"/>
-                  <path d="M12 5v14"/>
-               </svg>
-               <span>Create Order</span>
-            </a>
-         </div>
+
       </div>
 
     <!-- Floating Bulk Action Bar -->
@@ -149,7 +116,7 @@
          x-transition:leave-end="opacity-0 translate-y-10 scale-95"
          class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl px-4 pointer-events-none">
         
-        <div class="pointer-events-auto flex items-center justify-between gap-4 p-2 pl-4 bg-foreground/90 text-background backdrop-blur-xl rounded-full shadow-2xl border border-white/10 ring-1 ring-black/5">
+        <div class="pointer-events-auto flex items-center justify-between gap-4 p-2.5 pl-5 bg-black/90 dark:bg-black/80 text-white backdrop-blur-2xl rounded-full shadow-[0_20px_40px_rgb(0,0,0,0.3)] border border-white/10 ring-1 ring-white/5 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/20 before:to-transparent before:pointer-events-none">
             
             <div class="flex items-center gap-3">
                 <div class="flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm">
@@ -184,41 +151,39 @@
             </div>
         </div>
     </div>
-      <div class="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-xl shadow-[0_2px_20px_rgb(0,0,0,0.02)] overflow-hidden relative">
-         <div id="table-loading" class="absolute inset-0 z-50 bg-background/50 backdrop-blur-[2px] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-            <div class="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-lg"></div>
-         </div>
-         <div class="border-b border-border/40 p-3 bg-muted/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-2 text-xs text-muted-foreground font-medium px-2">
-               <span class="flex h-5 w-7 items-center justify-center rounded bg-background border border-border/50 font-bold text-foreground shadow-sm text-[10px]">
-               {{ $orders->total() }}
-               </span>
-               <span class="tracking-wide uppercase text-[10px] opacity-70">orders found</span>
+      <div class="rounded-[2rem] border border-white/60 dark:border-white/10 bg-white/60 dark:bg-black/30 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] overflow-hidden relative transition-all duration-500 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+         <div id="table-loading" class="absolute inset-0 z-50 bg-background/40 backdrop-blur-md flex flex-col items-center justify-center opacity-0 pointer-events-none transition-all duration-500 rounded-[2rem]">
+            <div class="relative flex items-center justify-center">
+                <div class="absolute w-16 h-16 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+                <svg class="animate-spin h-10 w-10 text-primary drop-shadow-md relative z-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
             </div>
-            <div class="flex items-center gap-3">
-               <form id="per-page-form" method="GET" action="{{ url()->current() }}" class="flex items-center gap-2">
-                  @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
-                  @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
-                  <label for="per_page" class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">Show</label>
-                  <div class="relative">
-                     <select name="per_page" id="per_page" class="appearance-none h-7 pl-2.5 pr-7 rounded-lg border border-border/50 bg-background text-xs font-semibold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors cursor-pointer hover:bg-accent/50 hover:border-border shadow-sm">
-                     <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
-                     <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
-                     <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                     </select>
-                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-muted-foreground">
-                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                     </div>
-                  </div>
-               </form>
-            </div>
+            <span class="mt-4 text-[10px] font-black uppercase tracking-widest text-primary animate-pulse drop-shadow-sm bg-primary/10 px-3 py-1 rounded-full border border-primary/20">Syncing Data</span>
          </div>
-         <div class="relative w-full overflow-auto">
-            <table class="w-full caption-bottom text-sm">
-               <thead class="[&_tr]:border-b">
-                  <tr class="border-b border-border/40 transition-colors hover:bg-muted/10 data-[state=selected]:bg-muted bg-muted/5">
+         <div class="border-b border-white/40 dark:border-white/10 p-3 sm:p-4 bg-white/50 dark:bg-black/20 flex flex-col xl:flex-row items-center justify-between gap-4 relative z-10 w-full overflow-hidden">
+            <div class="flex items-center gap-3 text-xs text-muted-foreground font-bold px-2 w-full xl:w-auto">
+               <div class="text-[11px] uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2 bg-white/40 dark:bg-black/40 px-3 py-1.5 rounded-xl border border-white/60 dark:border-white/5 shadow-sm">
+                   @if($orders->total() > 0)
+                       <span>Page <span class="font-black text-foreground">{{ $orders->currentPage() }}</span> of <span class="font-black text-foreground">{{ max(1, $orders->lastPage()) }}</span></span>
+                       <span class="opacity-50">|</span> 
+                       <span><span class="font-black text-foreground">{{ $orders->firstItem() ?? 0 }}</span> - <span class="font-black text-foreground">{{ $orders->lastItem() ?? 0 }}</span> of <span class="font-black text-foreground">{{ $orders->total() }}</span></span>
+                   @else
+                       <span>0 orders found</span>
+                   @endif
+               </div>
+            </div>
+            @if($orders->hasPages())
+            <div class="pagination-premium w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 scrollbar-none sm:[&>nav>div.hidden]:flex sm:[&>nav>div.hidden]:items-center sm:[&>nav>div.hidden]:justify-end [&_p.leading-5]:hidden">
+               {{ $orders->links() }}
+            </div>
+            @endif
+         </div>
+         <div class="relative w-full overflow-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+            <table class="w-full caption-bottom text-sm relative">
+               <thead class="[&_tr]:border-b relative z-10">
+                  <tr class="border-b border-white/40 dark:border-white/10 bg-white/60 dark:bg-black/40 backdrop-blur-xl transition-colors">
                      <th class="h-10 w-[40px] px-4 text-left align-middle">
                         <div class="flex items-center">
                            <input type="checkbox" class="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary/20 bg-background cursor-pointer transition-all checked:bg-primary checked:border-primary shadow-sm" @click="selected = $event.target.checked ? [{{ $orders->pluck('id')->join(',') }}] : []">
@@ -237,7 +202,7 @@
                </thead>
                <tbody class="[&_tr:last-child]:border-0 text-sm">
                             @forelse($orders as $order)
-                           <tr class="group border-b border-border/40 transition-all duration-300 hover:bg-muted/30 data-[state=selected]:bg-muted/60">
+                           <tr class="group border-b border-white/20 dark:border-white/5 transition-all duration-300 hover:bg-white/90 dark:hover:bg-white/5 data-[state=selected]:bg-primary/5 data-[state=selected]:border-primary/20 relative hover:shadow-[0_4px_30px_rgb(0,0,0,0.03)] hover:z-10 hover:border-transparent dark:hover:shadow-[0_4px_30px_rgb(0,0,0,0.2)]">
 
                                <!-- Checkbox -->
                                <td class="p-4 px-4 align-middle">
@@ -502,8 +467,18 @@
                            </tr>
                            @empty
 <tr>
-    <td colspan="10" class="p-16 text-center text-muted-foreground">
-        No orders found
+    <td colspan="10" class="p-20 text-center relative overflow-hidden">
+        <!-- Premium Empty State -->
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 pointer-events-none z-0"></div>
+        <div class="relative z-10 flex flex-col items-center justify-center space-y-4">
+            <div class="h-24 w-24 rounded-full bg-gradient-to-br from-white to-muted/30 dark:from-muted/20 dark:to-background flex items-center justify-center border border-white/60 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-2 group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary/40 group-hover:text-primary transition-colors duration-500 group-hover:scale-110 drop-shadow-sm"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-xl font-black tracking-tighter text-foreground bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">No orders found</h3>
+                <p class="text-sm font-medium text-muted-foreground max-w-[260px] mx-auto leading-relaxed">We could not find any active orders matching your current filters and search.</p>
+            </div>
+        </div>
     </td>
 </tr>
 @endforelse
@@ -512,9 +487,17 @@
             </table>
          </div>
          @if($orders->hasPages())
-         <div class="border-t border-border/40 p-3 bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="text-xs text-muted-foreground px-2">Page <span class="font-medium text-foreground">{{ $orders->currentPage() }}</span> of <span class="font-medium">{{ $orders->lastPage() }}</span></div>
-            <div>{{ $orders->links() }}</div>
+         <div class="border-t border-white/40 dark:border-white/10 p-4 sm:p-5 bg-white/50 dark:bg-black/20 backdrop-blur-xl relative z-10 transition-colors duration-300 flex flex-col xl:flex-row items-center justify-between gap-4 w-full">
+            <div class="flex items-center gap-3 text-xs text-muted-foreground font-bold px-2 w-full xl:w-auto">
+               <div class="text-[11px] uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2 bg-white/40 dark:bg-black/40 px-3 py-1.5 rounded-xl border border-white/60 dark:border-white/5 shadow-sm">
+                   <span>Page <span class="font-black text-foreground">{{ $orders->currentPage() }}</span> of <span class="font-black text-foreground">{{ max(1, $orders->lastPage()) }}</span></span>
+                   <span class="opacity-50">|</span> 
+                   <span><span class="font-black text-foreground">{{ $orders->firstItem() ?? 0 }}</span> - <span class="font-black text-foreground">{{ $orders->lastItem() ?? 0 }}</span> of <span class="font-black text-foreground">{{ $orders->total() }}</span></span>
+               </div>
+            </div>
+            <div class="pagination-premium w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 scrollbar-none sm:[&>nav>div.hidden]:flex sm:[&>nav>div.hidden]:items-center sm:[&>nav>div.hidden]:justify-end [&_p.leading-5]:hidden">
+                {{ $orders->links() }}
+            </div>
          </div>
          @endif
       </div>
@@ -559,39 +542,56 @@
            }
        });
    
-       container.addEventListener('input', (e) => {
-           if (e.target.name === 'search') {
-               clearTimeout(searchTimeout);
-               searchTimeout = setTimeout(() => {
-                   const form = e.target.closest('form');
-                   const url = new URL(form.action);
-                   const params = new URLSearchParams(new FormData(form));
-                   loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
-               }, 400);
-           }
-       });
+        function updateFilters(forcePerPage = null) {
+            const searchForm = document.getElementById('search-form');
+            const params = new URLSearchParams();
+            
+            if (searchForm) {
+                new FormData(searchForm).forEach((value, key) => {
+                    if (value) params.append(key, value);
+                });
+            }
+
+            if (forcePerPage) {
+                params.set('per_page', forcePerPage);
+            } else {
+                const perPageSelect = document.querySelector('select[name="per_page"]');
+                if (perPageSelect && perPageSelect.value) {
+                    params.set('per_page', perPageSelect.value);
+                }
+            }
+            
+            const url = new URL(searchForm ? searchForm.action : window.location.href);
+            loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+        }
+
+        container.addEventListener('input', (e) => {
+            if (e.target.name === 'search') {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    updateFilters();
+                }, 400);
+            }
+        });
        
        container.addEventListener('change', (e) => {
-            if (e.target.id === 'per_page' || 
-                e.target.name === 'start_date' || 
+            if (e.target.name === 'start_date' || 
                 e.target.name === 'end_date' ||
                 e.target.name === 'status' || 
                 e.target.name === 'payment_status' ||
                 e.target.name === 'shipping_status') {
-                const form = e.target.closest('form');
-                const url = new URL(form.action);
-                const params = new URLSearchParams(new FormData(form));
-               loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+                updateFilters();
            }
        });
+
+        window.addEventListener('per-page-change', (e) => {
+            updateFilters(e.detail?.value);
+        });
        
        container.addEventListener('submit', (e) => {
            if (e.target.id === 'search-form' || e.target.id === 'per-page-form') {
                e.preventDefault();
-               const form = e.target;
-               const url = new URL(form.action);
-               const params = new URLSearchParams(new FormData(form));
-               loadContent(`${url.origin}${url.pathname}?${params.toString()}`);
+               updateFilters();
            }
        });
    });
