@@ -1,7 +1,89 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="flex flex-1 flex-col space-y-8 p-6 md:p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
+    <div class="flex flex-1 flex-col space-y-8 p-6 md:p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500"
+         x-data="{ 
+            search: '{{ request('search') }}',
+            currentStatus: '{{ request('status', 'all') }}',
+            isSearching: false,
+            
+            clearSearch() {
+                this.search = '';
+                this.performSearch();
+            },
+
+            async performSearch() {
+                this.isSearching = true;
+                const url = new URL(window.location.origin + window.location.pathname);
+                const currentParams = new URLSearchParams(window.location.search);
+                
+                if (this.currentStatus) url.searchParams.set('status', this.currentStatus);
+                if (this.search) url.searchParams.set('search', this.search);
+                url.searchParams.set('ajax', '1');
+
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    
+                    const container = document.getElementById('returns-list-container');
+                    if (container) container.innerHTML = data.html;
+                    
+                    if (data.stats) {
+                        document.getElementById('stat-total').textContent = data.stats.total;
+                        document.getElementById('stat-approved').textContent = data.stats.approved;
+                        document.getElementById('stat-received').textContent = data.stats.received;
+                    }
+
+                    const historyUrl = new URL(window.location.origin + window.location.pathname);
+                    if (this.currentStatus) historyUrl.searchParams.set('status', this.currentStatus);
+                    if (this.search) historyUrl.searchParams.set('search', this.search);
+                    window.history.pushState({}, '', historyUrl);
+                } catch (err) {
+                    console.error('Search failed:', err);
+                } finally {
+                    this.isSearching = false;
+                }
+            },
+
+            async loadUrl(url) {
+                this.isSearching = true;
+                const ajaxUrl = new URL(url);
+                ajaxUrl.searchParams.set('ajax', '1');
+                
+                try {
+                    const res = await fetch(ajaxUrl);
+                    const data = await res.json();
+                    
+                    const container = document.getElementById('returns-list-container');
+                    if (container) container.innerHTML = data.html;
+                    
+                    if (data.stats) {
+                        document.getElementById('stat-total').textContent = data.stats.total;
+                        document.getElementById('stat-approved').textContent = data.stats.approved;
+                        document.getElementById('stat-received').textContent = data.stats.received;
+                    }
+
+                    const newParams = new URL(url).searchParams;
+                    this.search = newParams.get('search') || '';
+                    this.currentStatus = newParams.get('status') || 'all';
+
+                    window.history.pushState({}, '', url);
+                } catch (err) {
+                    console.error('Fetch failed:', err);
+                } finally {
+                    this.isSearching = false;
+                }
+            }
+         }"
+         x-init="
+            $el.addEventListener('click', (e) => {
+                const link = e.target.closest('.ajax-pagination a');
+                if (link) {
+                    e.preventDefault();
+                    loadUrl(link.href);
+                }
+            })
+         ">
 
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -27,129 +109,61 @@
             </div>
         </div>
 
-        <!-- Returns Table -->
-        <div
-            class="rounded-3xl border border-gray-100 bg-white/80 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left">
-                    <thead
-                        class="bg-gray-50/50 text-gray-500 font-semibold border-b border-gray-100 uppercase tracking-wider text-xs">
-                        <tr>
-                            <th class="px-8 py-5">RMA #</th>
-                            <th class="px-8 py-5">Order #</th>
-                            <th class="px-8 py-5">Customer</th>
-                            <th class="px-8 py-5">Status</th>
-                            <th class="px-8 py-5">Items</th>
-                            <th class="px-8 py-5 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($returns as $return)
-                            <tr class="group hover:bg-gray-50/60 transition-colors duration-200">
-                                <td class="px-8 py-5">
-                                    <div class="font-mono font-bold text-gray-900">{{ $return->rma_number }}</div>
-                                    <div class="text-[10px] uppercase font-bold tracking-wide text-gray-400 mt-0.5">
-                                        {{ $return->created_at->format('M d, H:i') }}
-                                    </div>
-                                </td>
-                                <td class="px-8 py-5 font-mono text-gray-600 font-medium">
-                                    {{ $return->order->order_number }}
-                                </td>
-                                <td class="px-8 py-5">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-indigo-700 font-bold text-xs ring-2 ring-white shadow-sm">
-                                            {{ substr($return->order->customer->first_name, 0, 1) }}{{ substr($return->order->customer->last_name, 0, 1) }}
-                                        </div>
-                                        <div>
-                                            <div class="font-bold text-gray-900">{{ $return->order->customer->first_name }}
-                                                {{ $return->order->customer->last_name }}</div>
-                                            <div class="text-xs text-gray-500">{{ $return->order->customer->email }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border shadow-sm
-                                                        {{ $return->status === 'approved' ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-blue-100' : '' }}
-                                                        {{ $return->status === 'received' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-emerald-100' : '' }}
-                                                        {{ $return->status === 'requested' ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-amber-100' : '' }}
-                                                        {{ $return->status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200 shadow-red-100' : '' }}
-                                                    ">
-                                        <span
-                                            class="w-1.5 h-1.5 rounded-full {{ $return->status === 'approved' ? 'bg-blue-500' : ($return->status === 'received' ? 'bg-emerald-500' : ($return->status === 'requested' ? 'bg-amber-500' : 'bg-red-500')) }}"></span>
-                                        {{ ucfirst($return->status) }}
-                                    </span>
-                                </td>
-                                <td class="px-8 py-5">
-                                    <div class="flex flex-col gap-1.5">
-                                        @foreach($return->items as $item)
-                                            <div class="flex items-center gap-2 text-xs">
-                                                <span class="font-bold text-gray-900">{{ $item->quantity }}x</span>
-                                                <span class="text-gray-600 truncate max-w-[150px]"
-                                                    title="{{ $item->product->name }}">{{ $item->product->name }}</span>
-                                                <span
-                                                    class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 border border-gray-200">{{ $item->condition }}</span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </td>
-                                <td class="px-8 py-5 text-center">
-                                    @if($return->status === 'approved')
-                                        <button @click="$dispatch('open-receive-modal', { 
-                                                            id: {{ $return->id }}, 
-                                                            rma: '{{ $return->rma_number }}', 
-                                                            items: {{ $return->items->map(fn($i) => ['id' => $i->id, 'name' => $i->product->name, 'sku' => $i->product->sku, 'quantity' => $i->quantity, 'condition' => $i->condition, 'image' => $i->product->image_url ?? null]) }} 
-                                                        })"
-                                            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gray-900/20 group-hover:shadow-gray-900/30">
-                                            <span>Receive</span>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
-                                                stroke-linejoin="round">
-                                                <path d="M5 12h14" />
-                                                <path d="m12 5 7 7-7 7" />
-                                            </svg>
-                                        </button>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 text-xs font-semibold text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                stroke-linejoin="round">
-                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                                <path d="m9 11 3 3L22 4" />
-                                            </svg>
-                                            Processed
-                                        </span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-8 py-24 text-center">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <div class="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
-                                                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                                stroke-linejoin="round" class="text-gray-300">
-                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                                <path d="M14 2v6h6" />
-                                                <path d="M16 13H8" />
-                                                <path d="M16 17H8" />
-                                                <path d="M10 9H8" />
-                                            </svg>
-                                        </div>
-                                        <h3 class="text-lg font-bold text-gray-900">No Approved Returns</h3>
-                                        <p class="text-sm text-gray-500 max-w-xs mx-auto">There are no approved return requests
-                                            waiting to be received at this time.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Requests</p>
+                <p class="text-2xl font-black text-gray-900" id="stat-total">{{ $stats['total'] }}</p>
             </div>
-            <div class="p-4 border-t border-gray-100 bg-gray-50/30">
-                {{ $returns->links() }}
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <p class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Waiting Receipt</p>
+                <p class="text-2xl font-black text-blue-600" id="stat-approved">{{ $stats['approved'] }}</p>
             </div>
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <p class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">Received</p>
+                <p class="text-2xl font-black text-emerald-600" id="stat-received">{{ $stats['received'] }}</p>
+            </div>
+        </div>
+
+        <!-- Filters & Search -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+            <div class="flex items-center p-1 bg-gray-50 rounded-xl w-full sm:w-auto overflow-x-auto no-scrollbar">
+                <a href="{{ route('central.processing.returns.index', ['status' => 'all']) }}" 
+                   @click.prevent="loadUrl($event.target.href)"
+                   :class="currentStatus === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                   class="flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap">
+                    All
+                </a>
+                <a href="{{ route('central.processing.returns.index', ['status' => 'approved']) }}" 
+                   @click.prevent="loadUrl($event.target.href)"
+                   :class="currentStatus === 'approved' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                   class="flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap">
+                    Approved
+                </a>
+                <a href="{{ route('central.processing.returns.index', ['status' => 'received']) }}" 
+                   @click.prevent="loadUrl($event.target.href)"
+                   :class="currentStatus === 'received' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+                   class="flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap">
+                    Received
+                </a>
+            </div>
+
+            <div class="relative w-full sm:w-64">
+                <input type="text" x-model="search" @input.debounce.500ms="performSearch()"
+                       placeholder="Search RMA or Order..."
+                       class="w-full pl-10 pr-10 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-gray-900 transition-all outline-none">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg x-show="!isSearching" class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <svg x-show="isSearching" class="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </div>
+                <button x-show="search.length > 0" @click="clearSearch()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="returns-list-container">
+            @include('central.processing.returns.partials.returns-content')
         </div>
     </div>
 

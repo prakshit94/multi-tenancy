@@ -439,19 +439,47 @@ class OrderProcessingController extends Controller
     /**
      * List approved returns that need to be received
      */
-    public function indexReturns(): View
+    public function indexReturns(Request $request): View|JsonResponse
     {
-        // specific requirements: receved itemes and aonly and acoirdng to update the inventory
-        // So we show 'approved' returns (waiting to be received)
-        // and 'received' returns (for history)
+        $query = OrderReturn::with(['order.customer', 'items.product'])
+            ->whereIn('status', ['approved', 'received']);
 
-        $returns = OrderReturn::with(['order.customer', 'items.product'])
-            ->whereIn('status', ['approved', 'received'])
-            ->latest()
-            ->paginate(10);
+        // Stats Calculation (Before filtering)
+        $stats = [
+            'total' => OrderReturn::whereIn('status', ['approved', 'received'])->count(),
+            'approved' => OrderReturn::where('status', 'approved')->count(),
+            'received' => OrderReturn::where('status', 'received')->count(),
+        ];
 
-        return view('central.processing.returns.index', compact('returns'));
+        // Filter by Status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by Search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('rma_number', 'like', "%{$search}%")
+                    ->orWhereHas('order', function ($o) use ($search) {
+                        $o->where('order_number', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $perPage = $request->input('per_page', 10);
+        $returns = $query->latest()->paginate((int)$perPage)->withQueryString();
+
+        if ($request->ajax() || $request->has('ajax')) {
+            return response()->json([
+                'html' => view('central.processing.returns.partials.returns-content', compact('returns'))->render(),
+                'stats' => $stats
+            ]);
+        }
+
+        return view('central.processing.returns.index', compact('returns', 'stats'));
     }
+
 
     /**
      * Receive Returned Items

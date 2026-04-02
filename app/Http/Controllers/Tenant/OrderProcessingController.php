@@ -310,7 +310,7 @@ class OrderProcessingController extends Controller
     /**
      * List approved returns that need to be received
      */
-    public function indexReturns(Request $request): View
+    public function indexReturns(Request $request): View|JsonResponse
     {
         $query = OrderReturn::with(['order.customer', 'items.product'])
             ->whereIn('status', ['approved', 'received']);
@@ -327,10 +327,30 @@ class OrderProcessingController extends Controller
             $query->where('status', $request->status);
         }
 
-        $returns = $query->latest()->paginate(10)->withQueryString();
+        // Filter by Search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('rma_number', 'like', "%{$search}%")
+                    ->orWhereHas('order', function ($o) use ($search) {
+                        $o->where('order_number', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $perPage = $request->input('per_page', 10);
+        $returns = $query->latest()->paginate((int)$perPage)->withQueryString();
+
+        if ($request->ajax() || $request->has('ajax')) {
+            return response()->json([
+                'html' => view('tenant.processing.returns.partials.returns-content', compact('returns', 'stats'))->render(),
+                'stats' => $stats
+            ]);
+        }
 
         return view('tenant.processing.returns.index', compact('returns', 'stats'));
     }
+
 
     /**
      * Receive Returned Items
