@@ -110,15 +110,19 @@ class InvoiceController extends Controller
     {
         $this->authorize('orders manage');
 
+        $remaining = round($invoice->total_amount - $invoice->paid_amount, 2);
+
         $request->validate([
-            'amount' => 'required|numeric|min:0.01',
-            'method' => 'required|string',
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:' . $remaining],
+            'method' => 'required|string|in:cash,bank_transfer,online,cheque',
             'transaction_id' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
 
         try {
             DB::transaction(function () use ($request, $invoice) {
+                $invoice = Invoice::lockForUpdate()->findOrFail($invoice->id);
+
                 Payment::create([
                     'invoice_id' => $invoice->id,
                     'order_id' => $invoice->order_id,

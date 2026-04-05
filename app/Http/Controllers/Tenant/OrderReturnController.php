@@ -342,7 +342,7 @@ class OrderReturnController extends Controller
                         $rows[] = array_merge($mappedRow, [
                             'preview_status' => 'error',
                             'preview_message' => "Ineligible status: " . ucfirst($order->status),
-                            'order_id' => clone $order->id,
+                            'order_id' => $order->id,
                         ]);
                     } else {
                         // Support full order fetch if no specific SKU was requested

@@ -78,10 +78,6 @@ Route::middleware(['auth', 'tenant.session', 'tenant.access'])->group(function (
     Route::post('invoices/{invoice}/payment', [\App\Http\Controllers\Tenant\InvoiceController::class, 'addPayment'])->name('tenant.invoices.add-payment');
     Route::resource('invoices', \App\Http\Controllers\Tenant\InvoiceController::class)->only(['index', 'store', 'show'])->names('tenant.invoices');
 
-    Route::post('purchase-orders/{purchaseOrder}/receive', [\App\Http\Controllers\Tenant\PurchaseOrderController::class, 'receive'])->name('tenant.purchase-orders.receive');
-    Route::resource('purchase-orders', \App\Http\Controllers\Tenant\PurchaseOrderController::class)->names('tenant.purchase-orders');
-
-
     // Purchase Orders
     Route::post('purchase-orders/{purchaseOrder}/receive', [\App\Http\Controllers\Tenant\PurchaseOrderController::class, 'receive'])->name('tenant.purchase-orders.receive');
     Route::resource('purchase-orders', \App\Http\Controllers\Tenant\PurchaseOrderController::class)->names('tenant.purchase-orders');
