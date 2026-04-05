@@ -231,6 +231,7 @@
                         <!-- Sales Over Time Chart -->
 
 
+                        @if(false)
                         <!-- Recent Orders (Balancing the layout) -->
                         @can('orders view')
                             <div
@@ -298,6 +299,7 @@
                                 </div>
                             </div>
                         @endcan
+                        @endif
                     </div>
 
                     <!-- Activity / Quick Actions -->
@@ -481,7 +483,7 @@
                             <div class="flex items-center gap-3">
                                 <span
                                     class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 py-1.5 bg-secondary/50 rounded-xl border border-border/30">
-                                    Total Orders: {{ count($orderHistory) }}
+                                    Total Orders: {{ $orderHistoryTotal ?? count($orderHistory) }}
                                 </span>
                             </div>
                         </div>
@@ -545,9 +547,9 @@
                                                 <div class="flex flex-col gap-1 max-w-[200px]">
                                                     @foreach($order->items->take(3) as $item)
                                                         <div class="flex items-center gap-1.5 text-[10px] text-muted-foreground truncate"
-                                                            title="{{ $item->product->name ?? 'Unknown' }}">
+                                                            title="{{ $item->product_name ?? 'Unknown' }}">
                                                             <span class="font-bold text-foreground">{{ $item->quantity }}x</span>
-                                                            <span>{{ Str::limit($item->product->name ?? 'Unknown', 20) }}</span>
+                                                            <span>{{ Str::limit($item->product_name ?? 'Unknown', 20) }}</span>
                                                         </div>
                                                     @endforeach
                                                     @if($order->items->count() > 3)
@@ -614,7 +616,7 @@
                                                     @foreach($order->items->take(2) as $item)
                                                         <div class="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                                                             <span class="font-bold text-foreground">{{ $item->quantity }}x</span>
-                                                            <span class="truncate max-w-[150px]">{{ $item->product->name ?? 'Unknown' }}</span>
+                                                            <span class="truncate max-w-[150px]">{{ $item->product_name ?? 'Unknown' }}</span>
                                                         </div>
                                                     @endforeach
                                                     @if($order->items->count() > 2)

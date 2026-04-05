@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    private const ORDER_HISTORY_LIMIT = 25;
+
     public function index(Request $request)
     {
         $user = auth()->user();
@@ -85,10 +87,17 @@ class DashboardController extends Controller
             }
         }
 
-        $totalSales = (float) (clone $filteredOrderQuery)->whereNotIn('status', ['cancelled', 'scheduled'])->sum('grand_total');
-        $ordersCount = $filteredOrderQuery->count();
+        $ordersCount = (clone $filteredOrderQuery)->count();
         $customersCount = $filteredCustomerQuery->count();
-        $cancelledCount = (clone $filteredOrderQuery)->where('status', 'cancelled')->count();
+        $salesSummary = (clone $filteredOrderQuery)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN status NOT IN ('cancelled', 'scheduled') THEN grand_total ELSE 0 END), 0) as total_sales,
+                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_count
+            ")
+            ->first();
+
+        $totalSales = (float) ($salesSummary->total_sales ?? 0);
+        $cancelledCount = (int) ($salesSummary->cancelled_count ?? 0);
 
         // Calculate comparison for change percentage (Dynamic based on period)
         $duration = $startDate->diffInDays($endDate ?? now()) + 1;
@@ -152,8 +161,6 @@ class DashboardController extends Controller
             ],
         ];
 
-        $recentOrders = (clone $filteredOrderQuery)->with(['customer', 'creator'])->latest()->take(5)->get();
-
         // Prepare chart data (based on duration)
         $chartDataDuration = $startDate->diffInDays($endDate ?? now()) + 1;
         if (in_array($period, ['today', 'yesterday'])) {
@@ -178,10 +185,19 @@ class DashboardController extends Controller
             $chartData[] = (float) ($chartDataRaw[$date] ?? 0);
         }
 
-        $orderHistory = (clone $filteredOrderQuery)->with(['customer', 'creator', 'items.product'])->latest()->take(20)->get();
+        $orderHistory = (clone $filteredOrderQuery)
+            ->with([
+                'customer',
+                'creator',
+                'items:id,order_id,product_name,quantity',
+            ])
+            ->latest()
+            ->take(self::ORDER_HISTORY_LIMIT)
+            ->get();
 
         // Admin/User Activity Tracking
         $onlineUsersQuery = \App\Models\User::query()
+            ->select(['id', 'name', 'location', 'last_seen_at', 'last_login_at'])
             ->withCount([
                 'orders' => function ($query) {
                     $query->whereDate('created_at', now()->toDateString());
@@ -206,7 +222,14 @@ class DashboardController extends Controller
             ->orderBy('last_seen_at', 'desc')
             ->get();
 
-        return view('dashboard', compact('stats', 'recentOrders', 'chartData', 'orderHistory', 'period', 'onlineUsers'));
+        return view('dashboard', [
+            'stats' => $stats,
+            'chartData' => $chartData,
+            'orderHistory' => $orderHistory,
+            'orderHistoryTotal' => $ordersCount,
+            'period' => $period,
+            'onlineUsers' => $onlineUsers,
+        ]);
     }
 
     public function exportTeamActivity()

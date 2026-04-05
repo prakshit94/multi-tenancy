@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    private const ORDER_HISTORY_LIMIT = 25;
+
     public function index(Request $request)
     {
         // Period (DEFAULT = TODAY)
@@ -116,13 +118,6 @@ class DashboardController extends Controller
             ],
         ];
 
-        // Recent Orders (Filtered by selected period)
-        $recentOrders = Order::with(['customer', 'creator'])
-            ->whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$startDate, $endDate])
-            ->latest()
-            ->take(5)
-            ->get();
-
         // Chart Data (date-aware)
         $chartDataRaw = Order::whereNotIn('status', ['cancelled', 'scheduled'])
             ->whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$startDate, $endDate])
@@ -150,17 +145,23 @@ class DashboardController extends Controller
         }
 
         // ✅ REQUIRED ADDITION (ORDER HISTORY) - NOW FILTERED
-        $orderHistory = Order::with(['customer', 'items.product', 'creator'])
+        $orderHistory = Order::with([
+                'customer',
+                'creator',
+                'items:id,order_id,product_name,quantity',
+            ])
             ->whereBetween(DB::raw('COALESCE(placed_at, created_at)'), [$startDate, $endDate])
             ->latest()
+            ->take(self::ORDER_HISTORY_LIMIT)
             ->get();
 
-        return view('dashboard', compact(
-            'stats',
-            'recentOrders',
-            'chartData',
-            'orderHistory',
-            'period'
-        ))->with('activeTab', $request->query('active_tab', 'overview'));
+        return view('dashboard', [
+            'stats' => $stats,
+            'chartData' => $chartData,
+            'orderHistory' => $orderHistory,
+            'orderHistoryTotal' => $ordersCount,
+            'period' => $period,
+            'activeTab' => $request->query('active_tab', 'overview'),
+        ]);
     }
 }
