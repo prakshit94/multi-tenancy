@@ -648,9 +648,11 @@ class OrderProcessingController extends Controller
             try {
 
                 switch ($validated['status']) {
+                    case 'confirmed':
+                        $this->orderService->confirmOrder($order);
+                        break;
 
                     case 'processing':
-
                         if ($order->status !== 'confirmed') {
                             throw new Exception();
                         }
@@ -659,11 +661,11 @@ class OrderProcessingController extends Controller
 
                         $order->update([
                             'status' => 'processing',
+                            'shipping_status' => 'pending',
                             'updated_by' => auth()->id(),
                         ]);
 
                         if ($order->invoices()->doesntExist()) {
-
                             Invoice::create([
                                 'order_id' => $order->id,
                                 'customer_id' => $order->customer_id,
@@ -675,56 +677,34 @@ class OrderProcessingController extends Controller
                                 'status' => 'unpaid',
                             ]);
                         }
-
                         break;
 
                     case 'ready_to_ship':
-
                         if ($order->status !== 'processing') {
                             throw new Exception();
                         }
 
                         $order->update([
                             'status' => 'ready_to_ship',
+                            'shipping_status' => 'pending',
                             'updated_by' => auth()->id(),
                         ]);
-
                         break;
 
                     case 'shipped':
-
                         if ($order->status !== 'ready_to_ship') {
                             throw new Exception();
                         }
 
                         $this->orderService->shipOrder($order);
-
                         break;
 
                     case 'delivered':
-
-                        if ($order->status !== 'shipped') {
-                            throw new Exception();
-                        }
-
-                        $order->update([
-                            'status' => 'delivered',
-                            'updated_by' => auth()->id(),
-                        ]);
-
+                        $this->orderService->deliverOrder($order);
                         break;
 
                     case 'cancelled':
-
-                        if (in_array($order->status, ['delivered', 'cancelled'])) {
-                            throw new Exception();
-                        }
-
-                        $order->update([
-                            'status' => 'cancelled',
-                            'updated_by' => auth()->id(),
-                        ]);
-
+                        $this->orderService->cancelOrder($order);
                         break;
                 }
 

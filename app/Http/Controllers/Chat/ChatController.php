@@ -63,14 +63,24 @@ class ChatController extends Controller
 
     public function updateGroup(Request $request, $id)
     {
-        // Logic from ChatGroupController@update
         $request->validate([
             'name' => 'required',
         ]);
 
         $group = ChatGroup::find($id);
         if ($group) {
-            $updateData = $request->all();
+            $updateData = $request->only(['name']);
+
+            if ($request->has('members_ids')) {
+                $members = $request->input('members_ids', []);
+                if (!is_array($members)) {
+                    $members = [];
+                }
+
+                $members[] = (string) $group->created_by;
+                $updateData['members_ids'] = array_values(array_unique(array_map('strval', $members)));
+            }
+
             $group->update($updateData);
             return response()->json(['message' => 'Group updated successfully', 'data' => $group, 'success' => true]);
         }
@@ -194,10 +204,7 @@ class ChatController extends Controller
 
     public function storeChat(Request $request)
     {
-        // Delegates to ChatServices@store
-        // The service expects an array but logic was slightly mixed. 
-        // We'll prepare data for service.
-        $data = $request->all(); // includes attachment, user_type, id (recipient), body
+        $data = array_merge($request->all(), $request->allFiles());
         return $this->chatService->store($data); // Service returns response()->json(...)
     }
 

@@ -61,7 +61,7 @@ class ShipmentController extends Controller
     {
         $this->authorize('orders manage');
 
-        $orders = Order::whereIn('status', ['confirmed', 'processing'])
+        $orders = Order::whereIn('status', ['processing', 'ready_to_ship'])
             ->where('shipping_status', '!=', 'shipped')
             ->latest()
             ->get();
@@ -91,22 +91,27 @@ class ShipmentController extends Controller
                 /** @var Order $order */
                 $order = Order::findOrFail($validated['order_id']);
 
-                Shipment::create([
-                    'order_id' => $order->id,
-                    'warehouse_id' => $validated['warehouse_id'],
-                    'carrier' => $validated['carrier'],
-                    'tracking_number' => $validated['tracking_number'] ?? null,
-                    'weight' => $validated['weight'] ?? null,
-                    'status' => 'shipped',
-                    'shipped_at' => now(),
-                ]);
+                if ($order->warehouse_id && (int) $order->warehouse_id !== (int) $validated['warehouse_id']) {
+                    throw new Exception('Shipment warehouse must match the order warehouse.');
+                }
 
-                // Delegate inventory logic to OrderService if applicable, 
-                // or handle simple state update here.
-                $order->update([
-                    'shipping_status' => 'shipped',
-                    'status' => 'shipped'
-                ]);
+                if ($order->status === 'processing') {
+                    $order->update([
+                        'status' => 'ready_to_ship',
+                        'shipping_status' => 'pending',
+                        'updated_by' => auth()->id(),
+                    ]);
+                }
+
+                if ($order->status !== 'ready_to_ship') {
+                    throw new Exception('Only ready to ship orders can be dispatched.');
+                }
+
+                $this->orderService->shipOrder(
+                    $order,
+                    $validated['tracking_number'] ?? null,
+                    $validated['carrier']
+                );
             });
 
             return redirect()->route('central.shipments.index')->with('success', 'Shipment created successfully.');

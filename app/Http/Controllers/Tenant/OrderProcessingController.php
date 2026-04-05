@@ -494,70 +494,78 @@ class OrderProcessingController extends Controller
         $validated = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:orders,id',
-            'status' => 'required|in:confirmed,processing,ready_to_ship,delivered,cancelled',
+            'status' => 'required|in:confirmed,processing,ready_to_ship,shipped,delivered,cancelled',
         ]);
 
         try {
             DB::beginTransaction();
 
             $orders = Order::whereIn('id', $validated['ids'])->get();
-            $statusFlow = ['placed', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'];
-            $targetStatus = $validated['status'];
-            $targetIndex = array_search($targetStatus, $statusFlow);
-
             $failedOrders = [];
 
             foreach ($orders as $order) {
-                // Skip if status is already same
-                if ($order->status === $targetStatus) {
-                    continue;
-                }
+                try {
+                    switch ($validated['status']) {
+                        case 'confirmed':
+                            $this->orderService->confirmOrder($order);
+                            break;
 
-                $currentIndex = array_search($order->status, $statusFlow);
+                        case 'processing':
+                            if ($order->status !== 'confirmed') {
+                                throw new Exception();
+                            }
 
-                // Validation Logic
-                $isValid = false;
+                            $this->orderService->validateStockForProcessing($order);
+                            $order->update([
+                                'status' => 'processing',
+                                'shipping_status' => 'pending',
+                                'updated_by' => auth()->id(),
+                            ]);
 
-                // Allow cancellation if not delivered
-                if ($targetStatus === 'cancelled') {
-                    if ($order->status !== 'delivered' && $order->status !== 'cancelled') {
-                        $isValid = true;
+                            if ($order->invoices()->doesntExist()) {
+                                Invoice::create([
+                                    'order_id' => $order->id,
+                                    'customer_id' => $order->customer_id,
+                                    'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT),
+                                    'issue_date' => now(),
+                                    'due_date' => now(),
+                                    'total_amount' => $order->grand_total,
+                                    'paid_amount' => 0,
+                                    'status' => 'unpaid',
+                                ]);
+                            }
+                            break;
+
+                        case 'ready_to_ship':
+                            if ($order->status !== 'processing') {
+                                throw new Exception();
+                            }
+
+                            $order->update([
+                                'status' => 'ready_to_ship',
+                                'shipping_status' => 'pending',
+                                'updated_by' => auth()->id(),
+                            ]);
+                            break;
+
+                        case 'shipped':
+                            if ($order->status !== 'ready_to_ship') {
+                                throw new Exception();
+                            }
+
+                            $this->orderService->shipOrder($order);
+                            break;
+
+                        case 'delivered':
+                            $this->orderService->deliverOrder($order);
+                            break;
+
+                        case 'cancelled':
+                            $this->orderService->cancelOrder($order);
+                            break;
                     }
-                }
-                // Forward transition check
-                elseif ($currentIndex !== false && $targetIndex !== false) {
-                    if ($targetIndex > $currentIndex) {
-                        $isValid = true;
-                    }
-                }
-
-                if (!$isValid) {
+                } catch (Exception $e) {
                     $failedOrders[] = $order->order_number;
-                    continue; // Skip invalid updates
-                }
-
-                // If valid, proceed to update
-                if ($validated['status'] === 'processing') {
-                    $this->orderService->validateStockForProcessing($order);
-                }
-
-                $order->update([
-                    'status' => $validated['status'],
-                    'updated_by' => auth()->id(),
-                ]);
-
-                // If updated to processing, ensure invoice exists
-                if ($validated['status'] === 'processing' && $order->invoices()->doesntExist()) {
-                    Invoice::create([
-                        'order_id' => $order->id,
-                        'customer_id' => $order->customer_id,
-                        'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT),
-                        'issue_date' => now(),
-                        'due_date' => now(),
-                        'total_amount' => $order->grand_total,
-                        'paid_amount' => 0,
-                        'status' => 'unpaid',
-                    ]);
                 }
             }
 
@@ -565,7 +573,7 @@ class OrderProcessingController extends Controller
 
             if (count($failedOrders) > 0) {
                 // Determine if it was a reversion attempt for better messaging
-                $message = 'Status Update Failed: You cannot revert the status of orders that have already progressed. The following orders were skipped: ' . implode(', ', $failedOrders);
+                $message = 'Some orders were skipped because the requested transition was invalid: ' . implode(', ', $failedOrders);
                 return back()->with('error', $message);
             }
 

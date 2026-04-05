@@ -42,8 +42,8 @@ class ChatServices
 
         $imgedata = [];
         if ($attachment) {
-            $ext = pathinfo($attachment->getClientOriginalName(), PATHINFO_EXTENSION);
-            if (!in_array($ext, array('jpg', 'jpeg', 'png', 'text', 'CSV', 'xls', 'xlsx', 'doc', 'docx', 'pdf'))) {
+            $ext = strtolower((string) pathinfo($attachment->getClientOriginalName(), PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'txt', 'text', 'csv', 'xls', 'xlsx', 'doc', 'docx', 'pdf'], true)) {
                 return response()->json([
                     'status_code' => 422,
                     'success' => false,
@@ -89,8 +89,14 @@ class ChatServices
         if ($user_type == 1) {
             $data['group_id'] = $receipent;
             $chat_group = ChatGroup::find($receipent);
-            if ($chat_group && is_array($chat_group->members_ids) && count($chat_group->members_ids) > 0) {
-                foreach ($chat_group->members_ids as $key => $member_id) {
+            $memberIds = $chat_group?->members_ids;
+            if (is_string($memberIds)) {
+                $memberIds = json_decode($memberIds, true);
+            }
+            $memberIds = is_array($memberIds) ? array_values(array_unique(array_map('strval', $memberIds))) : [];
+
+            if ($chat_group && count($memberIds) > 0) {
+                foreach ($memberIds as $key => $member_id) {
                     $recipient_data = array();
                     $recipient_data['message_id'] = $message->id;
                     $recipient_data['recipient_id'] = $member_id;
@@ -467,8 +473,14 @@ class ChatServices
             if ($user_type == 1) { // 1 = group
                 $userChat['group_id'] = $receipent;
                 $chat_group = ChatGroup::find($receipent);
-                if (is_array($chat_group->members_ids) && count($chat_group->members_ids) > 0) {
-                    foreach ($chat_group->members_ids as $key => $member_id) {
+                $memberIds = $chat_group?->members_ids;
+                if (is_string($memberIds)) {
+                    $memberIds = json_decode($memberIds, true);
+                }
+                $memberIds = is_array($memberIds) ? array_values(array_unique(array_map('strval', $memberIds))) : [];
+
+                if ($chat_group && count($memberIds) > 0) {
+                    foreach ($memberIds as $key => $member_id) {
                         $recipient_data = array();
                         $recipient_data['message_id'] = $message->id;
                         $recipient_data['recipient_id'] = $member_id;
@@ -515,18 +527,18 @@ class ChatServices
         } else {
             $query->select('user_chats.*', 'user_chat_recipients.is_read');
             $query->where('user_chats.group_id', 0);
-            $query->where('user_chat_recipients.recipient_group_id', 0);
             $query->with('user');
             $query->leftjoin('user_chat_recipients', 'user_chat_recipients.message_id', 'user_chats.id');
             $query->where(function ($query) use ($you, $recipient) {
-                $query->where('user_chats.sender_id', $you);
-                $query->where('user_chat_recipients.recipient_id', $recipient);
-                $query->where('user_chat_recipients.recipient_group_id', 0);
-            });
-            $query->orwhere(function ($query) use ($you, $recipient) {
-                $query->where('user_chats.sender_id', $recipient);
-                $query->where('user_chat_recipients.recipient_id', $you);
-                $query->where('user_chat_recipients.recipient_group_id', 0);
+                $query->where(function ($subQuery) use ($you, $recipient) {
+                    $subQuery->where('user_chats.sender_id', $you)
+                        ->where('user_chat_recipients.recipient_id', $recipient)
+                        ->where('user_chat_recipients.recipient_group_id', 0);
+                })->orWhere(function ($subQuery) use ($you, $recipient) {
+                    $subQuery->where('user_chats.sender_id', $recipient)
+                        ->where('user_chat_recipients.recipient_id', $you)
+                        ->where('user_chat_recipients.recipient_group_id', 0);
+                });
             });
         }
         $query->orderBy('user_chats.created_at', 'DESC');

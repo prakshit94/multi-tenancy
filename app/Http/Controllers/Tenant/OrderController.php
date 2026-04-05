@@ -416,12 +416,6 @@ class OrderController extends Controller
                     $order->items()->create($pItem);
                 }
 
-                // Re-apply reserves if needed
-                if ($isReservedState) {
-                    $order->refresh();
-                    $this->orderService->applyReserves($order);
-                }
-
                 $order->update([
                     'customer_id' => $validated['customer_id'],
                     'warehouse_id' => $validated['warehouse_id'],
@@ -440,6 +434,11 @@ class OrderController extends Controller
                     'status' => $validated['order_status'] ?? $order->status,
                     'updated_by' => auth()->id(),
                 ]);
+
+                if ($isReservedState) {
+                    $order->refresh();
+                    $this->orderService->applyReserves($order);
+                }
             });
 
             $order->creator->notify(new OrderNotification($order, 'updated'));

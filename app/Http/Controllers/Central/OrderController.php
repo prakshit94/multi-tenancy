@@ -654,19 +654,6 @@ class OrderController extends Controller
                     $order->items()->create($pItem);
                 }
 
-                // NO INVENTORY TOUCH HERE
-
-                /**
-                 * If the order was in a reserved state, we MUST apply reserves
-                 * to the NEW items now.
-                 */
-                if ($isReservedState) {
-                    // We refresh the order to get the new items
-                    $order->refresh();
-                    $this->orderService->applyReserves($order);
-                }
-
-
                 $order->update([
                     'customer_id' => $validated['customer_id'],
                     'warehouse_id' => $validated['warehouse_id'],
@@ -685,6 +672,13 @@ class OrderController extends Controller
                     'status' => $validated['order_status'] ?? $order->status,
                     'updated_by' => auth()->id(),
                 ]);
+
+                // Re-apply reserves after the order payload is updated so warehouse changes
+                // reserve stock against the correct warehouse.
+                if ($isReservedState) {
+                    $order->refresh();
+                    $this->orderService->applyReserves($order);
+                }
             });
             $order->creator->notify(new OrderNotification($order, 'updated'));
             if ($request->wantsJson()) {

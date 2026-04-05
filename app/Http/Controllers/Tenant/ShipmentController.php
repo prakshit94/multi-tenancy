@@ -36,7 +36,7 @@ class ShipmentController extends Controller
     {
         $this->authorize('orders manage');
         
-        $orders = Order::whereIn('status', ['confirmed', 'processing'])
+        $orders = Order::whereIn('status', ['processing', 'ready_to_ship'])
             ->where('shipping_status', '!=', 'shipped')
             ->latest()
             ->get();
@@ -63,21 +63,29 @@ class ShipmentController extends Controller
 
         try {
             DB::transaction(function () use ($request) {
-                Shipment::create([
-                    'order_id' => $request->order_id,
-                    'warehouse_id' => $request->warehouse_id,
-                    'carrier' => $request->carrier,
-                    'tracking_number' => $request->tracking_number,
-                    'weight' => $request->weight,
-                    'status' => 'shipped',
-                    'shipped_at' => now(),
-                ]);
-
                 $order = Order::findOrFail($request->order_id);
-                $order->update([
-                    'shipping_status' => 'shipped',
-                    'status' => 'shipped'
-                ]);
+
+                if ($order->warehouse_id && (int) $order->warehouse_id !== (int) $request->warehouse_id) {
+                    throw new \Exception('Shipment warehouse must match the order warehouse.');
+                }
+
+                if ($order->status === 'processing') {
+                    $order->update([
+                        'status' => 'ready_to_ship',
+                        'shipping_status' => 'pending',
+                        'updated_by' => auth()->id(),
+                    ]);
+                }
+
+                if ($order->status !== 'ready_to_ship') {
+                    throw new \Exception('Only ready to ship orders can be dispatched.');
+                }
+
+                app(\App\Services\OrderService::class)->shipOrder(
+                    $order,
+                    $request->tracking_number,
+                    $request->carrier
+                );
             });
 
             return redirect()->route('tenant.shipments.index')->with('success', 'Shipment created successfully.');

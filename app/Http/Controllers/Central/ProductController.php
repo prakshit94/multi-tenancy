@@ -30,7 +30,7 @@ class ProductController extends Controller
     {
         $this->authorize('products view');
 
-        $query = Product::with(['category', 'brand', 'images', 'taxClass']);
+        $query = Product::with(['category', 'brand', 'images', 'taxClass', 'stocks']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -55,15 +55,17 @@ class ProductController extends Controller
         $productIds = $products->pluck('id');
         $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
             ->whereHas('order', function ($q) {
-                $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship']);
+                $q->whereIn('status', ['pending', 'scheduled', 'draft']);
             })
             ->selectRaw('product_id, SUM(quantity) as total_pending')
             ->groupBy('product_id')
             ->pluck('total_pending', 'product_id');
 
         foreach ($products as $product) {
+            $totalPhysicalQty = (float) $product->stocks->sum('quantity');
+            $totalReservedQty = (float) $product->stocks->sum('reserve_quantity');
             $product->pending_order_qty = (float) $pendingQuantities->get($product->id, 0);
-            $product->sellable_qty = (float) $product->stock_on_hand - $product->pending_order_qty;
+            $product->sellable_qty = (float) max(0, $totalPhysicalQty - $totalReservedQty - $product->pending_order_qty);
         }
 
         return view('central.products.index', compact('products'));
