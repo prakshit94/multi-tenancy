@@ -77,277 +77,273 @@ class OrderController extends Controller
     /**
      * Show the form for creating a new order.
      */
-    public function create(Request $request): View
-    {
-        $this->authorize('orders create');
-        $warehouses = Warehouse::where('is_active', true)->get();
-        $customerId = $request->query('customer_id');
-        $preSelectedCustomer = $customerId ? Customer::with('addresses')->withCount('orders')->find($customerId) : null;
-        $pendingProductQuantities = \App\Models\OrderItem::whereHas('order', function ($q) {
-            $q->whereIn('status', ['pending', 'scheduled', 'draft']);
-        })->selectRaw('product_id, SUM(quantity) as total_pending')
-            ->groupBy('product_id')
-            ->pluck('total_pending', 'product_id');
+  public function create(Request $request): View
+{
+    $this->authorize('orders create');
 
-        $products = Product::where('is_active', true)
-            ->where('is_sku_enabled', true)
-            ->with(['stocks', 'images', 'taxClass.rates'])
-            ->limit(20)
-            ->get()
-            ->map(function ($product) use ($pendingProductQuantities) {
-                $grossSellable = $product->stocks->sum(fn($stock) => max(0, $stock->quantity - $stock->reserve_quantity));
-                $pendingQty = $pendingProductQuantities->get($product->id, 0);
+    $warehouses = Warehouse::where('is_active', true)->get();
 
-                $totalPhysicalQty = $product->stocks->sum('quantity');
-                $totalReservedQty = $product->stocks->sum('reserve_quantity');
-                $totalCommitment = $totalReservedQty + $pendingQty;
+    $customerId = $request->query('customer_id');
+    $preSelectedCustomer = $customerId
+        ? Customer::with('addresses')->withCount('orders')->find($customerId)
+        : null;
 
-                $taxAmount = 0.00;
-                if ($product->taxClass && $product->taxClass->rates->isNotEmpty()) {
-                    $taxAmount = $product->price * ($product->taxClass->rates->sum('rate') / 100);
-                } elseif ($product->tax_rate > 0) {
-                    $taxAmount = $product->price * ($product->tax_rate / 100);
-                }
+    // (kept as-is, but no longer used in stock calculation)
+    $pendingProductQuantities = \App\Models\OrderItem::whereHas('order', function ($q) {
+        $q->whereIn('status', ['pending', 'scheduled', 'draft']);
+    })->selectRaw('product_id, SUM(quantity) as total_pending')
+        ->groupBy('product_id')
+        ->pluck('total_pending', 'product_id');
 
-                $currentOversoldAmount = max(0, $totalCommitment - $totalPhysicalQty);
-                $oversellLimit = $product->oversell_limit !== null ? (int) $product->oversell_limit : null;
-                $effectiveOversellLimit = $oversellLimit !== null ? max(0, $oversellLimit - $currentOversoldAmount) : null;
+    $products = Product::where('is_active', true)
+        ->where('is_sku_enabled', true)
+        ->with(['stocks', 'images', 'taxClass.rates'])
+        ->limit(20)
+        ->get()
+        ->map(function ($product) {
 
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'sku' => $product->sku,
-                    'price' => (float) $product->price,
-                    'mrp' => (float) $product->mrp,
-                    'tax_amount' => (float) $taxAmount,
-                    'total_price_with_tax' => (float) ($product->price + $taxAmount),
-                    'stock_on_hand' => (float) max(0, $totalPhysicalQty - $totalCommitment),
-                    'allow_oversell' => (bool) $product->allow_oversell,
-                    'oversell_limit' => $effectiveOversellLimit,
-                    'unit_type' => $product->unit_type,
-                    'brand' => $product->brand->name ?? 'N/A',
-                    'description' => $product->description,
-                    'is_organic' => $product->is_organic,
-                    'origin' => $product->origin,
-                    'image_url' => $product->image_url,
-                    'category' => $product->category->name ?? 'Uncategorized',
-                    'default_discount_type' => $product->default_discount_type,
-                    'default_discount_value' => (float) $product->default_discount_value,
-                    'tax_rate' => $product->tax_rate,
-                    'tax_class_id' => $product->tax_class_id,
-                    'tax_class' => $product->taxClass ? [
-                        'id' => $product->taxClass->id,
-                        'name' => $product->taxClass->name,
-                        'rates' => $product->taxClass->rates->map(fn($r) => [
-                            'rate' => $r->rate,
-                            'name' => $r->name
-                        ])
-                    ] : null,
-                ];
-            });
-        return view('central.orders.create', [
-            'customers' => [],
-            'warehouses' => $warehouses,
-            'products' => $products,
-            'preSelectedCustomer' => $preSelectedCustomer,
-        ]);
-    }
+            $grossSellable = $product->stocks->sum(
+                fn($stock) => max(0, $stock->quantity - $stock->reserve_quantity)
+            );
+
+            $totalPhysicalQty = $product->stocks->sum('quantity');
+            $totalReservedQty = $product->stocks->sum('reserve_quantity');
+
+            // ✅ FIXED: removed pendingQty from stock logic
+            $totalCommitment = $totalReservedQty;
+
+            $taxAmount = 0.00;
+            if ($product->taxClass && $product->taxClass->rates->isNotEmpty()) {
+                $taxAmount = $product->price * ($product->taxClass->rates->sum('rate') / 100);
+            } elseif ($product->tax_rate > 0) {
+                $taxAmount = $product->price * ($product->tax_rate / 100);
+            }
+
+            $currentOversoldAmount = max(0, $totalCommitment - $totalPhysicalQty);
+            $oversellLimit = $product->oversell_limit !== null ? (int) $product->oversell_limit : null;
+            $effectiveOversellLimit = $oversellLimit !== null
+                ? max(0, $oversellLimit - $currentOversoldAmount)
+                : null;
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'price' => (float) $product->price,
+                'mrp' => (float) $product->mrp,
+                'tax_amount' => (float) $taxAmount,
+                'total_price_with_tax' => (float) ($product->price + $taxAmount),
+                'stock_on_hand' => (float) max(0, $totalPhysicalQty - $totalCommitment),
+                'allow_oversell' => (bool) $product->allow_oversell,
+                'oversell_limit' => $effectiveOversellLimit,
+                'unit_type' => $product->unit_type,
+                'brand' => $product->brand->name ?? 'N/A',
+                'description' => $product->description,
+                'is_organic' => $product->is_organic,
+                'origin' => $product->origin,
+                'image_url' => $product->image_url,
+                'category' => $product->category->name ?? 'Uncategorized',
+                'default_discount_type' => $product->default_discount_type,
+                'default_discount_value' => (float) $product->default_discount_value,
+                'tax_rate' => $product->tax_rate,
+                'tax_class_id' => $product->tax_class_id,
+                'tax_class' => $product->taxClass ? [
+                    'id' => $product->taxClass->id,
+                    'name' => $product->taxClass->name,
+                    'rates' => $product->taxClass->rates->map(fn($r) => [
+                        'rate' => $r->rate,
+                        'name' => $r->name
+                    ])
+                ] : null,
+            ];
+        });
+
+    return view('central.orders.create', [
+        'customers' => [],
+        'warehouses' => $warehouses,
+        'products' => $products,
+        'preSelectedCustomer' => $preSelectedCustomer,
+    ]);
+}
     /**
      * Store a newly created order in storage.
      */
     public function store(Request $request): JsonResponse|RedirectResponse
-    {
-        $this->authorize('orders create');
+{
+    $this->authorize('orders create');
 
-        $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'warehouse_id' => 'required|exists:warehouses,id',
-            'is_future_order' => 'boolean',
-            'scheduled_at' => 'required_if:is_future_order,true|nullable|date|after:now',
+    $validated = $request->validate([
+        'customer_id' => 'required|exists:customers,id',
+        'warehouse_id' => 'required|exists:warehouses,id',
+        'is_future_order' => 'boolean',
+        'scheduled_at' => 'required_if:is_future_order,true|nullable|date|after:now',
 
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|numeric|min:1',
-            'items.*.price' => 'required|numeric|min:0',
-            'items.*.discount_type' => 'nullable|string|in:fixed,percent',
-            'items.*.discount_value' => 'nullable|numeric|min:0',
+        'items' => 'required|array|min:1',
+        'items.*.product_id' => 'required|exists:products,id',
+        'items.*.quantity' => 'required|numeric|min:1',
+        'items.*.price' => 'required|numeric|min:0',
+        'items.*.discount_type' => 'nullable|string|in:fixed,percent',
+        'items.*.discount_value' => 'nullable|numeric|min:0',
 
-            'billing_address_id' => 'required|exists:customer_addresses,id',
-            'shipping_address_id' => 'nullable|exists:customer_addresses,id',
+        'billing_address_id' => 'required|exists:customer_addresses,id',
+        'shipping_address_id' => 'nullable|exists:customer_addresses,id',
 
-            'payment_method' => 'nullable|string',
-            'shipping_method' => 'nullable|string',
+        'payment_method' => 'nullable|string',
+        'shipping_method' => 'nullable|string',
 
-            'discount_type' => 'nullable|string|in:fixed,percent',
-            'discount_value' => 'nullable|numeric|min:0',
-        ]);
+        'discount_type' => 'nullable|string|in:fixed,percent',
+        'discount_value' => 'nullable|numeric|min:0',
+    ]);
 
-        try {
-            $order = DB::transaction(function () use ($validated) {
+    try {
+        $order = DB::transaction(function () use ($validated) {
 
-                $subTotalAmount = 0;
-                $itemDiscountsTotal = 0;
+            $subTotalAmount = 0;
+            $itemDiscountsTotal = 0;
 
-                $productIds = collect($validated['items'])->pluck('product_id');
-                $products = Product::whereIn('id', $productIds)->with(['taxClass.rates', 'stocks'])->get()->keyBy('id'); // Updated to load Tax Info and Stocks
+            $productIds = collect($validated['items'])->pluck('product_id');
+            $products = Product::whereIn('id', $productIds)
+                ->with(['taxClass.rates', 'stocks'])
+                ->get()
+                ->keyBy('id');
 
-                $preparedItems = [];
-                $totalTaxAmount = 0; // Track Total Tax
+            $preparedItems = [];
+            $totalTaxAmount = 0;
 
-                foreach ($validated['items'] as $item) {
+            foreach ($validated['items'] as $item) {
 
-                    $product = $products[$item['product_id']] ?? null; // Get product for Tax Calc
-                    if (!$product) {
-                        throw new \Exception("Product not found.");
-                    }
-
-                    // Stock and Oversell Validation
-                    $totalPhysicalQty = $product->stocks->sum('quantity');
-                    $totalReservedQty = $product->stocks->sum('reserve_quantity');
-                    $pendingQty = \App\Models\OrderItem::whereHas('order', function ($q) {
-                        $q->whereIn('status', ['pending', 'scheduled', 'draft']);
-                    })->where('product_id', $product->id)->sum('quantity');
-                    $totalCommitment = $totalReservedQty + $pendingQty;
-
-                    $currentStock = max(0, $totalPhysicalQty - $totalCommitment);
-                    $requestedQty = $item['quantity'];
-
-                    if ($requestedQty > $currentStock) {
-                        if (!$product->allow_oversell) {
-                            throw new \Exception("Product {$product->name} is out of stock.");
-                        }
-
-                        $currentOversold = max(0, $totalCommitment - $totalPhysicalQty);
-                        $totalOversoldAfterThis = $currentOversold + ($requestedQty - $currentStock);
-
-                        if ($product->oversell_limit !== null && $totalOversoldAfterThis > (int)$product->oversell_limit) {
-                            $availableOversell = max(0, (int)$product->oversell_limit - $currentOversold);
-                            throw new \Exception("Oversell limit exceeded for {$product->name}. Remaining oversell capacity: {$availableOversell}");
-                        }
-                    }
-
-                    $itemBasePrice = $item['quantity'] * $item['price'];
-
-                    $itemDiscountValue = $item['discount_value'] ?? 0;
-                    $itemDiscountType = $item['discount_type'] ?? 'fixed';
-
-                    $itemDiscount = $itemDiscountType === 'percent'
-                        ? $itemBasePrice * ($itemDiscountValue / 100)
-                        : $itemDiscountValue;
-
-                    $subTotalAmount += $itemBasePrice;
-                    $itemDiscountsTotal += $itemDiscount;
-
-                    // Tax Calculation
-                    $taxDetails = $this->taxService->calculate($product, (float) $item['price'], (float) $item['quantity']);
-                    $itemTaxAmount = $taxDetails['amount'];
-                    $totalTaxAmount += $itemTaxAmount;
-
-                    $preparedItems[] = array_merge($item, [
-                        'discount_amount' => $itemDiscount,
-                        'tax_percent' => $taxDetails['rate'], // Store Rate
-                        'tax_amount' => $itemTaxAmount,       // Store Amount (Logic Use)
-                    ]);
+                $product = $products[$item['product_id']] ?? null;
+                if (!$product) {
+                    throw new \Exception("Product not found.");
                 }
 
-                // Order-level discount
-                $orderDiscountType = $validated['discount_type'] ?? 'fixed';
-                $orderDiscountValue = $validated['discount_value'] ?? 0;
+                // ✅ FIXED STOCK CALCULATION
+                $totalPhysicalQty = $product->stocks->sum('quantity');
+                $totalReservedQty = $product->stocks->sum('reserve_quantity');
+                $totalCommitment = $totalReservedQty;
 
-                $netAfterItems = $subTotalAmount - $itemDiscountsTotal;
+                $currentStock = max(0, $totalPhysicalQty - $totalCommitment);
+                $requestedQty = $item['quantity'];
 
-                $orderDiscountAmount = $orderDiscountType === 'percent'
-                    ? $netAfterItems * ($orderDiscountValue / 100)
-                    : $orderDiscountValue;
-
-                // Grand Total = (Subtotal - ItemDisc - OrderDisc) + Tax
-                // Note: Typically tax is calculated on the discounted price. 
-                // However, simple implementation usually does Tax on Base or Tax on Net.
-                // For now, let's assume Tax is Inclusive or Exclusive? 
-                // The provided TaxService calculates on Base Price * Quantity.
-                // Only if we want Post-Discount Tax we need to adj.
-                // Given "Non-disruptive", let's keeps Tax on Line Base for now (Standard GST often on transaction value).
-
-                $grandTotal = ($netAfterItems - $orderDiscountAmount) + $totalTaxAmount;
-
-                // Create Order
-                $order = Order::create([
-                    'customer_id' => $validated['customer_id'],
-                    'warehouse_id' => $validated['warehouse_id'],
-                    'total_amount' => $subTotalAmount,
-                    'discount_amount' => $itemDiscountsTotal + $orderDiscountAmount,
-                    'tax_amount' => $totalTaxAmount, // Store Tax Total
-                    'discount_type' => $orderDiscountType,
-                    'discount_value' => $orderDiscountValue,
-                    'status' => ($validated['is_future_order'] ?? false) ? 'scheduled' : 'pending',
-                    'placed_at' => now(),
-                    'scheduled_at' => $validated['scheduled_at'] ?? null,
-                    'is_future_order' => $validated['is_future_order'] ?? false,
-                    'billing_address_id' => $validated['billing_address_id'],
-                    'shipping_address_id' => $validated['shipping_address_id'] ?? $validated['billing_address_id'],
-                    'payment_method' => $validated['payment_method'] ?? 'cash',
-                    'shipping_method' => $validated['shipping_method'] ?? 'standard',
-                    'grand_total' => $grandTotal,
-                    'created_by' => auth()->id(),
-                ]);
-
-                // Create Order Items (NO INVENTORY TOUCH HERE)
-                foreach ($preparedItems as $item) {
-
-                    $product = $products[$item['product_id']] ?? null;
-                    if (!$product) {
-                        throw new Exception('Product not found.');
+                if ($requestedQty > $currentStock) {
+                    if (!$product->allow_oversell) {
+                        throw new \Exception("Product {$product->name} is out of stock.");
                     }
 
-                    $order->items()->create([
-                        'product_id' => $item['product_id'],
-                        'product_name' => $product->name,
-                        'sku' => $product->sku ?? 'N/A',
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['price'],
-                        'cost_price' => $product->cost_price ?? 0, // Snapshot
-                        'discount_type' => $item['discount_type'] ?? 'fixed',
-                        'discount_value' => $item['discount_value'] ?? 0,
-                        'discount_amount' => $item['discount_amount'],
-                        'total_price' => $item['quantity'] * $item['price'],
-                        'tax_percent' => $item['tax_percent'] ?? 0,
-                    ]);
+                    $currentOversold = max(0, $totalCommitment - $totalPhysicalQty);
+                    $totalOversoldAfterThis = $currentOversold + ($requestedQty - $currentStock);
+
+                    if ($product->oversell_limit !== null && $totalOversoldAfterThis > (int)$product->oversell_limit) {
+                        $availableOversell = max(0, (int)$product->oversell_limit - $currentOversold);
+                        throw new \Exception("Oversell limit exceeded for {$product->name}. Remaining oversell capacity: {$availableOversell}");
+                    }
                 }
 
-                return $order;
-            });
+                $itemBasePrice = $item['quantity'] * $item['price'];
 
-            if ($request->wantsJson()) {
-                // Send Notification
-                auth()->user()->notify(new OrderNotification($order, 'created'));
+                $itemDiscountValue = $item['discount_value'] ?? 0;
+                $itemDiscountType = $item['discount_type'] ?? 'fixed';
 
-                session()->flash('success', 'Order created successfully.');
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Order created successfully.',
-                    'redirect_url' => route('central.orders.create'),
+                $itemDiscount = $itemDiscountType === 'percent'
+                    ? $itemBasePrice * ($itemDiscountValue / 100)
+                    : $itemDiscountValue;
+
+                $subTotalAmount += $itemBasePrice;
+                $itemDiscountsTotal += $itemDiscount;
+
+                $taxDetails = $this->taxService->calculate($product, (float) $item['price'], (float) $item['quantity']);
+                $itemTaxAmount = $taxDetails['amount'];
+                $totalTaxAmount += $itemTaxAmount;
+
+                $preparedItems[] = array_merge($item, [
+                    'discount_amount' => $itemDiscount,
+                    'tax_percent' => $taxDetails['rate'],
+                    'tax_amount' => $itemTaxAmount,
                 ]);
             }
 
+            $orderDiscountType = $validated['discount_type'] ?? 'fixed';
+            $orderDiscountValue = $validated['discount_value'] ?? 0;
+
+            $netAfterItems = $subTotalAmount - $itemDiscountsTotal;
+
+            $orderDiscountAmount = $orderDiscountType === 'percent'
+                ? $netAfterItems * ($orderDiscountValue / 100)
+                : $orderDiscountValue;
+
+            $grandTotal = ($netAfterItems - $orderDiscountAmount) + $totalTaxAmount;
+
+            $order = Order::create([
+                'customer_id' => $validated['customer_id'],
+                'warehouse_id' => $validated['warehouse_id'],
+                'total_amount' => $subTotalAmount,
+                'discount_amount' => $itemDiscountsTotal + $orderDiscountAmount,
+                'tax_amount' => $totalTaxAmount,
+                'discount_type' => $orderDiscountType,
+                'discount_value' => $orderDiscountValue,
+                'status' => ($validated['is_future_order'] ?? false) ? 'scheduled' : 'pending',
+                'placed_at' => now(),
+                'scheduled_at' => $validated['scheduled_at'] ?? null,
+                'is_future_order' => $validated['is_future_order'] ?? false,
+                'billing_address_id' => $validated['billing_address_id'],
+                'shipping_address_id' => $validated['shipping_address_id'] ?? $validated['billing_address_id'],
+                'payment_method' => $validated['payment_method'] ?? 'cash',
+                'shipping_method' => $validated['shipping_method'] ?? 'standard',
+                'grand_total' => $grandTotal,
+                'created_by' => auth()->id(),
+            ]);
+
+            foreach ($preparedItems as $item) {
+                $product = $products[$item['product_id']];
+                $order->items()->create([
+                    'product_id' => $item['product_id'],
+                    'product_name' => $product->name,
+                    'sku' => $product->sku ?? 'N/A',
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['price'],
+                    'cost_price' => $product->cost_price ?? 0,
+                    'discount_type' => $item['discount_type'] ?? 'fixed',
+                    'discount_value' => $item['discount_value'] ?? 0,
+                    'discount_amount' => $item['discount_amount'],
+                    'total_price' => $item['quantity'] * $item['price'],
+                    'tax_percent' => $item['tax_percent'] ?? 0,
+                ]);
+            }
+
+            return $order;
+        });
+
+        if ($request->wantsJson()) {
             auth()->user()->notify(new OrderNotification($order, 'created'));
-            return redirect()
-                ->route('central.orders.create')
-                ->with('success', 'Order created successfully.');
 
-        } catch (Exception $e) {
-
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                ], 422);
-            }
-
-            return back()
-                ->withInput()
-                ->with('error', 'Failed to create order: ' . $e->getMessage());
+            session()->flash('success', 'Order created successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Order created successfully.',
+                'redirect_url' => route('central.orders.create'),
+            ]);
         }
+
+        auth()->user()->notify(new OrderNotification($order, 'created'));
+
+        return redirect()
+            ->route('central.orders.create')
+            ->with('success', 'Order created successfully.');
+
+    } catch (Exception $e) {
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+
+        return back()
+            ->withInput()
+            ->with('error', 'Failed to create order: ' . $e->getMessage());
     }
+}
 
     /**
      * Display the specified order.

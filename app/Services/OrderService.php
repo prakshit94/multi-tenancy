@@ -18,60 +18,68 @@ class OrderService
      * pending | draft | scheduled → confirmed
      */
     public function confirmOrder(Order $order): Order
-    {
-        if (!in_array($order->status, ['pending', 'draft', 'scheduled'], true)) {
-            throw new Exception("Order cannot be confirmed from status: {$order->status}");
-        }
-
-        return DB::transaction(function () use ($order) {
-
-            foreach ($order->items as $item) {
-
-                $stock = InventoryStock::lockForUpdate()->firstOrCreate(
-                    [
-                        'product_id' => $item->product_id,
-                        'warehouse_id' => $order->warehouse_id,
-                    ],
-                    [
-                        'quantity' => 0,
-                        'reserve_quantity' => 0,
-                    ]
-                );
-
-                $available = $stock->quantity - $stock->reserve_quantity;
-
-                if ($available < $item->quantity && !$item->product->manage_stock) {
-                    if (!$item->product->allow_oversell) {
-                        throw new Exception(
-                            "Insufficient stock for Product ID {$item->product_id}. 
-                            Required: {$item->quantity}, Available: {$available}"
-                        );
-                    }
-                    
-                    $oversold_amount = abs($available - $item->quantity);
-                    if ($item->product->oversell_limit !== null && $oversold_amount > $item->product->oversell_limit) {
-                        throw new Exception(
-                            "Oversell limit exceeded for Product ID {$item->product_id}. 
-                            Allowed oversell: {$item->product->oversell_limit}, Requested oversell: {$oversold_amount}"
-                        );
-                    }
-                }
-
-                $stock->increment('reserve_quantity', $item->quantity);
-
-                $item->product->refreshStockOnHand();
-            }
-
-            $order->update([
-                'status' => 'confirmed',
-                'payment_status' => 'unpaid',
-                'updated_by' => Auth::id(),
-            ]);
-
-            return $order->fresh();
-        });
+{
+    if (!in_array($order->status, ['pending', 'draft', 'scheduled'], true)) {
+        throw new Exception("Order cannot be confirmed from status: {$order->status}");
     }
 
+    return DB::transaction(function () use ($order) {
+
+        foreach ($order->items as $item) {
+
+            // ✅ FIXED: Proper locking instead of firstOrCreate()
+            $stock = InventoryStock::where('product_id', $item->product_id)
+                ->where('warehouse_id', $order->warehouse_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$stock) {
+                $stock = InventoryStock::create([
+                    'product_id' => $item->product_id,
+                    'warehouse_id' => $order->warehouse_id,
+                    'quantity' => 0,
+                    'reserve_quantity' => 0,
+                ]);
+
+                // 🔒 lock again after create
+                $stock = InventoryStock::where('id', $stock->id)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            $available = $stock->quantity - $stock->reserve_quantity;
+
+            if ($available < $item->quantity && !$item->product->manage_stock) {
+                if (!$item->product->allow_oversell) {
+                    throw new Exception(
+                        "Insufficient stock for Product ID {$item->product_id}. 
+                        Required: {$item->quantity}, Available: {$available}"
+                    );
+                }
+
+                $oversold_amount = abs($available - $item->quantity);
+                if ($item->product->oversell_limit !== null && $oversold_amount > $item->product->oversell_limit) {
+                    throw new Exception(
+                        "Oversell limit exceeded for Product ID {$item->product_id}. 
+                        Allowed oversell: {$item->product->oversell_limit}, Requested oversell: {$oversold_amount}"
+                    );
+                }
+            }
+
+            $stock->increment('reserve_quantity', $item->quantity);
+
+            $item->product->refreshStockOnHand();
+        }
+
+        $order->update([
+            'status' => 'confirmed',
+            'payment_status' => 'unpaid',
+            'updated_by' => Auth::id(),
+        ]);
+
+        return $order->fresh();
+    });
+}
     /**
      * Ship order and deduct physical stock.
      * processing | ready_to_ship → shipped
@@ -248,44 +256,53 @@ class OrderService
      * Apply reserved stock without changing status.
      */
     public function applyReserves(Order $order): void
-    {
-        foreach ($order->items as $item) {
+{
+    foreach ($order->items as $item) {
 
-            $stock = InventoryStock::lockForUpdate()->firstOrCreate(
-                [
-                    'product_id' => $item->product_id,
-                    'warehouse_id' => $order->warehouse_id,
-                ],
-                [
-                    'quantity' => 0,
-                    'reserve_quantity' => 0,
-                ]
-            );
+        // ✅ FIXED: proper locking instead of firstOrCreate()
+        $stock = InventoryStock::where('product_id', $item->product_id)
+            ->where('warehouse_id', $order->warehouse_id)
+            ->lockForUpdate()
+            ->first();
 
-            $available = $stock->quantity - $stock->reserve_quantity;
+        if (!$stock) {
+            $stock = InventoryStock::create([
+                'product_id' => $item->product_id,
+                'warehouse_id' => $order->warehouse_id,
+                'quantity' => 0,
+                'reserve_quantity' => 0,
+            ]);
 
-            if ($available < $item->quantity && !$item->product->manage_stock) {
-                 if (!$item->product->allow_oversell) {
-                    throw new Exception(
-                        "Insufficient stock for Product ID {$item->product_id}. 
-                        Required: {$item->quantity}, Available: {$available}"
-                    );
-                }
-                
-                $oversold_amount = abs($available - $item->quantity);
-                if ($item->product->oversell_limit !== null && $oversold_amount > $item->product->oversell_limit) {
-                    throw new Exception(
-                        "Oversell limit exceeded for Product ID {$item->product_id}. 
-                        Allowed oversell: {$item->product->oversell_limit}, Requested oversell: {$oversold_amount}"
-                    );
-                }
+            // 🔒 lock again after create
+            $stock = InventoryStock::where('id', $stock->id)
+                ->lockForUpdate()
+                ->first();
+        }
+
+        $available = $stock->quantity - $stock->reserve_quantity;
+
+        if ($available < $item->quantity && !$item->product->manage_stock) {
+            if (!$item->product->allow_oversell) {
+                throw new Exception(
+                    "Insufficient stock for Product ID {$item->product_id}. 
+                    Required: {$item->quantity}, Available: {$available}"
+                );
             }
 
-            $stock->increment('reserve_quantity', $item->quantity);
-
-            $item->product->refreshStockOnHand();
+            $oversold_amount = abs($available - $item->quantity);
+            if ($item->product->oversell_limit !== null && $oversold_amount > $item->product->oversell_limit) {
+                throw new Exception(
+                    "Oversell limit exceeded for Product ID {$item->product_id}. 
+                    Allowed oversell: {$item->product->oversell_limit}, Requested oversell: {$oversold_amount}"
+                );
+            }
         }
+
+        $stock->increment('reserve_quantity', $item->quantity);
+
+        $item->product->refreshStockOnHand();
     }
+}
 
     /**
      * Mark order as returned.
