@@ -145,11 +145,12 @@ class OrderVerificationController extends Controller
         */
 
         $districtCounts = (clone $query)
-            ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
-            ->selectRaw('customer_addresses.district, COUNT(orders.id) as total')
-            ->groupBy('customer_addresses.district')
-            ->orderByDesc('total')
-            ->get();
+    ->reorder() // 🔥 THIS LINE FIXES YOUR ERROR
+    ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
+    ->selectRaw('customer_addresses.district, COUNT(orders.id) as total')
+    ->groupBy('customer_addresses.district')
+    ->orderByDesc('total')
+    ->get();
 
         /*
         |--------------------------------------------------------------------------
