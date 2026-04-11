@@ -9,15 +9,19 @@ use App\Http\Controllers\Chat\ChatController;
 |--------------------------------------------------------------------------
 */
 
+// ✅ UPDATED: Root now redirects properly
 Route::get('/', function () {
+    return auth()->check()
+        ? redirect('/dashboard')   // if logged in
+        : redirect('/login');      // if not logged in
+});
+
+// Optional: keep workspace route accessible manually if needed
+Route::get('/find-workspace', function () {
     return view('central.find-workspace');
 });
 
-// Avoid 405 error if user visits /find-workspace via GET
-Route::get('/find-workspace', function () {
-    return redirect('/');
-});
-
+// Workspace POST (unchanged)
 Route::post('/find-workspace', function (Illuminate\Http\Request $request) {
     $request->validate([
         'workspace' => 'required|alpha_dash|max:64',

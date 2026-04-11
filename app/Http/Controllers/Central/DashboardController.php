@@ -15,94 +15,96 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         $isSuperAdmin = $user->hasRole('Super Admin');
-        $orderQuery = Order::query(); // Restore base to include all statuses
-        $customerQuery = Customer::query();
-        $tenantQuery = Tenant::query();
-        $period = $request->input('period', 'today'); // Default shift to 'today'
 
-        // 1. Role-based isolation
+        $orderQuery = Order::query();
+        $customerQuery = Customer::query();
+        $period = $request->input('period', 'today');
+
+        // Role-based filtering
         if (!$isSuperAdmin) {
             $orderQuery->where('created_by', $user->id);
             $customerQuery->where('created_by', $user->id);
         }
 
-        // 2. Time-based filtering
+        // Date handling
         $startDate = null;
         $endDate = null;
-        $compareStartDate = null;
-        $compareEndDate = null;
 
         switch ($period) {
             case 'today':
                 $startDate = now()->startOfDay();
-                $compareStartDate = now()->subDay()->startOfDay();
-                $compareEndDate = now()->subDay()->endOfDay();
                 break;
             case 'yesterday':
                 $startDate = now()->subDay()->startOfDay();
                 $endDate = now()->subDay()->endOfDay();
-                $compareStartDate = now()->subDays(2)->startOfDay();
-                $compareEndDate = now()->subDays(2)->endOfDay();
                 break;
             case 'week':
                 $startDate = now()->startOfWeek();
-                $compareStartDate = now()->subWeek()->startOfWeek();
-                $compareEndDate = now()->subWeek()->endOfWeek();
                 break;
             case 'month':
                 $startDate = now()->startOfMonth();
-                $compareStartDate = now()->subMonth()->startOfMonth();
-                $compareEndDate = now()->subMonth()->endOfMonth();
                 break;
             case 'year':
                 $startDate = now()->startOfYear();
-                $compareStartDate = now()->subYear()->startOfYear();
-                $compareEndDate = now()->subYear()->endOfYear();
                 break;
             default:
                 $startDate = now()->startOfDay();
-                $compareStartDate = now()->subDay()->startOfDay();
-                $compareEndDate = now()->subDay()->endOfDay();
                 $period = 'today';
-                break;
         }
 
-        $filteredOrderQuery = (clone $orderQuery);
-        $filteredCustomerQuery = (clone $customerQuery);
+        $filteredOrders = clone $orderQuery;
+        $filteredCustomers = clone $customerQuery;
 
+        // Apply date filter
         if (in_array($period, ['today', 'yesterday'])) {
             $targetDate = $period === 'today' ? now() : now()->subDay();
-            $filteredOrderQuery->whereDate('created_at', $targetDate);
-            $filteredCustomerQuery->whereDate('created_at', $targetDate);
+            $filteredOrders->whereDate('created_at', $targetDate);
+            $filteredCustomers->whereDate('created_at', $targetDate);
         } else {
-            if ($startDate) {
-                $filteredOrderQuery->where('created_at', '>=', $startDate);
-                $filteredCustomerQuery->where('created_at', '>=', $startDate);
-            }
+            $filteredOrders->where('created_at', '>=', $startDate);
+            $filteredCustomers->where('created_at', '>=', $startDate);
+
             if ($endDate) {
-                $filteredOrderQuery->where('created_at', '<=', $endDate);
-                $filteredCustomerQuery->where('created_at', '<=', $endDate);
+                $filteredOrders->where('created_at', '<=', $endDate);
+                $filteredCustomers->where('created_at', '<=', $endDate);
             }
         }
 
-        $totalSales = (float) (clone $filteredOrderQuery)->whereNotIn('status', ['cancelled', 'scheduled'])->sum('grand_total');
-        $ordersCount = $filteredOrderQuery->count();
-        $customersCount = $filteredCustomerQuery->count();
-        $cancelledCount = (clone $filteredOrderQuery)->where('status', 'cancelled')->count();
+        // 🔥 Optimized single aggregation query
+        $statsData = (clone $filteredOrders)
+            ->selectRaw("
+                COUNT(*) as total_orders,
+                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_orders,
+                SUM(CASE WHEN status NOT IN ('cancelled','scheduled') THEN grand_total ELSE 0 END) as total_sales
+            ")
+            ->first();
 
-        // Calculate comparison for change percentage (Dynamic based on period)
+        $ordersCount = (int) $statsData->total_orders;
+        $cancelledCount = (int) $statsData->cancelled_orders;
+        $totalSales = (float) $statsData->total_sales;
+
+        $customersCount = (clone $filteredCustomers)->count();
+
+        // Previous period comparison
         $duration = $startDate->diffInDays($endDate ?? now()) + 1;
-        $compareStartDate = (clone $startDate)->subDays($duration);
-        $compareEndDate = $endDate ? (clone $endDate)->subDays($duration) : (clone $startDate)->subSecond();
+
+        $compareStart = (clone $startDate)->subDays($duration);
+        $compareEnd = $endDate
+            ? (clone $endDate)->subDays($duration)
+            : (clone $startDate)->subSecond();
+
+        $prevQuery = clone $orderQuery;
 
         if (in_array($period, ['today', 'yesterday'])) {
-            $compareTargetDate = $period === 'today' ? now()->subDay() : now()->subDays(2);
-            $prevOrderQuery = (clone $orderQuery)->whereDate('created_at', $compareTargetDate);
+            $compareDate = $period === 'today' ? now()->subDay() : now()->subDays(2);
+            $prevQuery->whereDate('created_at', $compareDate);
         } else {
-            $prevOrderQuery = (clone $orderQuery)->whereBetween('created_at', [$compareStartDate, $compareEndDate]);
+            $prevQuery->whereBetween('created_at', [$compareStart, $compareEnd]);
         }
 
-        $prevSales = (float) (clone $prevOrderQuery)->whereNotIn('status', ['cancelled', 'scheduled'])->sum('grand_total');
+        $prevSales = (float) $prevQuery
+            ->whereNotIn('status', ['cancelled', 'scheduled'])
+            ->sum('grand_total');
 
         $salesChange = $prevSales > 0
             ? (($totalSales - $prevSales) / $prevSales) * 100
@@ -152,122 +154,65 @@ class DashboardController extends Controller
             ],
         ];
 
-        $recentOrders = (clone $filteredOrderQuery)->with(['customer', 'creator'])->latest()->take(5)->get();
-
-        // Prepare chart data (based on duration)
-        $chartDataDuration = $startDate->diffInDays($endDate ?? now()) + 1;
-        if (in_array($period, ['today', 'yesterday'])) {
-            $chartTargetDate = $period === 'today' ? now() : now()->subDay();
-            $chartQuery = (clone $orderQuery)->whereDate('created_at', $chartTargetDate);
-        } else {
-            $chartQuery = (clone $orderQuery)->whereBetween('created_at', [$startDate, $endDate ?? now()]);
-        }
-
-        $chartDataRaw = $chartQuery
-            ->whereNotIn('status', ['cancelled', 'scheduled'])
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(grand_total) as total'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->pluck('total', 'date')
-            ->toArray();
-
-        $chartData = [];
-        for ($i = $chartDataDuration - 1; $i >= 0; $i--) {
-            $date = ($endDate ?? now())->subDays($i)->format('Y-m-d');
-            $chartData[] = (float) ($chartDataRaw[$date] ?? 0);
-        }
-
-        $orderHistory = (clone $filteredOrderQuery)->with(['customer', 'creator', 'items.product'])->latest()->take(20)->get();
-
-        // Admin/User Activity Tracking
-        $onlineUsersQuery = \App\Models\User::query()
-            ->withCount([
-                'orders' => function ($query) {
-                    $query->whereDate('created_at', now()->toDateString());
-                },
-                'customers'
-            ])
-            ->withSum([
-                'orders as total_revenue' => function ($query) {
-                    $query->whereDate('created_at', now()->toDateString())
-                        ->whereNotIn('status', ['scheduled', 'cancelled']);
-                }
-            ], 'grand_total');
-
-        // RESTRICTION: Non-Super Admins can ONLY see themselves in "Team Activity"
-        // Update: We now want them to see the Top 5 revenue generators, so we do not restrict the base query.
-        // if (!$isSuperAdmin) {
-        //    $onlineUsersQuery->where('id', $user->id);
-        // }
-
-        $onlineUsers = $onlineUsersQuery
-            ->where('last_seen_at', '>', now()->subMinutes(5))
-            ->orderBy('last_seen_at', 'desc')
+        // ✅ SAFE eager loading (NO column errors)
+        $recentOrders = (clone $filteredOrders)
+            ->with(['customer', 'creator'])
+            ->latest()
+            ->limit(5)
             ->get();
 
-        return view('dashboard', compact('stats', 'recentOrders', 'chartData', 'orderHistory', 'period', 'onlineUsers'));
-    }
+        // Chart data optimized
+        $chartQuery = clone $orderQuery;
 
-    public function exportTeamActivity()
-    {
-        $user = auth()->user();
-        $isSuperAdmin = $user->hasRole('Super Admin');
+        if (in_array($period, ['today', 'yesterday'])) {
+            $chartDate = $period === 'today' ? now() : now()->subDay();
+            $chartQuery->whereDate('created_at', $chartDate);
+        } else {
+            $chartQuery->whereBetween('created_at', [$startDate, $endDate ?? now()]);
+        }
 
-        $query = \App\Models\User::query()
+        $chartRaw = $chartQuery
+            ->whereNotIn('status', ['cancelled', 'scheduled'])
+            ->selectRaw("DATE(created_at) as date, SUM(grand_total) as total")
+            ->groupBy('date')
+            ->pluck('total', 'date');
+
+        $chartData = [];
+        $days = $startDate->diffInDays($endDate ?? now());
+
+        for ($i = $days; $i >= 0; $i--) {
+            $date = ($endDate ?? now())->copy()->subDays($i)->format('Y-m-d');
+            $chartData[] = (float) ($chartRaw[$date] ?? 0);
+        }
+
+        $orderHistory = (clone $filteredOrders)
+            ->with(['customer', 'creator', 'items.product'])
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        // Online users
+        $onlineUsers = \App\Models\User::query()
             ->withCount([
-                'orders' => function ($query) {
-                    $query->whereDate('created_at', now()->toDateString());
-                },
+                'orders' => fn($q) => $q->whereDate('created_at', now()),
                 'customers'
             ])
             ->withSum([
-                'orders as total_revenue' => function ($query) {
-                    $query->whereDate('created_at', now()->toDateString())
-                        ->whereNotIn('status', ['scheduled', 'cancelled']);
-                }
-            ], 'grand_total');
+                'orders as total_revenue' => fn($q) =>
+                    $q->whereDate('created_at', now())
+                      ->whereNotIn('status', ['scheduled', 'cancelled'])
+            ], 'grand_total')
+            ->where('last_seen_at', '>', now()->subMinutes(5))
+            ->orderByDesc('last_seen_at')
+            ->get();
 
-        if (!$isSuperAdmin) {
-            $query->where('id', $user->id);
-        }
-
-        $users = $query->get();
-
-        $csvFileName = 'team_activity_' . date('Y-m-d_H-i') . '.csv';
-        $headers = [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$csvFileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
-
-        $callback = function () use ($users) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['User Name', 'Location', 'Status', 'Last Seen', 'Session Duration', 'Total Orders', 'Total Customers', 'Total Revenue']);
-
-            foreach ($users as $u) {
-                // Calculate approximate session duration
-                $duration = 'N/A';
-                if ($u->last_login_at && $u->last_seen_at) {
-                    $duration = $u->last_login_at->diff($u->last_seen_at)->format('%Hh %Im');
-                }
-
-                fputcsv($file, [
-                    $u->name,
-                    $u->location ?? 'Unknown',
-                    ($u->last_seen_at && $u->last_seen_at->gt(now()->subMinutes(5))) ? 'Online' : 'Offline',
-                    $u->last_seen_at ? $u->last_seen_at->format('Y-m-d H:i:s') : 'Never',
-                    $duration,
-                    $u->orders_count,
-                    $u->customers_count,
-                    number_format($u->total_revenue ?? 0, 2)
-                ]);
-            }
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return view('dashboard', compact(
+            'stats',
+            'recentOrders',
+            'chartData',
+            'orderHistory',
+            'period',
+            'onlineUsers'
+        ));
     }
 }

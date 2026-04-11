@@ -90,7 +90,7 @@ class OrderController extends Controller
 
     // (kept as-is, but no longer used in stock calculation)
     $pendingProductQuantities = \App\Models\OrderItem::whereHas('order', function ($q) {
-        $q->whereIn('status', ['pending', 'scheduled', 'draft']);
+        $q->whereIn('status', ['pending','draft']);
     })->selectRaw('product_id, SUM(quantity) as total_pending')
         ->groupBy('product_id')
         ->pluck('total_pending', 'product_id');

@@ -25,14 +25,21 @@
                 </svg>
             </div>
             <div class="flex flex-col overflow-hidden transition-all duration-500 ease-out"
-                :class="sidebarCollapsed ? 'w-0 opacity-0 absolute translate-x-10' : 'w-auto opacity-100 translate-x-0'">
-                <span
-                    class="font-heading font-bold text-lg tracking-tight leading-none text-foreground group-hover/logo:text-primary transition-colors duration-300 whitespace-nowrap">
-                    {{ tenant('id') ? ucfirst(tenant('id')) : 'Central Admin' }}
-                </span>
-                <span
-                    class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.25em] mt-1 pl-0.5 whitespace-nowrap">Workspace</span>
-            </div>
+    :class="sidebarCollapsed ? 'w-0 opacity-0 absolute translate-x-10' : 'w-auto opacity-100 translate-x-0'">
+
+    <!-- User Name -->
+    <span
+        class="font-heading font-bold text-lg tracking-tight leading-none text-foreground group-hover/logo:text-primary transition-colors duration-300 whitespace-nowrap">
+        {{ auth()->user()->name ?? (tenant('id') ? ucfirst(tenant('id')) : 'Central Admin') }}
+    </span>
+
+    <!-- Welcome Text -->
+    <span
+        class="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.25em] mt-1 pl-0.5 whitespace-nowrap">
+        Welcome, {{ auth()->user()->name ?? 'User' }}
+    </span>
+
+</div>
         </a>
     </div>
 
