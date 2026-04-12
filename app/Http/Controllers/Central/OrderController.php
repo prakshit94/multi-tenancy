@@ -37,43 +37,60 @@ class OrderController extends Controller
      * Display a listing of central orders.
      */
     public function index(Request $request): View
-    {
-        $this->authorize('orders view');
-        $query = Order::with(['customer', 'warehouse', 'creator', 'shipments', 'items'])
-            ->withSum('invoices', 'paid_amount');
+{
+    $this->authorize('orders view');
 
-        if (!auth()->user()->hasRole('Super Admin')) {
-            $query->where('created_by', auth()->id());
-        }
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where('order_number', 'like', "%{$search}%")->orWhereHas('customer', function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")->orWhere('last_name', 'like', "%{$search}%");
-            });
-        }
-        if ($request->filled('status')) {
-            $query->where('status', (string) $request->input('status'));
-        }
+    $query = Order::with(['customer', 'warehouse', 'creator', 'shipments', 'items'])
+        ->withSum('invoices', 'paid_amount');
 
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->input('start_date'));
-        }
-
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->input('end_date'));
-        }
-
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', (string) $request->input('payment_status'));
-        }
-
-        if ($request->filled('shipping_status')) {
-            $query->where('shipping_status', (string) $request->input('shipping_status'));
-        }
-        $perPage = (int) $request->input('per_page', 10);
-        $orders = $query->latest()->paginate($perPage)->withQueryString();
-        return view('central.orders.index', compact('orders'));
+    // ✅ Restrict non-admin users
+    if (!auth()->user()->hasRole('Super Admin')) {
+        $query->where('created_by', auth()->id());
     }
+
+    // ✅ FIXED: Search with proper grouping
+    if ($request->filled('search')) {
+        $search = $request->input('search');
+
+        $query->where(function ($q) use ($search) {
+            $q->where('order_number', 'like', "%{$search}%")
+              ->orWhereHas('customer', function ($q2) use ($search) {
+                  $q2->where('first_name', 'like', "%{$search}%")
+                     ->orWhere('last_name', 'like', "%{$search}%");
+              });
+        });
+    }
+
+    // ✅ Filters
+    if ($request->filled('status')) {
+        $query->where('status', (string) $request->input('status'));
+    }
+
+    if ($request->filled('start_date')) {
+        $query->whereDate('created_at', '>=', $request->input('start_date'));
+    }
+
+    if ($request->filled('end_date')) {
+        $query->whereDate('created_at', '<=', $request->input('end_date'));
+    }
+
+    if ($request->filled('payment_status')) {
+        $query->where('payment_status', (string) $request->input('payment_status'));
+    }
+
+    if ($request->filled('shipping_status')) {
+        $query->where('shipping_status', (string) $request->input('shipping_status'));
+    }
+
+    // ✅ Pagination
+    $perPage = (int) $request->input('per_page', 10);
+
+    $orders = $query->latest()
+        ->paginate($perPage)
+        ->withQueryString();
+
+    return view('central.orders.index', compact('orders'));
+}
     /**
      * Show the form for creating a new order.
      */
