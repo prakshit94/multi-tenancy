@@ -271,97 +271,162 @@ td {
             </tr>
          </table>
          <br>
-         <!-- ================= ITEMS ================= -->
-         <table class="items">
-            <thead>
-               <tr>
-                  <th width="4%">Sl</th>
-                  <th width="26%">Description</th>
-                  <th width="8%">HSN</th>
-                  <th width="6%">Qty</th>
-                  <th width="10%">Rate</th>
-                  <th width="8%">Disc.</th>
-                  <th width="12%">Taxable</th>
-                  <th width="10%">CGST</th>
-                  <th width="10%">SGST</th>
-                  <th width="10%">Total</th>
-               </tr>
-            </thead>
-            <tbody>
-               @php
-               $totalTaxable = 0;
-               $totalCGST = 0;
-               $totalSGST = 0;
-               @endphp
-               @foreach($invoice->order->items as $i => $item)
-               @php
-               $baseTotal = $item->unit_price * $item->quantity;
-               $discount = $item->discount_amount ?? 0;
-               $taxAmount = ($baseTotal * ($item->tax_percent ?? 0)) / 100;
-               $taxableValue = $baseTotal - $discount; // For display purpose
-               $cgstRate = ($item->tax_percent ?? 0) / 2;
-               $sgstRate = ($item->tax_percent ?? 0) / 2;
-               $cgstAmount = $taxAmount / 2;
-               $sgstAmount = $taxAmount / 2;
-               $lineTotal = $baseTotal + $taxAmount - $discount;
-               $totalTaxable += $taxableValue;
-               $totalCGST += $cgstAmount;
-               $totalSGST += $sgstAmount;
-               @endphp
-               <tr>
-                  <td class="text-center">{{ $i + 1 }}</td>
-                  <td>
-                     {{ $item->product_name }}<br>
-                     <small class="muted">{{ $item->sku }}</small>
-                  </td>
-                  <td class="text-center">
-                     {{ $item->product->hsn_code ?? '-' }}
-                  </td>
-                  <td class="text-center">{{ $item->quantity }}</td>
-                  <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
-                  <td class="text-right">{{ number_format($discount, 2) }}</td>
-                  <td class="text-right">{{ number_format($taxableValue, 2) }}</td>
-                  <td class="text-right">
-                     @if($cgstRate > 0)
-                     <span style="font-size:9px;">{{ $cgstRate }}%</span><br>
-                     {{ number_format($cgstAmount, 2) }}
-                     @else
-                     -
-                     @endif
-                  </td>
-                  <td class="text-right">
-                     @if($sgstRate > 0)
-                     <span style="font-size:9px;">{{ $sgstRate }}%</span><br>
-                     {{ number_format($sgstAmount, 2) }}
-                     @else
-                     -
-                     @endif
-                  </td>
-                  <td class="text-right">{{ number_format($lineTotal, 2) }}</td>
-               </tr>
-               @endforeach
-            </tbody>
-         </table>
-         <br>
-         <!-- ================= TOTALS ================= -->
-         <table class="totals">
-            <tr>
-               <td colspan="8" class="text-right bold">Total Taxable Value</td>
-               <td class="text-right">{{ number_format($totalTaxable, 2) }}</td>
-            </tr>
-            <tr>
-               <td colspan="8" class="text-right bold">Total CGST</td>
-               <td class="text-right">{{ number_format($totalCGST, 2) }}</td>
-            </tr>
-            <tr>
-               <td colspan="8" class="text-right bold">Total SGST</td>
-               <td class="text-right">{{ number_format($totalSGST, 2) }}</td>
-            </tr>
-            <tr class="grand-total">
-               <td colspan="8" class="text-right">Grand Total</td>
-               <td class="text-right">{{ number_format($invoice->total_amount, 2) }}</td>
-            </tr>
-         </table>
+       <!-- ================= ITEMS ================= -->
+@php
+$shippingState = strtolower($invoice->order->shippingAddress->state ?? '');
+$isInterState = $shippingState !== 'gujarat';
+
+$totalTaxable = 0;
+$totalCGST = 0;
+$totalSGST = 0;
+$totalIGST = 0;
+@endphp
+
+<table class="items">
+    <thead>
+        <tr>
+            <th width="4%">Sl</th>
+            <th width="26%">Description</th>
+            <th width="8%">HSN</th>
+            <th width="6%">Qty</th>
+            <th width="10%">Rate</th>
+            <th width="8%">Disc.</th>
+            <th width="12%">Taxable</th>
+
+            @if($isInterState)
+                <th width="10%">IGST</th>
+            @else
+                <th width="10%">CGST</th>
+                <th width="10%">SGST</th>
+            @endif
+
+            <th width="10%">Total</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach($invoice->order->items as $i => $item)
+        @php
+        $baseTotal = $item->unit_price * $item->quantity;
+        $discount = $item->discount_amount ?? 0;
+        $taxPercent = $item->tax_percent ?? 0;
+
+        $taxAmount = ($baseTotal * $taxPercent) / 100;
+        $taxableValue = $baseTotal - $discount;
+
+        if ($isInterState) {
+            $igstRate = $taxPercent;
+            $igstAmount = $taxAmount;
+
+            $cgstRate = 0;
+            $sgstRate = 0;
+            $cgstAmount = 0;
+            $sgstAmount = 0;
+
+            $totalIGST += $igstAmount;
+        } else {
+            $cgstRate = $taxPercent / 2;
+            $sgstRate = $taxPercent / 2;
+
+            $cgstAmount = $taxAmount / 2;
+            $sgstAmount = $taxAmount / 2;
+
+            $igstRate = 0;
+            $igstAmount = 0;
+
+            $totalCGST += $cgstAmount;
+            $totalSGST += $sgstAmount;
+        }
+
+        $lineTotal = $baseTotal + $taxAmount - $discount;
+        $totalTaxable += $taxableValue;
+        @endphp
+
+        <tr>
+            <td class="text-center">{{ $i + 1 }}</td>
+
+            <td>
+                {{ $item->product_name }}<br>
+                <small class="muted">{{ $item->sku }}</small>
+            </td>
+
+            <td class="text-center">
+                {{ $item->product->hsn_code ?? '-' }}
+            </td>
+
+            <td class="text-center">{{ $item->quantity }}</td>
+
+            <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
+
+            <td class="text-right">{{ number_format($discount, 2) }}</td>
+
+            <td class="text-right">{{ number_format($taxableValue, 2) }}</td>
+
+            @if($isInterState)
+                <td class="text-right">
+                    @if($igstRate > 0)
+                        <span style="font-size:9px;">{{ $igstRate }}%</span><br>
+                        {{ number_format($igstAmount, 2) }}
+                    @else
+                        -
+                    @endif
+                </td>
+            @else
+                <td class="text-right">
+                    @if($cgstRate > 0)
+                        <span style="font-size:9px;">{{ $cgstRate }}%</span><br>
+                        {{ number_format($cgstAmount, 2) }}
+                    @else
+                        -
+                    @endif
+                </td>
+
+                <td class="text-right">
+                    @if($sgstRate > 0)
+                        <span style="font-size:9px;">{{ $sgstRate }}%</span><br>
+                        {{ number_format($sgstAmount, 2) }}
+                    @else
+                        -
+                    @endif
+                </td>
+            @endif
+
+            <td class="text-right">{{ number_format($lineTotal, 2) }}</td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+
+<br>
+
+<!-- ================= TOTALS ================= -->
+<table class="totals">
+    <tr>
+        <td colspan="8" class="text-right bold">Total Taxable Value</td>
+        <td class="text-right">{{ number_format($totalTaxable, 2) }}</td>
+    </tr>
+
+    @if($isInterState)
+        <tr>
+            <td colspan="8" class="text-right bold">Total IGST</td>
+            <td class="text-right">{{ number_format($totalIGST, 2) }}</td>
+        </tr>
+    @else
+        <tr>
+            <td colspan="8" class="text-right bold">Total CGST</td>
+            <td class="text-right">{{ number_format($totalCGST, 2) }}</td>
+        </tr>
+        <tr>
+            <td colspan="8" class="text-right bold">Total SGST</td>
+            <td class="text-right">{{ number_format($totalSGST, 2) }}</td>
+        </tr>
+    @endif
+
+    <tr class="grand-total">
+        <td colspan="8" class="text-right">Grand Total</td>
+        <td class="text-right">{{ number_format($invoice->total_amount, 2) }}</td>
+    </tr>
+</table>
          <br>
          <!-- ================= TERMS ================= -->
          <table class="terms">
