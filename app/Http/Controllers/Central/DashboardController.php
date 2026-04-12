@@ -215,4 +215,47 @@ class DashboardController extends Controller
             'onlineUsers'
         ));
     }
+
+    public function exportTeamActivity()
+{
+    $users = \App\Models\User::withCount([
+        'orders',
+        'customers'
+    ])->withSum([
+        'orders as total_revenue' => function ($q) {
+            $q->whereNotIn('status', ['scheduled', 'cancelled']);
+        }
+    ], 'grand_total')
+    ->get();
+
+    // ✅ Add more columns here
+    $csvData = [];
+    $csvData[] = ['Name', 'Email', 'Location', 'Orders', 'Customers', 'Revenue'];
+
+    foreach ($users as $user) {
+        $csvData[] = [
+            $user->name,
+            $user->email ?? '',
+            $user->location ?? 'Unknown', // ✅ location added
+            $user->orders_count,
+            $user->customers_count,
+            $user->total_revenue ?? 0
+        ];
+    }
+
+    $filename = "team_activity.csv";
+
+    $handle = fopen('php://temp', 'r+');
+
+    foreach ($csvData as $row) {
+        fputcsv($handle, $row);
+    }
+
+    rewind($handle);
+
+    return response(stream_get_contents($handle), 200, [
+        'Content-Type' => 'text/csv',
+        'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+    ]);
+}
 }
