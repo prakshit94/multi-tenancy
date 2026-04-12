@@ -30,10 +30,8 @@ class ProductController extends Controller
 {
     $this->authorize('products view');
 
-    // ✅ Load stocks relation
     $query = Product::with(['category', 'brand', 'images', 'taxClass', 'stocks']);
 
-    // 🔍 Search
     if ($request->filled('search')) {
         $search = $request->input('search');
         $query->where(function ($q) use ($search) {
@@ -42,7 +40,6 @@ class ProductController extends Controller
         });
     }
 
-    // ✅ Status filter
     if ($request->input('status') === 'active') {
         $query->where('is_active', true);
     }
@@ -50,10 +47,8 @@ class ProductController extends Controller
     $perPage = (int) $request->input('per_page', 10);
     $products = $query->latest()->paginate($perPage)->withQueryString();
 
-    // ✅ Get product IDs
     $productIds = $products->pluck('id');
 
-    // ✅ Get placed order qty (single optimized query)
     $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
         ->whereHas('order', function ($q) {
             $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship']);
@@ -62,19 +57,14 @@ class ProductController extends Controller
         ->groupBy('product_id')
         ->pluck('total_pending', 'product_id');
 
-    // ✅ FINAL CALCULATION (WITH OVERSELL)
     foreach ($products as $product) {
 
-        // 👉 total stock
         $totalPhysicalQty = $product->stocks->sum('quantity');
 
-        // 👉 placed order qty
         $pendingQty = (float) ($pendingQuantities[$product->id] ?? 0);
 
-        // 👉 base stock
         $stockOnHand = max(0, $totalPhysicalQty - $pendingQty);
 
-        // 👉 oversell calculation
         $oversellLimit = $product->oversell_limit !== null
             ? (int) $product->oversell_limit
             : null;
@@ -85,21 +75,19 @@ class ProductController extends Controller
             ? max(0, $oversellLimit - $currentOversold)
             : null;
 
-        // 👉 FINAL sellable qty
+        // ✅ FIXED LOGIC HERE
         if ($product->allow_oversell) {
 
             if ($remainingOversell === null) {
-                // unlimited oversell
-                $sellableQty = null; // represents ∞
+                $sellableQty = null; // ∞
             } else {
-                $sellableQty = $stockOnHand + $remainingOversell;
+                $sellableQty = $stockOnHand - $remainingOversell; // 👈 FIX
             }
 
         } else {
             $sellableQty = $stockOnHand;
         }
 
-        // ✅ assign values
         $product->pending_order_qty = $pendingQty;
         $product->stock_on_hand = $stockOnHand;
         $product->sellable_qty = $sellableQty;
