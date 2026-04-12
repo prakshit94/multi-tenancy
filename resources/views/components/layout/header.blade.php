@@ -303,487 +303,160 @@
                     </template>
 
                     <!-- Premeum Registration Modal (Teleported to Body to avoid Header Clipping) -->
-                    <!-- Premium Fast Enrollment Modal -->
-                    <template x-teleport="body">
-                        <div x-show="showModal" x-transition:enter="transition ease-out duration-500"
-                            x-transition:enter-start="opacity-0 backdrop-blur-none"
-                            x-transition:enter-end="opacity-100 backdrop-blur-xl"
-                            x-transition:leave="transition ease-in duration-300"
-                            x-transition:leave-start="opacity-100 backdrop-blur-xl"
-                            x-transition:leave-end="opacity-0 backdrop-blur-none"
-                            class="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-950/60 backdrop-blur-xl p-4 sm:p-6"
-                            style="display: none;">
+                    <!-- FINAL ENHANCED UI (TAILWIND ONLY, LOGIC SAME) -->
+<template x-teleport="body">
+    <div x-show="showModal"
+        x-transition.opacity
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        style="display: none;">
 
-                            <div class="relative w-full max-w-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-3xl rounded-[40px] shadow-[0_32px_128px_rgba(0,0,0,0.4)] border border-white/20 dark:border-white/5 overflow-hidden flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-500 ease-out"
-                                @click.away="showModal = false">
+        <div class="w-full max-w-2xl">
 
-                                <!-- Floating Abstract Background Elements (System Level) -->
-                                <div
-                                    class="absolute -top-40 -right-40 size-96 bg-gradient-to-br from-primary/30 to-purple-600/30 blur-[100px] rounded-full pointer-events-none animate-pulse">
-                                </div>
-                                <div
-                                    class="absolute top-1/2 -left-32 size-80 bg-teal-500/10 blur-[90px] rounded-full pointer-events-none">
-                                </div>
+            <!-- Card -->
+            <div class="rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl shadow-xl overflow-hidden"
+                @click.away="showModal = false">
 
-                                <!-- Floating Close Command -->
-                                <button @click="showModal = false"
-                                    class="absolute top-8 right-8 z-[100] size-12 flex items-center justify-center rounded-2xl bg-secondary/50 hover:bg-black/5 dark:hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all duration-300 group">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="size-5 text-muted-foreground group-hover:text-foreground transition-all group-hover:rotate-90">
-                                        <path d="M18 6 6 18" />
-                                        <path d="m6 6 12 12" />
-                                    </svg>
+                <!-- Top Accent -->
+                <div class="h-1 bg-gradient-to-r from-primary via-primary/50 to-transparent"></div>
+
+                <!-- Content -->
+                <div class="p-6 space-y-6 overflow-y-auto max-h-[90vh]">
+
+                    <!-- Title -->
+                    <div class="space-y-1">
+                        <h2 class="text-xl font-bold text-foreground">Add Customer</h2>
+                        <p class="text-sm text-muted-foreground">Create new customer</p>
+                    </div>
+
+                    <!-- Identity -->
+                    <div class="space-y-4 p-4 rounded-xl bg-muted/20 border border-border/30">
+                        <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            Identity
+                        </div>
+
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <input type="text" x-model="newCustomer.first_name"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="First Name">
+
+                            <input type="text" x-model="newCustomer.middle_name"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Middle Name">
+
+                            <input type="text" x-model="newCustomer.last_name"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Last Name">
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <input type="text" x-model="newCustomer.mobile" maxlength="10"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Mobile">
+
+                            <input type="email" x-model="newCustomer.email"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Email">
+                        </div>
+
+                        <!-- Type -->
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="type in ['farmer','buyer','dealer','vendor']">
+                                <button @click="newCustomer.type = type"
+                                    :class="newCustomer.type === type 
+                                        ? 'bg-primary text-primary-foreground shadow-sm' 
+                                        : 'bg-background border border-border text-muted-foreground hover:bg-muted'"
+                                    class="px-3 py-1.5 rounded-md text-xs font-medium uppercase transition">
+                                    <span x-text="type"></span>
                                 </button>
+                            </template>
+                        </div>
+                    </div>
 
-                                <!-- Integrated Scrollable Core -->
-                                <div class="flex-1 overflow-y-auto custom-scrollbar px-12 pt-16 pb-12 space-y-12 relative z-10">
+                    <!-- Address -->
+                    <div class="space-y-4 p-4 rounded-xl bg-muted/20 border border-border/30">
+                        <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            Address
+                        </div>
 
-                                    <!-- Integrated Intro Section -->
-                                    <div class="space-y-4 max-w-lg">
-                                        <div
-                                            class="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-2 border border-primary/10">
-                                            <span class="size-2 rounded-full bg-primary animate-pulse"></span>
-                                            Identity Protocol 2.0
-                                        </div>
-                                        <h2
-                                            class="text-6xl font-black tracking-[-0.06em] leading-[0.9] bg-gradient-to-br from-foreground via-foreground to-foreground/40 bg-clip-text text-transparent">
-                                            Fast<br />Enrollment
-                                        </h2>
-                                        <p class="text-sm font-medium text-muted-foreground/50 leading-relaxed">
-                                            Initializing secure record entry. Ensure all identity attributes are verified
-                                            against physical documentation for ledger integrity.
-                                        </p>
-                                    </div>
+                        <div class="grid md:grid-cols-2 gap-4">
 
-                                    <!-- Identity Section -->
-                                    <section class="space-y-8 relative">
-                                        <div class="flex items-center gap-4 group/sec">
-                                            <div
-                                                class="size-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]">
-                                            </div>
-                                            <h4 class="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/80">
-                                                01. Identity Blueprint
-                                            </h4>
-                                            <div class="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent"></div>
-                                        </div>
+                            <!-- Village -->
+                            <div class="relative">
+                                <input type="text" x-model="newCustomer.village"
+                                    @focus="activeLookupField = 'village'; lookupAddressOnFocus('village')"
+                                    @input.debounce.300ms="activeLookupField = 'village'; lookupAddress('village', $el.value)"
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                    placeholder="Village">
 
-                                        <div class="space-y-6">
-                                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">First
-                                                        Name</label>
-                                                    <input type="text" x-model="newCustomer.first_name"
-                                                        class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 shadow-sm"
-                                                        placeholder="Legal first name" />
-                                                </div>
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Middle
-                                                        Name</label>
-                                                    <input type="text" x-model="newCustomer.middle_name"
-                                                        class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 shadow-sm"
-                                                        placeholder="Father/Spouse" />
-                                                </div>
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Last
-                                                        Name</label>
-                                                    <input type="text" x-model="newCustomer.last_name"
-                                                        class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 shadow-sm"
-                                                        placeholder="Surname" />
-                                                </div>
-                                            </div>
-
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                <div class="space-y-2 group/field relative">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Contact
-                                                        Mobile</label>
-                                                    <div class="relative group/input">
-                                                        <div
-                                                            class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                                            <span
-                                                                class="text-primary font-black text-[10px] tracking-tighter bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20 invisible sm:visible">INTL</span>
-                                                        </div>
-                                                        <input type="text" x-model="newCustomer.mobile" maxlength="10"
-                                                            class="w-full h-14 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl sm:pl-20 pl-6 pr-5 text-2xl font-black tracking-[0.15em] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 font-mono shadow-inner"
-                                                            placeholder="0000000000" />
-                                                        <div
-                                                            class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
-                                                            <div :class="newCustomer.mobile.length === 10 ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)]' : 'bg-muted/20'"
-                                                                class="size-2.5 rounded-full transition-all duration-700">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Email
-                                                        Address</label>
-                                                    <input type="email" x-model="newCustomer.email"
-                                                        class="w-full h-14 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 shadow-sm"
-                                                        placeholder="example@identity.io" />
-                                                </div>
-                                            </div>
-
-                                            <div class="space-y-3 group/field">
-                                                <label
-                                                    class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Relationship
-                                                    Vector</label>
-                                                <div class="flex flex-wrap gap-2.5">
-                                                    <template x-for="type in ['farmer', 'buyer', 'dealer', 'vendor']">
-                                                        <button @click="newCustomer.type = type"
-                                                            :class="newCustomer.type === type ? 'bg-foreground text-background shadow-xl scale-[1.05] ring-4 ring-primary/10' : 'bg-secondary/40 dark:bg-white/5 text-muted-foreground hover:bg-secondary/60 dark:hover:bg-white/10'"
-                                                            class="px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500">
-                                                            <span x-text="type"></span>
-                                                        </button>
-                                                    </template>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </section>
-
-                                    <!-- Address Section -->
-                                    <section class="space-y-8 relative">
-                                        <div class="flex items-center gap-4 group/sec">
-                                            <div
-                                                class="size-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]">
-                                            </div>
-                                            <h4 class="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/80">
-                                                02. Geospatial Attributes
-                                            </h4>
-                                            <div class="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent"></div>
-                                        </div>
-
-                                        <div class="space-y-6">
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Village
-                                                        / Town</label>
-                                                    <div class="relative">
-                                                        <input type="text" x-model="newCustomer.village"
-                                                            @focus="activeLookupField = 'village'; lookupAddressOnFocus('village')"
-                                                            @input.debounce.300ms="activeLookupField = 'village'; lookupAddress('village', $el.value)"
-                                                            class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 placeholder:text-muted-foreground/20"
-                                                            placeholder="Search village..." />
-                                                        <!-- Suggestions Dropdown -->
-                                                        <div x-show="addressSuggestions.length > 0 && activeLookupField === 'village'"
-                                                            @click.away="addressSuggestions = []"
-                                                            x-transition:enter="transition ease-out duration-300"
-                                                            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-                                                            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                                                            class="absolute z-50 left-0 right-0 mt-3 max-h-60 overflow-y-auto bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-border/40 rounded-[24px] shadow-2xl ring-1 ring-black/5 custom-scrollbar overflow-hidden">
-                                                            <div
-                                                                class="sticky top-0 bg-secondary/80 backdrop-blur-md px-5 py-2.5 text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 border-b border-border/20">
-                                                                Matches Found</div>
-                                                            <template x-for="item in addressSuggestions" :key="item.label">
-                                                                <button @click="fillAddress(item.data)"
-                                                                    class="w-full text-left px-6 py-4 hover:bg-primary/5 dark:hover:bg-white/5 transition-all text-xs font-bold border-b border-border/10 last:border-0 flex items-center justify-between group/item">
-                                                                    <span x-text="item.label"></span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                                                        height="24" viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="3"
-                                                                        stroke-linecap="round" stroke-linejoin="round"
-                                                                        class="size-3 text-primary opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0">
-                                                                        <path d="m9 18 6-6-6-6" />
-                                                                    </svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Pincode</label>
-                                                    <div class="relative">
-                                                        <input type="text" x-model="newCustomer.pincode" maxlength="6"
-                                                            @focus="activeLookupField = 'pincode'; lookupAddressOnFocus('pincode')"
-                                                            @input.debounce.300ms="activeLookupField = 'pincode'; lookupAddress('pincode', $el.value)"
-                                                            class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 font-mono tracking-[0.3em]"
-                                                            placeholder="000000" />
-                                                        <!-- Suggestions Dropdown -->
-                                                        <div x-show="addressSuggestions.length > 0 && activeLookupField === 'pincode'"
-                                                            @click.away="addressSuggestions = []"
-                                                            x-transition:enter="transition ease-out duration-300"
-                                                            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-                                                            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                                                            class="absolute z-50 left-0 right-0 mt-3 max-h-60 overflow-y-auto bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-border/40 rounded-[24px] shadow-2xl ring-1 ring-black/5 custom-scrollbar overflow-hidden">
-                                                            <div
-                                                                class="sticky top-0 bg-secondary/80 backdrop-blur-md px-5 py-2.5 text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 border-b border-border/20">
-                                                                Matches Found</div>
-                                                            <template x-for="item in addressSuggestions" :key="item.label">
-                                                                <button @click="fillAddress(item.data)"
-                                                                    class="w-full text-left px-6 py-4 hover:bg-primary/5 dark:hover:bg-white/5 transition-all text-xs font-bold border-b border-border/10 last:border-0 flex items-center justify-between group/item">
-                                                                    <span x-text="item.label"></span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                                                        height="24" viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="3"
-                                                                        stroke-linecap="round" stroke-linejoin="round"
-                                                                        class="size-3 text-primary opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0">
-                                                                        <path d="m9 18 6-6-6-6" />
-                                                                    </svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Post
-                                                        Office</label>
-                                                    <div class="relative">
-                                                        <input type="text" x-model="newCustomer.post_office"
-                                                            @focus="activeLookupField = 'post_office'; lookupAddressOnFocus('post_office')"
-                                                            @input.debounce.300ms="activeLookupField = 'post_office'; lookupAddress('post_office', $el.value)"
-                                                            class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 placeholder:text-muted-foreground/20"
-                                                            placeholder="Search SO..." />
-                                                        <!-- Suggestions Dropdown -->
-                                                        <div x-show="addressSuggestions.length > 0 && activeLookupField === 'post_office'"
-                                                            @click.away="addressSuggestions = []"
-                                                            x-transition:enter="transition ease-out duration-300"
-                                                            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-                                                            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                                                            class="absolute z-50 left-0 right-0 mt-3 max-h-60 overflow-y-auto bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-border/40 rounded-[24px] shadow-2xl ring-1 ring-black/5 custom-scrollbar overflow-hidden">
-                                                            <div
-                                                                class="sticky top-0 bg-secondary/80 backdrop-blur-md px-5 py-2.5 text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 border-b border-border/20">
-                                                                Matches Found</div>
-                                                            <template x-for="item in addressSuggestions" :key="item.label">
-                                                                <button @click="fillAddress(item.data)"
-                                                                    class="w-full text-left px-6 py-4 hover:bg-primary/5 dark:hover:bg-white/5 transition-all text-xs font-bold border-b border-border/10 last:border-0 flex items-center justify-between group/item">
-                                                                    <span x-text="item.label"></span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                                                        height="24" viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="3"
-                                                                        stroke-linecap="round" stroke-linejoin="round"
-                                                                        class="size-3 text-primary opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0">
-                                                                        <path d="m9 18 6-6-6-6" />
-                                                                    </svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Taluka</label>
-                                                    <div class="relative">
-                                                        <input type="text" x-model="newCustomer.taluka"
-                                                            @focus="activeLookupField = 'taluka'; lookupAddressOnFocus('taluka')"
-                                                            @input.debounce.300ms="activeLookupField = 'taluka'; lookupAddress('taluka', $el.value)"
-                                                            class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 placeholder:text-muted-foreground/20"
-                                                            placeholder="Search taluka..." />
-                                                        <!-- Suggestions Dropdown -->
-                                                        <div x-show="addressSuggestions.length > 0 && activeLookupField === 'taluka'"
-                                                            @click.away="addressSuggestions = []"
-                                                            x-transition:enter="transition ease-out duration-300"
-                                                            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-                                                            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                                                            class="absolute z-50 left-0 right-0 mt-3 max-h-60 overflow-y-auto bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-border/40 rounded-[24px] shadow-2xl ring-1 ring-black/5 custom-scrollbar overflow-hidden">
-                                                            <div
-                                                                class="sticky top-0 bg-secondary/80 backdrop-blur-md px-5 py-2.5 text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 border-b border-border/20">
-                                                                Matches Found</div>
-                                                            <template x-for="item in addressSuggestions" :key="item.label">
-                                                                <button @click="fillAddress(item.data)"
-                                                                    class="w-full text-left px-6 py-4 hover:bg-primary/5 dark:hover:bg-white/5 transition-all text-xs font-bold border-b border-border/10 last:border-0 flex items-center justify-between group/item">
-                                                                    <span x-text="item.label"></span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                                                        height="24" viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="3"
-                                                                        stroke-linecap="round" stroke-linejoin="round"
-                                                                        class="size-3 text-primary opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0">
-                                                                        <path d="m9 18 6-6-6-6" />
-                                                                    </svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">District</label>
-                                                    <div class="relative">
-                                                        <input type="text" x-model="newCustomer.district"
-                                                            @focus="activeLookupField = 'district'; lookupAddressOnFocus('district')"
-                                                            @input.debounce.300ms="activeLookupField = 'district'; lookupAddress('district', $el.value)"
-                                                            class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 placeholder:text-muted-foreground/20"
-                                                            placeholder="Search district..." />
-                                                        <!-- Suggestions Dropdown -->
-                                                        <div x-show="addressSuggestions.length > 0 && activeLookupField === 'district'"
-                                                            @click.away="addressSuggestions = []"
-                                                            x-transition:enter="transition ease-out duration-300"
-                                                            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-                                                            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                                                            class="absolute z-50 left-0 right-0 mt-3 max-h-60 overflow-y-auto bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-border/40 rounded-[24px] shadow-2xl ring-1 ring-black/5 custom-scrollbar overflow-hidden">
-                                                            <div
-                                                                class="sticky top-0 bg-secondary/80 backdrop-blur-md px-5 py-2.5 text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 border-b border-border/20">
-                                                                Matches Found</div>
-                                                            <template x-for="item in addressSuggestions" :key="item.label">
-                                                                <button @click="fillAddress(item.data)"
-                                                                    class="w-full text-left px-6 py-4 hover:bg-primary/5 dark:hover:bg-white/5 transition-all text-xs font-bold border-b border-border/10 last:border-0 flex items-center justify-between group/item">
-                                                                    <span x-text="item.label"></span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                                                        height="24" viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="3"
-                                                                        stroke-linecap="round" stroke-linejoin="round"
-                                                                        class="size-3 text-primary opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0">
-                                                                        <path d="m9 18 6-6-6-6" />
-                                                                    </svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">State</label>
-                                                    <div class="relative">
-                                                        <input type="text" x-model="newCustomer.state"
-                                                            @focus="activeLookupField = 'state'; lookupAddressOnFocus('state')"
-                                                            @input.debounce.300ms="activeLookupField = 'state'; lookupAddress('state', $el.value)"
-                                                            class="w-full h-12 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 placeholder:text-muted-foreground/20"
-                                                            placeholder="Search state..." />
-                                                        <!-- Suggestions Dropdown -->
-                                                        <div x-show="addressSuggestions.length > 0 && activeLookupField === 'state'"
-                                                            @click.away="addressSuggestions = []"
-                                                            x-transition:enter="transition ease-out duration-300"
-                                                            x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-                                                            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                                                            class="absolute z-50 left-0 right-0 mt-3 max-h-60 overflow-y-auto bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-border/40 rounded-[24px] shadow-2xl ring-1 ring-black/5 custom-scrollbar overflow-hidden">
-                                                            <div
-                                                                class="sticky top-0 bg-secondary/80 backdrop-blur-md px-5 py-2.5 text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 border-b border-border/20">
-                                                                Matches Found</div>
-                                                            <template x-for="item in addressSuggestions" :key="item.label">
-                                                                <button @click="fillAddress(item.data)"
-                                                                    class="w-full text-left px-6 py-4 hover:bg-primary/5 dark:hover:bg-white/5 transition-all text-xs font-bold border-b border-border/10 last:border-0 flex items-center justify-between group/item">
-                                                                    <span x-text="item.label"></span>
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                                                        height="24" viewBox="0 0 24 24" fill="none"
-                                                                        stroke="currentColor" stroke-width="3"
-                                                                        stroke-linecap="round" stroke-linejoin="round"
-                                                                        class="size-3 text-primary opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0">
-                                                                        <path d="m9 18 6-6-6-6" />
-                                                                    </svg>
-                                                                </button>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="space-y-6 pt-2">
-                                                <div class="flex items-center gap-4 group/sec">
-                                                    <div
-                                                        class="size-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]">
-                                                    </div>
-                                                    <h4
-                                                        class="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/80">
-                                                        03. Specific Location
-                                                    </h4>
-                                                    <div class="h-px flex-1 bg-gradient-to-r from-border/60 to-transparent">
-                                                    </div>
-                                                </div>
-
-                                                <div class="space-y-2 group/field">
-                                                    <label
-                                                        class="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] pl-1">Primary
-                                                        Physical Location</label>
-                                                    <div class="relative">
-                                                        <input type="text" x-model="newCustomer.address_line1"
-                                                            class="w-full h-14 bg-secondary/20 dark:bg-black/40 border border-border/40 dark:border-white/5 rounded-2xl px-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white dark:focus:bg-zinc-800 transition-all duration-500 shadow-sm placeholder:text-muted-foreground/20"
-                                                            placeholder="Building name, Street address, House number, Landmark etc." />
-                                                        <div
-                                                            class="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground/20 group-focus-within/field:text-primary/40 transition-colors">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2.5" stroke-linecap="round"
-                                                                stroke-linejoin="round" class="size-5">
-                                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                                                <circle cx="12" cy="10" r="3" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </section>
-
-                                    <!-- Error Box -->
-                                    <div x-show="error" x-transition:enter="transition ease-out duration-500"
-                                        x-transition:enter-start="opacity-0 translate-y-4"
-                                        x-transition:enter-end="opacity-100 translate-y-0"
-                                        class="mx-10 mb-8 p-6 rounded-[32px] bg-rose-500/5 border border-rose-500/10 backdrop-blur-sm flex items-center gap-5 group/err">
-                                        <div
-                                            class="size-12 rounded-[20px] bg-rose-500/10 flex items-center justify-center shrink-0 shadow-[0_4px_12px_rgba(244,63,94,0.1)] group-hover/err:scale-110 transition-transform duration-500">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
-                                                stroke-linejoin="round" class="size-5 text-rose-500">
-                                                <path
-                                                    d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                                                <line x1="12" x2="12" y1="9" y2="13" />
-                                                <line x1="12" x2="12.01" y1="17" y2="17" />
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1">
-                                            <p
-                                                class="text-[9px] font-black uppercase tracking-[0.3em] text-rose-500 opacity-60 mb-0.5">
-                                                Registration Error</p>
-                                            <p class="text-xs font-bold text-rose-600/80 dark:text-rose-400/80" x-text="error">
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Premium Footer -->
-                                <div
-                                    class="px-10 py-8 bg-white/50 dark:bg-black/50 backdrop-blur-3xl border-t border-border/40 flex items-center justify-between gap-6 shrink-0 z-20">
-                                    <button @click="showModal = false"
-                                        class="h-14 px-10 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 hover:text-foreground hover:bg-secondary/50 dark:hover:bg-white/5 transition-all duration-500 active:scale-95">
-                                        Discard
-                                    </button>
-
-                                    <button @click="createCustomer()" :disabled="saving"
-                                        class="group relative h-14 min-w-[240px] rounded-2xl bg-foreground text-background text-[11px] font-black uppercase tracking-[0.3em] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(255,255,255,0.05)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 overflow-hidden">
-
-                                        <!-- Gradient Overlay -->
-                                        <div
-                                            class="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out">
-                                        </div>
-
-                                        <div class="relative flex items-center justify-center gap-3">
-                                            <span x-show="!saving">Complete Enrollment</span>
-                                            <span x-show="saving" class="flex items-center gap-3">
-                                                <svg class="animate-spin size-4" viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                        stroke-width="4" fill="none"></circle>
-                                                    <path class="opacity-75" fill="currentColor"
-                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                    </path>
-                                                </svg>
-                                                Processing...
-                                            </span>
-                                            <svg x-show="!saving" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
-                                                stroke-linecap="round" stroke-linejoin="round"
-                                                class="size-4 group-hover:translate-x-1 transition-transform duration-300">
-                                                <path d="M5 12h14" />
-                                                <path d="m12 5 7 7-7 7" />
-                                            </svg>
-                                        </div>
-                                    </button>
+                                <div x-show="addressSuggestions.length && activeLookupField === 'village'"
+                                    class="absolute z-50 w-full mt-1 rounded-md border border-border bg-background shadow-md max-h-48 overflow-auto">
+                                    <template x-for="item in addressSuggestions">
+                                        <div @click="fillAddress(item.data)"
+                                            class="px-3 py-2 text-sm hover:bg-muted cursor-pointer"
+                                            x-text="item.label"></div>
+                                    </template>
                                 </div>
                             </div>
+
+                            <!-- Pincode -->
+                            <div class="relative">
+                                <input type="text" x-model="newCustomer.pincode" maxlength="6"
+                                    @focus="activeLookupField = 'pincode'; lookupAddressOnFocus('pincode')"
+                                    @input.debounce.300ms="activeLookupField = 'pincode'; lookupAddress('pincode', $el.value)"
+                                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                    placeholder="Pincode">
+
+                                <div x-show="addressSuggestions.length && activeLookupField === 'pincode'"
+                                    class="absolute z-50 w-full mt-1 rounded-md border border-border bg-background shadow-md max-h-48 overflow-auto">
+                                    <template x-for="item in addressSuggestions">
+                                        <div @click="fillAddress(item.data)"
+                                            class="px-3 py-2 text-sm hover:bg-muted cursor-pointer"
+                                            x-text="item.label"></div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <input type="text" x-model="newCustomer.post_office" class="input" placeholder="Post Office">
+                            <input type="text" x-model="newCustomer.taluka" class="input" placeholder="Taluka">
+                            <input type="text" x-model="newCustomer.district" class="input" placeholder="District">
+                            <input type="text" x-model="newCustomer.state" class="input" placeholder="State">
                         </div>
-                    </template>
+
+                        <input type="text" x-model="newCustomer.address_line1"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                            placeholder="Full Address">
+                    </div>
+
+                    <!-- Error -->
+                    <div x-show="error"
+                        class="p-3 rounded-lg bg-red-500/10 text-red-600 border border-red-500/20 text-sm">
+                        <span x-text="error"></span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex justify-end gap-3 pt-2">
+
+                        <!-- Cancel -->
+                        <button @click="showModal = false"
+                            class="px-4 py-2 rounded-md text-sm font-medium border border-border bg-background hover:bg-muted transition">
+                            Cancel
+                        </button>
+
+                        <!-- Save -->
+                        <button @click="createCustomer()" :disabled="saving"
+                            class="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition">
+
+                            <span x-show="!saving">Save Customer</span>
+                            <span x-show="saving">Processing...</span>
+                        </button>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
                     <script>
                         function headerCustomerSearch(routes) {
