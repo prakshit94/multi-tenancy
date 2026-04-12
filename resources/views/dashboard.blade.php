@@ -370,9 +370,9 @@ if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
 }
 @endphp
 
-<!-- ⭐ TOP 3 TRIANGLE (FULL NAME) -->
+<!-- ⭐ TOP 3 TRIANGLE (FIXED PROPER SHAPE) -->
 @if($displayUsers->count() >= 1)
-<div class="p-5">
+<div class="p-6">
 
     @php
         $topUsers = $allOnline->take(3);
@@ -381,26 +381,26 @@ if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
         $third = $topUsers->get(2);
     @endphp
 
-    <div class="flex justify-center items-end gap-8">
+    <div class="flex justify-center items-end gap-10">
 
-        <!-- 2 -->
+        <!-- 🥈 SECOND (LEFT - LOWER) -->
         @if($second)
-        <div class="flex flex-col items-center max-w-[80px]">
+        <div class="flex flex-col items-center translate-y-4">
             <div class="relative">
-                <div class="px-3 py-1 bg-gray-200 rounded-lg text-[10px] font-bold text-center truncate w-full">
+                <div class="px-3 py-1 bg-gray-200 rounded-lg text-[10px] font-bold text-center truncate max-w-[90px]">
                     {{ $second->name }}
                 </div>
                 <span class="absolute -top-2 -right-2 text-xs">⭐</span>
             </div>
-            <div class="text-[10px] mt-1 font-semibold">2</div>
+            <div class="text-[10px] mt-1 font-semibold text-gray-500">2</div>
         </div>
         @endif
 
-        <!-- 1 -->
+        <!-- 🥇 FIRST (CENTER - TOP) -->
         @if($first)
-        <div class="flex flex-col items-center -mt-4 max-w-[100px]">
+        <div class="flex flex-col items-center -translate-y-4 scale-105">
             <div class="relative">
-                <div class="px-4 py-1.5 bg-yellow-400 rounded-lg text-[11px] font-bold text-center truncate w-full shadow">
+                <div class="px-4 py-1.5 bg-yellow-400 rounded-lg text-[11px] font-bold text-center truncate max-w-[110px] shadow-lg">
                     {{ $first->name }}
                 </div>
                 <span class="absolute -top-2 -right-2 text-sm animate-pulse">⭐</span>
@@ -409,16 +409,16 @@ if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
         </div>
         @endif
 
-        <!-- 3 -->
+        <!-- 🥉 THIRD (RIGHT - LOWER) -->
         @if($third)
-        <div class="flex flex-col items-center max-w-[80px]">
+        <div class="flex flex-col items-center translate-y-4">
             <div class="relative">
-                <div class="px-3 py-1 bg-orange-300 rounded-lg text-[10px] font-bold text-center truncate w-full">
+                <div class="px-3 py-1 bg-orange-300 rounded-lg text-[10px] font-bold text-center truncate max-w-[90px]">
                     {{ $third->name }}
                 </div>
                 <span class="absolute -top-2 -right-2 text-xs">⭐</span>
             </div>
-            <div class="text-[10px] mt-1 font-semibold">3</div>
+            <div class="text-[10px] mt-1 font-semibold text-orange-600">3</div>
         </div>
         @endif
 
