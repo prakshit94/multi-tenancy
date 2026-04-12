@@ -3,91 +3,129 @@
    <head>
       <meta charset="UTF-8">
       <title>Delivery Challan - {{ $invoice->invoice_number }}</title>
-      <style>
-         @page {
-         size: A4 portrait;
-         margin: 14mm 12mm;
-         }
-         body {
-         font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
-         font-size: 10px;
-         color: #334155;
-         line-height: 1.35;
-         }
-         table {
-         width: 100%;
-         border-collapse: collapse;
-         }
-         th,
-         td {
-         border: 1px solid #cbd5e1;
-         padding: 6px;
-         vertical-align: top;
-         }
-         .text-right {
-         text-align: right;
-         }
-         .text-center {
-         text-align: center;
-         }
-         .bold {
-         font-weight: bold;
-         }
-         .title {
-         text-align: center;
-         font-size: 15px;
-         font-weight: bold;
-         padding: 6px;
-         border: 2px solid #1e40af;
-         background: #eff6ff;
-         color: #1e40af;
-         margin-bottom: 8px;
-         letter-spacing: 1px;
-         }
-         .company-name {
-         font-size: 13px;
-         font-weight: bold;
-         color: #1e40af;
-         }
-         .muted {
-         color: #444;
-         }
-         .header-table td {
-         border: 1px solid #cbd5e1;
-         }
-         .no-border td {
-         border: none;
-         padding: 2px 4px;
-         }
-         .label {
-         width: 38%;
-         font-weight: bold;
-         white-space: nowrap;
-         }
-         .items thead th {
-         background: #1e40af;
-         color: #fff;
-         text-align: center;
-         }
-         .items td {
-         padding: 6px 5px;
-         }
-         .totals td {
-         padding: 6px;
-         }
-         .grand-total {
-         font-size: 12px;
-         font-weight: bold;
-         background: #f1f5f9;
-         }
-         .terms {
-         font-size: 10px;
-         line-height: 1.4;
-         }
-         .page-break {
-         page-break-inside: avoid;
-         }
-      </style>
+<style>
+@page {
+   size: A4 portrait;
+   margin: 8mm 8mm;
+}
+
+body {
+   font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
+   font-size: 8.7px;
+   color: #334155;
+   line-height: 1.15;
+   background: #ffffff;
+}
+
+table {
+   width: 100%;
+   border-collapse: collapse;
+   page-break-inside: auto;
+   border: 1px solid #cbd5e1;
+}
+
+tr {
+   page-break-inside: avoid;
+}
+
+th,
+td {
+   border: 1px solid #cbd5e1;
+   padding: 3px;
+   vertical-align: top;
+}
+
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.bold { font-weight: bold; }
+
+/* 🔥 TITLE (MATCH BULK) */
+.title {
+   text-align: center;
+   font-size: 13px;
+   font-weight: bold;
+   padding: 4px;
+   border: 2px solid #1e40af;
+   background: #eff6ff;
+   color: #1e40af;
+   margin-bottom: 5px;
+   letter-spacing: 1px;
+   border-radius: 4px;
+}
+
+/* 🔥 COMPANY */
+.company-name {
+   font-size: 12px;
+   font-weight: bold;
+   color: #1e40af;
+}
+
+.muted {
+   color: #475569;
+}
+
+/* 🔥 HEADER TABLE LOOK */
+.header-table td {
+   border: 1px solid #cbd5e1;
+   background: #f8fafc;
+}
+
+/* 🔥 ADDRESS LABELS */
+.label {
+   width: 38%;
+   font-weight: bold;
+   color: #1e293b;
+   white-space: nowrap;
+}
+
+/* 🔥 REMOVE EXTRA SPACE */
+.no-border td {
+   border: none;
+   padding: 1px 2px;
+}
+
+/* 🔥 ITEMS HEADER (BLUE BAR) */
+.items thead th {
+   background: #1e40af;
+   color: #ffffff;
+   text-align: center;
+   border-color: #1e40af;
+}
+
+/* 🔥 ITEMS ROWS */
+.items td {
+   padding: 3px 2px;
+}
+
+/* 🔥 TOTAL SECTION */
+.totals td {
+   padding: 3px;
+   background: #f8fafc;
+}
+
+/* 🔥 GRAND TOTAL HIGHLIGHT */
+.grand-total {
+   font-size: 10px;
+   font-weight: bold;
+   background: #e2e8f0;
+   color: #0f172a;
+}
+
+/* 🔥 TERMS BOX */
+.terms td {
+   background: #f8fafc;
+}
+
+.terms {
+   font-size: 8.5px;
+   line-height: 1.2;
+}
+
+/* 🔥 SMALL UI IMPROVEMENT */
+br {
+   line-height: 0.8;
+}
+</style>
    </head>
    <body>
       <div class="title">DELIVERY CHALLAN</div>
@@ -250,17 +288,17 @@
       </table>
       <br>
       <!-- ITEMS -->
-      <!-- ITEMS -->
-<table class="items page-break">
+     <!-- ITEMS -->
+<table class="items">
    <thead>
       <tr>
-         <th width="4%">Sl</th>
-         <th width="26%">Description</th>
-         <th width="8%">HSN</th>
-         <th width="6%">Qty</th>
-         <th width="10%">Rate</th>
-         <th width="8%">Disc</th>
-         <th width="12%">Taxable</th>
+         <th width="3%">Sl</th>
+         <th width="28%">Description</th>
+         <th width="7%">HSN</th>
+         <th width="5%">Qty</th>
+         <th width="9%">Rate</th>
+         <th width="7%">Disc</th>
+         <th width="11%">Taxable</th>
          <th width="10%">CGST</th>
          <th width="10%">SGST</th>
          <th width="10%">Total</th>
@@ -280,26 +318,19 @@
             $baseTotal = $item->unit_price * $item->quantity;
             $discount = $item->discount_amount ?? 0;
 
-            // SAFE TAX %
             $taxPercent = floatval($item->tax_percent ?? 0);
 
-            // CORRECT TAXABLE
             $taxableValue = $baseTotal - $discount;
-
-            // CORRECT GST CALCULATION
             $taxAmount = ($taxableValue * $taxPercent) / 100;
 
-            // CGST / SGST SPLIT
             $cgstRate = $taxPercent / 2;
             $sgstRate = $taxPercent / 2;
 
             $cgstAmount = $taxAmount / 2;
             $sgstAmount = $taxAmount / 2;
 
-            // FINAL LINE TOTAL
             $lineTotal = $taxableValue + $taxAmount;
 
-            // TOTALS
             $totalTaxable += $taxableValue;
             $totalCGST += $cgstAmount;
             $totalSGST += $sgstAmount;
@@ -308,10 +339,10 @@
          <tr>
             <td class="text-center">{{ $i + 1 }}</td>
 
-            <!-- Description -->
+            <!-- Description (compact) -->
             <td>
-               {{ $item->product_name }}<br>
-               <small class="muted">{{ $item->sku }}</small>
+               {{ $item->product_name }}
+               <span class="muted">({{ $item->sku }})</span>
             </td>
 
             <!-- HSN -->
@@ -337,25 +368,21 @@
                {{ number_format($taxableValue, 2) }}
             </td>
 
-            <!-- CGST -->
+            <!-- CGST (compact) -->
             <td class="text-right">
                @if($cgstRate > 0)
-                  <span style="font-size:9px">
-                     {{ number_format($cgstRate, 2) }}%
-                  </span><br>
-                  {{ number_format($cgstAmount, 2) }}
+                  {{ number_format($cgstRate, 2) }}%
+                  ({{ number_format($cgstAmount, 2) }})
                @else
                   -
                @endif
             </td>
 
-            <!-- SGST -->
+            <!-- SGST (compact) -->
             <td class="text-right">
                @if($sgstRate > 0)
-                  <span style="font-size:9px">
-                     {{ number_format($sgstRate, 2) }}%
-                  </span><br>
-                  {{ number_format($sgstAmount, 2) }}
+                  {{ number_format($sgstRate, 2) }}%
+                  ({{ number_format($sgstAmount, 2) }})
                @else
                   -
                @endif
@@ -413,8 +440,7 @@
 </table>
 
 <br>
-
-<!-- TERMS -->
+      <!-- TERMS -->
       <table class="terms">
          <tr>
             <td>

@@ -4,97 +4,114 @@
       <meta charset="UTF-8">
       <title>Bulk Invoice Print</title>
       <style>
-         @page {
-         size: a4;
-         margin: 12px 15px;
-         }
-         body {
-         font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
-         font-size: 9.5px;
-         color: #334155;
-         line-height: 1.25;
-         }
-         .page-break {
-         page-break-after: always;
-         }
-         .text-right {
-         text-align: right;
-         }
-         .text-center {
-         text-align: center;
-         }
-         .bold {
-         font-weight: bold;
-         }
-         .title {
-         text-align: center;
-         font-size: 14px;
-         font-weight: bold;
-         padding: 4px;
-         border: 2px solid #1e40af;
-         background-color: #eff6ff;
-         color: #1e40af;
-         border-radius: 4px;
-         margin-bottom: 6px;
-         letter-spacing: 1px;
-         }
-         table {
-         width: 100%;
-         border-collapse: collapse;
-         page-break-inside: avoid;
-         border: 1px solid #cbd5e1;
-         }
-         th,
-         td {
-         border: 1px solid #cbd5e1;
-         padding: 5px;
-         vertical-align: top;
-         }
-         th {
-         background: #e2e8f0;
-         color: #1e293b;
-         font-weight: bold;
-         }
-         .no-border td {
-         border: none;
-         padding: 2px 4px;
-         }
-         .label {
-         width: 38%;
-         font-weight: bold;
-         white-space: nowrap;
-         }
-         .company-name {
-         font-size: 13px;
-         font-weight: bold;
-         color: #1e40af;
-         }
-         .muted {
-         color: #444;
-         }
-         .items th {
-         text-align: center;
-         background: #1e40af;
-         color: #ffffff;
-         border-color: #1e40af;
-         }
-         .items td {
-         padding: 6px 5px;
-         }
-         .totals td {
-         padding: 6px;
-         }
-         .grand-total {
-         font-size: 12px;
-         font-weight: bold;
-         background: #f1f5f9;
-         color: #0f172a;
-         }
-         .terms {
-         font-size: 10px;
-         line-height: 1.35;
-         }
-      </style>
+@page {
+   size: A4 portrait;
+   margin: 10mm 10mm; /* reduced */
+}
+
+body {
+   font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
+   font-size: 9px; /* reduced */
+   color: #334155;
+   line-height: 1.2; /* compact */
+}
+
+table {
+   width: 100%;
+   border-collapse: collapse;
+   page-break-inside: auto;
+}
+
+tr {
+   page-break-inside: avoid;
+}
+
+th,
+td {
+   border: 1px solid #cbd5e1;
+   padding: 4px; /* reduced */
+   vertical-align: top;
+}
+
+.text-right {
+   text-align: right;
+}
+
+.text-center {
+   text-align: center;
+}
+
+.bold {
+   font-weight: bold;
+}
+
+.title {
+   text-align: center;
+   font-size: 13px; /* reduced */
+   font-weight: bold;
+   padding: 4px;
+   border: 2px solid #1e40af;
+   background: #eff6ff;
+   color: #1e40af;
+   margin-bottom: 5px;
+   letter-spacing: 1px;
+}
+
+.company-name {
+   font-size: 12px;
+   font-weight: bold;
+   color: #1e40af;
+}
+
+.muted {
+   color: #555;
+}
+
+.header-table td {
+   border: 1px solid #cbd5e1;
+}
+
+.no-border td {
+   border: none;
+   padding: 2px 3px; /* reduced */
+}
+
+.label {
+   width: 38%;
+   font-weight: bold;
+   white-space: nowrap;
+}
+
+.items thead th {
+   background: #1e40af;
+   color: #fff;
+   text-align: center;
+}
+
+.items td {
+   padding: 4px 3px; /* reduced */
+}
+
+.totals td {
+   padding: 4px;
+}
+
+.grand-total {
+   font-size: 11px;
+   font-weight: bold;
+   background: #f1f5f9;
+}
+
+.terms {
+   font-size: 9px;
+   line-height: 1.25;
+}
+
+/* IMPORTANT FIX */
+.page-break {
+   page-break-inside: auto; /* FIXED (was breaking layout) */
+}
+</style>
    </head>
    <body>
       @foreach($invoices as $index => $invoice)
