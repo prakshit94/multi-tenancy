@@ -374,9 +374,15 @@
                     <td class="text-center">{{ $i + 1 }}</td>
 
                     <td>
-                        {{ $item->product_name }}<br>
-                        <small class="muted">{{ $item->sku }}</small>
-                    </td>
+    {{ $item->product_name }}<br>
+
+    <small class="muted">
+        {{ $item->sku }}
+        @if(!empty($item->hsn_code))
+            | HSN: {{ $item->hsn_code }}
+        @endif
+    </small>
+</td>
 
                     <td class="text-center">{{ $item->quantity }}</td>
 
