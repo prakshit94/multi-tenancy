@@ -53,7 +53,7 @@ class ProductController extends Controller
     // ✅ Get product IDs
     $productIds = $products->pluck('id');
 
-    // ✅ Get placed order qty
+    // ✅ Get placed order qty (single optimized query)
     $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
         ->whereHas('order', function ($q) {
             $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship']);
@@ -62,7 +62,7 @@ class ProductController extends Controller
         ->groupBy('product_id')
         ->pluck('total_pending', 'product_id');
 
-    // ✅ FINAL CALCULATION (NEGATIVE ENABLED)
+    // ✅ FINAL CALCULATION (WITH OVERSELL)
     foreach ($products as $product) {
 
         // 👉 total stock
@@ -71,10 +71,10 @@ class ProductController extends Controller
         // 👉 placed order qty
         $pendingQty = (float) ($pendingQuantities[$product->id] ?? 0);
 
-        // ❗ CHANGE HERE → allow negative stock
-        $stockOnHand = $totalPhysicalQty - $pendingQty;
+        // 👉 base stock
+        $stockOnHand = max(0, $totalPhysicalQty - $pendingQty);
 
-        // 👉 oversell calculation (unchanged)
+        // 👉 oversell calculation
         $oversellLimit = $product->oversell_limit !== null
             ? (int) $product->oversell_limit
             : null;
@@ -85,11 +85,12 @@ class ProductController extends Controller
             ? max(0, $oversellLimit - $currentOversold)
             : null;
 
-        // 👉 FINAL sellable qty (unchanged logic)
+        // 👉 FINAL sellable qty
         if ($product->allow_oversell) {
 
             if ($remainingOversell === null) {
-                $sellableQty = null; // ∞
+                // unlimited oversell
+                $sellableQty = null; // represents ∞
             } else {
                 $sellableQty = $stockOnHand + $remainingOversell;
             }
@@ -100,8 +101,8 @@ class ProductController extends Controller
 
         // ✅ assign values
         $product->pending_order_qty = $pendingQty;
-        $product->stock_on_hand = $stockOnHand; // can be negative now
-        $product->sellable_qty = $sellableQty;  // can be negative
+        $product->stock_on_hand = $stockOnHand;
+        $product->sellable_qty = $sellableQty;
         $product->remaining_oversell = $remainingOversell;
     }
 
