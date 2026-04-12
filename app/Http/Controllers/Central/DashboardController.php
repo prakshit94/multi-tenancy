@@ -216,34 +216,45 @@ class DashboardController extends Controller
         ));
     }
 
-    public function exportTeamActivity()
+public function exportTeamActivity()
 {
+    $today = now();
+
     $users = \App\Models\User::withCount([
-        'orders',
-        'customers'
+        // ✅ Only today's orders
+        'orders as orders_count' => function ($q) use ($today) {
+            $q->whereDate('created_at', $today);
+        },
+
+        // ✅ Only today's customers
+        'customers as customers_count' => function ($q) use ($today) {
+            $q->whereDate('created_at', $today);
+        }
     ])->withSum([
-        'orders as total_revenue' => function ($q) {
-            $q->whereNotIn('status', ['scheduled', 'cancelled']);
+        // ✅ Only today's revenue
+        'orders as total_revenue' => function ($q) use ($today) {
+            $q->whereDate('created_at', $today)
+              ->whereNotIn('status', ['scheduled', 'cancelled']);
         }
     ], 'grand_total')
     ->get();
 
-    // ✅ Add more columns here
+    // CSV Headers
     $csvData = [];
-    $csvData[] = ['Name', 'Email', 'Location', 'Orders', 'Customers', 'Revenue'];
+    $csvData[] = ['Name', 'Email', 'Location', 'Orders (Today)', 'Customers (Today)', 'Revenue (Today)'];
 
     foreach ($users as $user) {
         $csvData[] = [
             $user->name,
             $user->email ?? '',
-            $user->location ?? 'Unknown', // ✅ location added
-            $user->orders_count,
-            $user->customers_count,
+            $user->location ?? 'Unknown',
+            $user->orders_count ?? 0,
+            $user->customers_count ?? 0,
             $user->total_revenue ?? 0
         ];
     }
 
-    $filename = "team_activity.csv";
+    $filename = "team_activity_today.csv";
 
     $handle = fopen('php://temp', 'r+');
 
