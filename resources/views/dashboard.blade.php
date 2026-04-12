@@ -345,10 +345,8 @@ class="rounded-3xl border border-border/40 bg-card/60 backdrop-blur-xl shadow-lg
     </div>
 
     <!-- Search -->
-    <div class="relative">
-        <input type="text" x-model="searchQuery" placeholder="Search team..."
-            class="w-full bg-background/50 border border-border/40 rounded-xl py-2.5 px-3 text-xs focus:ring-2 focus:ring-primary/30 outline-none">
-    </div>
+    <input type="text" x-model="searchQuery" placeholder="Search team..."
+        class="w-full bg-background/50 border border-border/40 rounded-xl py-2.5 px-3 text-xs focus:ring-2 focus:ring-primary/30 outline-none">
 </div>
 
 <!-- DATA -->
@@ -370,9 +368,9 @@ if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
 }
 @endphp
 
-<!-- ⭐ TOP 3 TRIANGLE (FIXED PROPER SHAPE) -->
+<!-- ⭐ TOP 3 PERFECT TRIANGLE -->
 @if($displayUsers->count() >= 1)
-<div class="p-6">
+<div class="py-6">
 
     @php
         $topUsers = $allOnline->take(3);
@@ -381,44 +379,44 @@ if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
         $third = $topUsers->get(2);
     @endphp
 
-    <div class="flex justify-center items-end gap-10">
+    <div class="flex justify-center items-end gap-12">
 
-        <!-- 🥈 SECOND (LEFT - LOWER) -->
+        <!-- 🥈 LEFT -->
         @if($second)
-        <div class="flex flex-col items-center translate-y-4">
+        <div class="flex flex-col items-center mt-6">
             <div class="relative">
-                <div class="px-3 py-1 bg-gray-200 rounded-lg text-[10px] font-bold text-center truncate max-w-[90px]">
+                <div class="px-3 py-1 bg-gray-200 rounded-lg text-[10px] font-bold truncate max-w-[90px] text-center">
                     {{ $second->name }}
                 </div>
                 <span class="absolute -top-2 -right-2 text-xs">⭐</span>
             </div>
-            <div class="text-[10px] mt-1 font-semibold text-gray-500">2</div>
+            <span class="text-[10px] mt-1 font-semibold text-gray-500">2</span>
         </div>
         @endif
 
-        <!-- 🥇 FIRST (CENTER - TOP) -->
+        <!-- 🥇 CENTER -->
         @if($first)
-        <div class="flex flex-col items-center -translate-y-4 scale-105">
+        <div class="flex flex-col items-center -mt-4">
             <div class="relative">
-                <div class="px-4 py-1.5 bg-yellow-400 rounded-lg text-[11px] font-bold text-center truncate max-w-[110px] shadow-lg">
+                <div class="px-4 py-2 bg-yellow-400 rounded-xl text-[11px] font-bold shadow-lg truncate max-w-[120px] text-center">
                     {{ $first->name }}
                 </div>
                 <span class="absolute -top-2 -right-2 text-sm animate-pulse">⭐</span>
             </div>
-            <div class="text-xs mt-1 font-bold text-yellow-600">1</div>
+            <span class="text-xs mt-1 font-bold text-yellow-600">1</span>
         </div>
         @endif
 
-        <!-- 🥉 THIRD (RIGHT - LOWER) -->
+        <!-- 🥉 RIGHT -->
         @if($third)
-        <div class="flex flex-col items-center translate-y-4">
+        <div class="flex flex-col items-center mt-6">
             <div class="relative">
-                <div class="px-3 py-1 bg-orange-300 rounded-lg text-[10px] font-bold text-center truncate max-w-[90px]">
+                <div class="px-3 py-1 bg-orange-300 rounded-lg text-[10px] font-bold truncate max-w-[90px] text-center">
                     {{ $third->name }}
                 </div>
                 <span class="absolute -top-2 -right-2 text-xs">⭐</span>
             </div>
-            <div class="text-[10px] mt-1 font-semibold text-orange-600">3</div>
+            <span class="text-[10px] mt-1 font-semibold text-orange-600">3</span>
         </div>
         @endif
 
@@ -426,7 +424,7 @@ if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
 </div>
 @endif
 
-<!-- LIST -->
+<!-- LIST (UNCHANGED) -->
 <div x-ref="userList" class="divide-y divide-border/30 flex-1 overflow-y-auto">
 
 @foreach($displayUsers as $onlineUser)
@@ -440,7 +438,6 @@ $actualRank = $allOnline->search(fn($u) => $u->id === $onlineUser->id) + 1;
     class="flex items-center justify-between p-3.5 px-4 hover:bg-primary/5 transition">
 
     <div class="flex items-center gap-3">
-
         <div class="w-5 h-5 rounded-md bg-muted flex items-center justify-center text-[9px] font-bold">
             {{ $actualRank }}
         </div>
