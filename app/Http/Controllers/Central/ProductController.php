@@ -27,48 +27,87 @@ class ProductController extends Controller
      * Display a listing of the central products.
      */
     public function index(Request $request): View
-    {
-        $this->authorize('products view');
+{
+    $this->authorize('products view');
 
-        $query = Product::with(['category', 'brand', 'images', 'taxClass']);
+    // ✅ Load stocks relation
+    $query = Product::with(['category', 'brand', 'images', 'taxClass', 'stocks']);
 
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->input('status') === 'active') {
-            $query->where('is_active', true);
-        }
-
-        if ($request->input('stock') === 'low') {
-            $query->where('stock_on_hand', '<=', 10);
-        }
-
-        $perPage = (int) $request->input('per_page', 10);
-        $products = $query->latest()->paginate($perPage)->withQueryString();
-
-        // Calculate pending quantities for current page products
-        $productIds = $products->pluck('id');
-        $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
-            ->whereHas('order', function ($q) {
-                $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship']);
-            })
-            ->selectRaw('product_id, SUM(quantity) as total_pending')
-            ->groupBy('product_id')
-            ->pluck('total_pending', 'product_id');
-
-        foreach ($products as $product) {
-            $product->pending_order_qty = (float) $pendingQuantities->get($product->id, 0);
-            $product->sellable_qty = (float) $product->stock_on_hand - $product->pending_order_qty;
-        }
-
-        return view('central.products.index', compact('products'));
+    // 🔍 Search
+    if ($request->filled('search')) {
+        $search = $request->input('search');
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('sku', 'like', "%{$search}%");
+        });
     }
 
+    // ✅ Status filter
+    if ($request->input('status') === 'active') {
+        $query->where('is_active', true);
+    }
+
+    $perPage = (int) $request->input('per_page', 10);
+    $products = $query->latest()->paginate($perPage)->withQueryString();
+
+    // ✅ Get product IDs
+    $productIds = $products->pluck('id');
+
+    // ✅ Get placed order qty (single optimized query)
+    $pendingQuantities = \App\Models\OrderItem::whereIn('product_id', $productIds)
+        ->whereHas('order', function ($q) {
+            $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship']);
+        })
+        ->selectRaw('product_id, SUM(quantity) as total_pending')
+        ->groupBy('product_id')
+        ->pluck('total_pending', 'product_id');
+
+    // ✅ FINAL CALCULATION (WITH OVERSELL)
+    foreach ($products as $product) {
+
+        // 👉 total stock
+        $totalPhysicalQty = $product->stocks->sum('quantity');
+
+        // 👉 placed order qty
+        $pendingQty = (float) ($pendingQuantities[$product->id] ?? 0);
+
+        // 👉 base stock
+        $stockOnHand = max(0, $totalPhysicalQty - $pendingQty);
+
+        // 👉 oversell calculation
+        $oversellLimit = $product->oversell_limit !== null
+            ? (int) $product->oversell_limit
+            : null;
+
+        $currentOversold = max(0, $pendingQty - $totalPhysicalQty);
+
+        $remainingOversell = $oversellLimit !== null
+            ? max(0, $oversellLimit - $currentOversold)
+            : null;
+
+        // 👉 FINAL sellable qty
+        if ($product->allow_oversell) {
+
+            if ($remainingOversell === null) {
+                // unlimited oversell
+                $sellableQty = null; // represents ∞
+            } else {
+                $sellableQty = $stockOnHand + $remainingOversell;
+            }
+
+        } else {
+            $sellableQty = $stockOnHand;
+        }
+
+        // ✅ assign values
+        $product->pending_order_qty = $pendingQty;
+        $product->stock_on_hand = $stockOnHand;
+        $product->sellable_qty = $sellableQty;
+        $product->remaining_oversell = $remainingOversell;
+    }
+
+    return view('central.products.index', compact('products'));
+}
     /**
      * Show the form for creating a new product.
      */
