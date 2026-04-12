@@ -88,13 +88,6 @@ class OrderController extends Controller
         ? Customer::with('addresses')->withCount('orders')->find($customerId)
         : null;
 
-    // (kept as-is, but no longer used in stock calculation)
-    $pendingProductQuantities = \App\Models\OrderItem::whereHas('order', function ($q) {
-        $q->whereIn('status', ['pending','draft']);
-    })->selectRaw('product_id, SUM(quantity) as total_pending')
-        ->groupBy('product_id')
-        ->pluck('total_pending', 'product_id');
-
     $products = Product::where('is_active', true)
         ->where('is_sku_enabled', true)
         ->with(['stocks', 'images', 'taxClass.rates'])
@@ -102,16 +95,20 @@ class OrderController extends Controller
         ->get()
         ->map(function ($product) {
 
-            $grossSellable = $product->stocks->sum(
-                fn($stock) => max(0, $stock->quantity - $stock->reserve_quantity)
-            );
-
+            // ✅ Total Physical Stock
             $totalPhysicalQty = $product->stocks->sum('quantity');
-            $totalReservedQty = $product->stocks->sum('reserve_quantity');
 
-            // ✅ FIXED: removed pendingQty from stock logic
-            $totalCommitment = $totalReservedQty;
+            // ✅ Placed Order Qty (instead of reserve_quantity)
+            $placedOrderQty = \App\Models\OrderItem::whereHas('order', function ($q) {
+                $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship']);
+            })
+            ->where('product_id', $product->id)
+            ->sum('quantity');
 
+            // ✅ Final Sellable Stock
+            $stockOnHand = max(0, $totalPhysicalQty - $placedOrderQty);
+
+            // ✅ Tax Calculation
             $taxAmount = 0.00;
             if ($product->taxClass && $product->taxClass->rates->isNotEmpty()) {
                 $taxAmount = $product->price * ($product->taxClass->rates->sum('rate') / 100);
@@ -119,8 +116,13 @@ class OrderController extends Controller
                 $taxAmount = $product->price * ($product->tax_rate / 100);
             }
 
-            $currentOversoldAmount = max(0, $totalCommitment - $totalPhysicalQty);
-            $oversellLimit = $product->oversell_limit !== null ? (int) $product->oversell_limit : null;
+            // ✅ Oversell Logic (adjusted)
+            $currentOversoldAmount = max(0, $placedOrderQty - $totalPhysicalQty);
+
+            $oversellLimit = $product->oversell_limit !== null
+                ? (int) $product->oversell_limit
+                : null;
+
             $effectiveOversellLimit = $oversellLimit !== null
                 ? max(0, $oversellLimit - $currentOversoldAmount)
                 : null;
@@ -129,13 +131,21 @@ class OrderController extends Controller
                 'id' => $product->id,
                 'name' => $product->name,
                 'sku' => $product->sku,
+
+                // ✅ PRICE
                 'price' => (float) $product->price,
                 'mrp' => (float) $product->mrp,
+
+                // ✅ TAX
                 'tax_amount' => (float) $taxAmount,
                 'total_price_with_tax' => (float) ($product->price + $taxAmount),
-                'stock_on_hand' => (float) max(0, $totalPhysicalQty - $totalCommitment),
+
+                // ✅ STOCK (UPDATED LOGIC)
+                'stock_on_hand' => (float) $stockOnHand,
                 'allow_oversell' => (bool) $product->allow_oversell,
                 'oversell_limit' => $effectiveOversellLimit,
+
+                // ✅ EXTRA FIELDS
                 'unit_type' => $product->unit_type,
                 'brand' => $product->brand->name ?? 'N/A',
                 'description' => $product->description,
@@ -145,6 +155,8 @@ class OrderController extends Controller
                 'category' => $product->category->name ?? 'Uncategorized',
                 'default_discount_type' => $product->default_discount_type,
                 'default_discount_value' => (float) $product->default_discount_value,
+
+                // ✅ TAX CONFIG
                 'tax_rate' => $product->tax_rate,
                 'tax_class_id' => $product->tax_class_id,
                 'tax_class' => $product->taxClass ? [
