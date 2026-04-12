@@ -300,144 +300,192 @@
                     </div>
 
                     <!-- Right Column (Team Activity) -->
-                    <div class="col-span-1 lg:col-span-2">
-                        @can('dashboard view')
-                            <div x-data="{ 
-                                searchQuery: '',
-                                sortDir: 'desc',
-                                sortItems() {
-                                    let container = this.$refs.userList;
-                                    if (!container) return;
-                                    let items = Array.from(container.children).filter(el => el.hasAttribute('data-revenue'));
-                                    if(items.length === 0) return;
-                                    items.sort((a, b) => {
-                                        let revA = parseFloat(a.getAttribute('data-revenue'));
-                                        let revB = parseFloat(b.getAttribute('data-revenue'));
-                                        return this.sortDir === 'desc' ? revB - revA : revA - revB;
-                                    });
-                                    items.forEach(item => container.appendChild(item));
-                                }
-                            }" x-init="$nextTick(() => sortItems())"
-                                class="rounded-3xl border border-border/40 bg-card/60 backdrop-blur-xl shadow-lg overflow-hidden h-full flex flex-col">
-                                
-                                <!-- Header -->
-                                <div class="p-4 px-6 border-b border-border/30 bg-gradient-to-r from-muted/40 to-transparent space-y-3">
-                                    <div class="flex justify-between items-center">
-                                        <h3 class="text-sm font-bold uppercase tracking-wider font-heading flex items-center gap-2">
-                                            <span class="relative flex h-2 w-2">
-                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                            </span>
-                                            Team Activity
-                                        </h3>
-                                        <div class="flex items-center gap-2">
-                                            <button @click="sortDir = sortDir === 'desc' ? 'asc' : 'desc'; sortItems()"
-                                                class="text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors uppercase tracking-wide flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-muted/30"
-                                                title="Sort by Revenue">
-                                                <span x-text="sortDir === 'desc' ? 'High' : 'Low'" class="text-foreground"></span>
-                                                <svg x-show="sortDir === 'desc'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="m6 9 6 6 6-6" />
-                                                </svg>
-                                                <svg x-show="sortDir === 'asc'" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="m18 15-6-6-6 6" />
-                                                </svg>
-                                            </button>
-                                            @can('users export')
-                                                <a href="{{ route('central.team.export') }}" class="text-[10px] font-bold text-primary hover:text-primary/70 uppercase tracking-wide px-2.5 py-1 rounded-lg hover:bg-primary/5 transition-colors" title="Export CSV">Export</a>
-                                            @endcan
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Search Box -->
-                                    <div class="relative">
-                                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                        <input type="text" x-model="searchQuery" placeholder="Search team..."
-                                            class="w-full bg-background/50 border border-border/40 rounded-xl py-2.5 pl-9 pr-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all placeholder:text-muted-foreground/60">
-                                    </div>
-                                </div>
+<div class="col-span-1 lg:col-span-2">
+@can('dashboard view')
 
-                                <!-- Team List -->
-                                <div x-ref="userList" class="divide-y divide-border/30 flex-1 overflow-y-auto">
-                                    @php
-                                        $allOnline = collect($onlineUsers ?? [])->filter(function ($u) {
-                                            return $u && $u->isOnline();
-                                        })->sortByDesc(function ($u) {
-                                            return $u->total_revenue ?? 0;
-                                        })->values();
+<div x-data="{ 
+    searchQuery: '',
+    sortDir: 'desc',
+    sortItems() {
+        let container = this.$refs.userList;
+        if (!container) return;
+        let items = Array.from(container.children).filter(el => el.hasAttribute('data-revenue'));
+        if(items.length === 0) return;
+        items.sort((a, b) => {
+            let revA = parseFloat(a.getAttribute('data-revenue'));
+            let revB = parseFloat(b.getAttribute('data-revenue'));
+            return this.sortDir === 'desc' ? revB - revA : revA - revB;
+        });
+        items.forEach(item => container.appendChild(item));
+    }
+}" x-init="$nextTick(() => sortItems())"
+class="rounded-3xl border border-border/40 bg-card/60 backdrop-blur-xl shadow-lg overflow-hidden h-full flex flex-col">
 
-                                        $displayUsers = $allOnline;
+<!-- Header -->
+<div class="p-4 px-6 border-b border-border/30 bg-gradient-to-r from-muted/40 to-transparent space-y-3">
+    
+    <div class="flex justify-between items-center">
+        <h3 class="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+            🏆 Team Activity
+        </h3>
 
-                                        if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
-                                            $top5 = $allOnline->take(5);
-                                            $currentUser = $allOnline->firstWhere('id', auth()->id());
+        <div class="flex items-center gap-2">
+            <button @click="sortDir = sortDir === 'desc' ? 'asc' : 'desc'; sortItems()"
+                class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg hover:bg-muted/30">
+                <span x-text="sortDir === 'desc' ? 'High' : 'Low'"></span>
+            </button>
 
-                                            if ($currentUser && !$top5->contains('id', auth()->id())) {
-                                                $displayUsers = $top5->push($currentUser);
-                                            } else {
-                                                $displayUsers = $top5;
-                                            }
-                                        }
-                                    @endphp
-                                    
-                                    @foreach($displayUsers as $index => $onlineUser)
-                                        <div data-revenue="{{ $onlineUser->total_revenue ?? 0 }}"
-                                            x-show="!searchQuery || '{{ strtolower($onlineUser->name) }}'.includes(searchQuery.toLowerCase())"
-                                            class="flex items-center justify-between p-3.5 px-4 hover:bg-primary/5 transition-colors border-l-3 border-transparent hover:border-primary/40">
-                                            
-                                            <div class="flex items-center gap-3 flex-1 min-w-0">
-                                                <div class="flex items-center gap-2">
-                                                    @php
-                                                        $actualRank = $allOnline->search(fn($u) => $u->id === $onlineUser->id) + 1;
-                                                    @endphp
-                                                    <div class="flex-shrink-0 w-5 h-5 rounded-md bg-muted/50 border border-border/40 flex items-center justify-center text-[9px] font-bold text-muted-foreground">
-                                                        {{ $actualRank }}
-                                                    </div>
-                                                    <div class="relative flex-shrink-0">
-                                                        <div class="w-8 h-8 rounded-full {{ $onlineUser->id === auth()->id() ? 'bg-primary text-primary-foreground' : 'bg-primary/15 text-primary' }} flex items-center justify-center font-bold text-xs border border-primary/20">
-                                                            {{ substr($onlineUser->name, 0, 2) }}
-                                                        </div>
-                                                        <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-emerald-500 animate-pulse"></span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="min-w-0">
-                                                    <div class="text-xs font-bold text-foreground truncate">
-                                                        {{ $onlineUser->name }}
-                                                        @if($onlineUser->id === auth()->id())
-                                                            <span class="text-[9px] text-primary ml-1.5">(You)</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
-                                                        <svg class="w-3 h-3 flex-shrink-0 text-muted-foreground/60" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L8.59 4.59A7 7 0 015.05 4.05zM1.414 14.414a9 9 0 1112.728-12.728l-8.9 8.9a3 3 0 01-4.242-4.242l8.9-8.9A9 9 0 011.414 14.414z" clip-rule="evenodd" />
-                                                        </svg>
-                                                        <span class="truncate">{{ $onlineUser->location ?? 'Unknown' }}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-                                                <div class="text-[10px] font-bold text-foreground text-right">
-                                                    Rs {{ number_format($onlineUser->total_revenue ?? 0, 0) }}
-                                                </div>
-                                                <div class="text-[9px] font-bold text-muted-foreground/70 text-right">
-                                                    {{ $onlineUser->orders_count }} Orders
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                    
-                                    @if($displayUsers->isEmpty())
-                                        <div class="p-8 text-center text-muted-foreground">
-                                            <p class="text-xs">No users online</p>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endcan
-                    </div>
+            @can('users export')
+            <a href="{{ route('central.team.export') }}"
+               class="text-[10px] font-bold text-primary px-2.5 py-1 rounded-lg hover:bg-primary/5">
+               Export
+            </a>
+            @endcan
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="relative">
+        <input type="text" x-model="searchQuery" placeholder="Search team..."
+            class="w-full bg-background/50 border border-border/40 rounded-xl py-2.5 px-3 text-xs focus:ring-2 focus:ring-primary/30 outline-none">
+    </div>
+</div>
+
+<!-- DATA -->
+@php
+$allOnline = collect($onlineUsers ?? [])->filter(fn($u) => $u && $u->isOnline())
+    ->sortByDesc(fn($u) => $u->total_revenue ?? 0)->values();
+
+$displayUsers = $allOnline;
+
+if (auth()->check() && !auth()->user()->hasRole('Super Admin')) {
+    $top5 = $allOnline->take(5);
+    $currentUser = $allOnline->firstWhere('id', auth()->id());
+
+    if ($currentUser && !$top5->contains('id', auth()->id())) {
+        $displayUsers = $top5->push($currentUser);
+    } else {
+        $displayUsers = $top5;
+    }
+}
+@endphp
+
+<!-- ⭐ TOP 3 TRIANGLE (FULL NAME) -->
+@if($displayUsers->count() >= 1)
+<div class="p-5">
+
+    @php
+        $topUsers = $allOnline->take(3);
+        $second = $topUsers->get(1);
+        $first = $topUsers->get(0);
+        $third = $topUsers->get(2);
+    @endphp
+
+    <div class="flex justify-center items-end gap-8">
+
+        <!-- 2 -->
+        @if($second)
+        <div class="flex flex-col items-center max-w-[80px]">
+            <div class="relative">
+                <div class="px-3 py-1 bg-gray-200 rounded-lg text-[10px] font-bold text-center truncate w-full">
+                    {{ $second->name }}
+                </div>
+                <span class="absolute -top-2 -right-2 text-xs">⭐</span>
+            </div>
+            <div class="text-[10px] mt-1 font-semibold">2</div>
+        </div>
+        @endif
+
+        <!-- 1 -->
+        @if($first)
+        <div class="flex flex-col items-center -mt-4 max-w-[100px]">
+            <div class="relative">
+                <div class="px-4 py-1.5 bg-yellow-400 rounded-lg text-[11px] font-bold text-center truncate w-full shadow">
+                    {{ $first->name }}
+                </div>
+                <span class="absolute -top-2 -right-2 text-sm animate-pulse">⭐</span>
+            </div>
+            <div class="text-xs mt-1 font-bold text-yellow-600">1</div>
+        </div>
+        @endif
+
+        <!-- 3 -->
+        @if($third)
+        <div class="flex flex-col items-center max-w-[80px]">
+            <div class="relative">
+                <div class="px-3 py-1 bg-orange-300 rounded-lg text-[10px] font-bold text-center truncate w-full">
+                    {{ $third->name }}
+                </div>
+                <span class="absolute -top-2 -right-2 text-xs">⭐</span>
+            </div>
+            <div class="text-[10px] mt-1 font-semibold">3</div>
+        </div>
+        @endif
+
+    </div>
+</div>
+@endif
+
+<!-- LIST -->
+<div x-ref="userList" class="divide-y divide-border/30 flex-1 overflow-y-auto">
+
+@foreach($displayUsers as $onlineUser)
+
+@php
+$actualRank = $allOnline->search(fn($u) => $u->id === $onlineUser->id) + 1;
+@endphp
+
+<div data-revenue="{{ $onlineUser->total_revenue ?? 0 }}"
+    x-show="!searchQuery || '{{ strtolower($onlineUser->name) }}'.includes(searchQuery.toLowerCase())"
+    class="flex items-center justify-between p-3.5 px-4 hover:bg-primary/5 transition">
+
+    <div class="flex items-center gap-3">
+
+        <div class="w-5 h-5 rounded-md bg-muted flex items-center justify-center text-[9px] font-bold">
+            {{ $actualRank }}
+        </div>
+
+        <div class="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center font-bold text-xs">
+            {{ substr($onlineUser->name, 0, 2) }}
+        </div>
+
+        <div>
+            <div class="text-xs font-bold">
+                {{ $onlineUser->name }}
+                @if($onlineUser->id === auth()->id())
+                    <span class="text-[9px] text-primary">(You)</span>
+                @endif
+            </div>
+            <div class="text-[10px] text-muted-foreground">
+                {{ $onlineUser->location ?? 'Unknown' }}
+            </div>
+        </div>
+    </div>
+
+    <div class="text-right">
+        <div class="text-[10px] font-bold">
+            Rs {{ number_format($onlineUser->total_revenue ?? 0, 0) }}
+        </div>
+        <div class="text-[9px] text-muted-foreground">
+            {{ $onlineUser->orders_count }} Orders
+        </div>
+    </div>
+
+</div>
+
+@endforeach
+
+@if($displayUsers->isEmpty())
+<div class="p-8 text-center text-muted-foreground">
+    <p class="text-xs">No users online</p>
+</div>
+@endif
+
+</div>
+
+</div>
+@endcan
+</div>
                 </div>
             </div>
 
