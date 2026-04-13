@@ -222,6 +222,7 @@ public function exportTeamActivity()
 
     $users = \App\Models\User::where('status', 'active')
     ->whereNull('deleted_at') // ✅ added this line only
+    ->role('CSR')
     ->withCount([
         // ✅ Only today's orders
         'orders as orders_count' => function ($q) use ($today) {
