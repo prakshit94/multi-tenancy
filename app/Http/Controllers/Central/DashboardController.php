@@ -220,7 +220,9 @@ public function exportTeamActivity()
 {
     $today = now();
 
-    $users = \App\Models\User::withCount([
+    $users = \App\Models\User::where('status', 'active')
+    ->whereNull('deleted_at') // ✅ added this line only
+    ->withCount([
         // ✅ Only today's orders
         'orders as orders_count' => function ($q) use ($today) {
             $q->whereDate('created_at', $today);
