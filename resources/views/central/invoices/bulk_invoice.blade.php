@@ -109,7 +109,10 @@ td {
 
 /* IMPORTANT FIX */
 .page-break {
-   page-break-inside: auto; /* FIXED (was breaking layout) */
+   page-break-after: always; /* FIXED (was breaking layout) */
+}
+.invoice-container:last-child {
+   page-break-after: auto;
 }
 </style>
    </head>
