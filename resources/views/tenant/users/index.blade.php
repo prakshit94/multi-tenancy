@@ -290,7 +290,7 @@
                                     Status</th>
                                 <th
                                     class="h-12 px-6 text-left align-middle font-medium text-muted-foreground/70 uppercase tracking-wider text-[11px]">
-                                    Joined</th>
+                                    Joined / Last Login</th>
                                 <th
                                     class="h-12 px-6 text-right align-middle font-medium text-muted-foreground/70 uppercase tracking-wider text-[11px]">
                                     Actions</th>
@@ -320,6 +320,9 @@
                                                 <span
                                                     class="font-semibold text-foreground text-sm tracking-tight">{{ $user->name }}</span>
                                                 <span class="text-xs text-muted-foreground font-mono">{{ $user->email }}</span>
+                                                @if($user->employee_id)
+                                                    <span class="text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider mt-0.5 bg-muted/50 rounded px-1.5 py-0.5 w-max">ID: {{ $user->employee_id }}</span>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
@@ -351,8 +354,23 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="p-6 align-middle text-muted-foreground font-mono text-xs">
-                                        {{ $user->created_at->format('M d, Y') }}
+                                    <td class="p-6 align-middle">
+                                        <div class="flex flex-col space-y-2">
+                                            <div class="flex items-center gap-1.5 text-xs" title="Joined {{ $user->created_at->format('M d, Y h:i A') }}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="m9 16 2 2 4-4"/><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                                <span class="text-foreground/80 font-medium">{{ $user->created_at->format('M d, Y') }}</span>
+                                            </div>
+                                            @if($user->last_login_at)
+                                                <div class="flex items-center gap-1.5 text-[11px] text-muted-foreground relative" title="Last login: {{ $user->last_login_at->format('M d, Y h:i A') }}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500/70"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                                                    {{ $user->last_login_at->diffForHumans() }}
+                                                </div>
+                                            @else
+                                                <div class="flex items-center gap-1 text-[11px] text-muted-foreground/60 italic">
+                                                    Never logged in
+                                                </div>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="p-6 align-middle text-right">
                                         <div class="relative flex justify-end" x-data="{ open: false }"

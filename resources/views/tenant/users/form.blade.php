@@ -30,7 +30,57 @@
               x-data='{ 
                   showPassword: false, 
                   showConfirm: false,
-                  selectedRoles: @json(old("roles", isset($user) ? $user->roles->pluck("name")->toArray() : []))
+                  selectedRoles: @json(old("roles", isset($user) ? $user->roles->pluck("name")->toArray() : [])),
+                  addressSuggestions: [],
+                  activeLookupField: "",
+                  first_name: "{{ old("first_name", $user->first_name ?? "") }}",
+                  middle_name: "{{ old("middle_name", $user->middle_name ?? "") }}",
+                  last_name: "{{ old("last_name", $user->last_name ?? "") }}",
+                  village: "{{ old("village", $user->village ?? "") }}",
+                  pincode: "{{ old("pincode", $user->pincode ?? "") }}",
+                  post_office: "{{ old("post_office", $user->post_office ?? "") }}",
+                  taluka: "{{ old("taluka", $user->taluka ?? "") }}",
+                  district: "{{ old("district", $user->district ?? "") }}",
+                  state: "{{ old("state", $user->state ?? "") }}",
+                  address: "{{ old("address", $user->address ?? "") }}",
+
+                  async lookupAddress(field, value) {
+                      if (!value || value.toString().trim().length < 2) {
+                          this.addressSuggestions = [];
+                          return;
+                      }
+                      if (field === "pincode" && value.toString().length < 6) return;
+                      try {
+                          const encodedValue = encodeURIComponent(value);
+                          let res = await fetch(`{{ url("/api/village-lookup") }}?${field}=${encodedValue}`, {
+                              headers: { "Accept": "application/json", "X-Requested-With": "XMLHttpRequest" }
+                          });
+                          if (!res.ok) throw new Error("Lookup failed");
+                          let data = await res.json();
+                          if (data.found) {
+                              if (data.mode === "single") {
+                                  this.fillAddress(data.data);
+                                  this.addressSuggestions = [];
+                              } else {
+                                  this.addressSuggestions = data.list;
+                              }
+                          } else { this.addressSuggestions = []; }
+                      } catch (e) { console.error("Lookup error:", e); this.addressSuggestions = []; }
+                  },
+                  lookupAddressOnFocus(field) {
+                      if (this[field] && this[field].toString().trim() !== "") return;
+                      const baseValue = this.pincode || this.village || "";
+                      if (baseValue.length >= 2) { this.lookupAddress(field, baseValue); }
+                  },
+                  fillAddress(data) {
+                      if (data.village) this.village = data.village;
+                      if (data.pincode) this.pincode = data.pincode;
+                      if (data.taluka) this.taluka = data.taluka;
+                      if (data.district) this.district = data.district;
+                      if (data.state) this.state = data.state;
+                      if (data.post_office) this.post_office = data.post_office;
+                      this.addressSuggestions = [];
+                  }
               }'>
             @csrf
             @if(isset($user))
@@ -46,22 +96,54 @@
                         <p class="text-sm text-muted-foreground">Basic identity details for login and display.</p>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
-                        <!-- Full Name -->
+                    <div class="grid gap-6 sm:grid-cols-3">
+                        <!-- First Name -->
                         <div class="space-y-2">
-                            <label class="text-sm font-medium leading-none text-foreground/80" for="name">
-                                Full Name <span class="text-destructive">*</span>
+                            <label class="text-sm font-medium leading-none text-foreground/80" for="first_name">
+                                First Name <span class="text-destructive">*</span>
                             </label>
                             <div class="relative group">
                                 <span class="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-primary transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                 </span>
                                 <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm" 
-                                       id="name" name="name" placeholder="John Doe" required 
-                                       value="{{ old('name', $user->name ?? '') }}">
+                                       id="first_name" name="first_name" x-model="first_name" placeholder="John" required>
                             </div>
-                            @error('name') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                            @error('first_name') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
                         </div>
+
+                        <!-- Middle Name -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none text-foreground/80" for="middle_name">
+                                Middle Name
+                            </label>
+                            <div class="relative group">
+                                <span class="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </span>
+                                <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm" 
+                                       id="middle_name" name="middle_name" x-model="middle_name" placeholder="B.">
+                            </div>
+                            @error('middle_name') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none text-foreground/80" for="last_name">
+                                Last Name
+                            </label>
+                            <div class="relative group">
+                                <span class="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </span>
+                                <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm" 
+                                       id="last_name" name="last_name" x-model="last_name" placeholder="Doe">
+                            </div>
+                            @error('last_name') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid gap-6 sm:grid-cols-2 mt-6">
                         
                         <!-- Email -->
                         <div class="space-y-2">
@@ -111,20 +193,179 @@
                             @error('designation') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
                         </div>
 
-                        <!-- Location -->
+                        <!-- Department -->
                         <div class="space-y-2">
-                            <label class="text-sm font-medium leading-none text-foreground/80" for="location">
-                                Location
+                            <label class="text-sm font-medium leading-none text-foreground/80" for="department">
+                                Department
                             </label>
                             <div class="relative group">
                                 <span class="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-primary transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5a2.5 2.5 0 0 1 2.5-2.5h11"/></svg>
                                 </span>
-                                <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm" 
-                                       id="location" name="location" placeholder="City, Country" 
-                                       value="{{ old('location', $user->location ?? '') }}">
+                                <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm" 
+                                       id="department" name="department" placeholder="E.g. Engineering, HR" 
+                                       value="{{ old('department', $user->department ?? '') }}">
                             </div>
-                            @error('location') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                            @error('department') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Employee ID -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none text-foreground/80" for="employee_id">
+                                Employee ID
+                            </label>
+                            <div class="relative group">
+                                <span class="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M7 7h10"/><path d="M7 11h10"/><path d="M7 15h6"/></svg>
+                                </span>
+                                <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm" 
+                                       id="employee_id" name="employee_id" placeholder="EMP-001" 
+                                       value="{{ old('employee_id', $user->employee_id ?? '') }}">
+                            </div>
+                            @error('employee_id') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none text-foreground/80" for="gender">
+                                Gender
+                            </label>
+                            <div class="relative group">
+                                <span class="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-primary transition-colors z-10 pointer-events-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="4"/><path d="M12 14v7"/><path d="M9 18h6"/></svg>
+                                </span>
+                                <select class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm"
+                                        id="gender" name="gender">
+                                    <option value="">Select Gender</option>
+                                    <option value="Male" {{ old('gender', $user->gender ?? '') == 'Male' ? 'selected' : '' }}>Male</option>
+                                    <option value="Female" {{ old('gender', $user->gender ?? '') == 'Female' ? 'selected' : '' }}>Female</option>
+                                    <option value="Other" {{ old('gender', $user->gender ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
+                                </select>
+                            </div>
+                            @error('gender') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Date of Birth -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none text-foreground/80" for="date_of_birth">
+                                Date of Birth
+                            </label>
+                            <div class="relative group">
+                                <span class="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                </span>
+                                <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm" 
+                                       id="date_of_birth" name="date_of_birth" type="date" 
+                                       value="{{ old('date_of_birth', isset($user) && $user->date_of_birth ? $user->date_of_birth->format('Y-m-d') : '') }}">
+                            </div>
+                            @error('date_of_birth') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Joining Date -->
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium leading-none text-foreground/80" for="joining_date">
+                                Joining Date
+                            </label>
+                            <div class="relative group">
+                                <span class="absolute left-3 top-2.5 text-muted-foreground group-focus-within:text-primary transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+                                </span>
+                                <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 pl-10 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-sm" 
+                                       id="joining_date" name="joining_date" type="date" 
+                                       value="{{ old('joining_date', isset($user) && $user->joining_date ? $user->joining_date->format('Y-m-d') : '') }}">
+                            </div>
+                            @error('joining_date') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <!-- Address Information -->
+                        <div class="space-y-4 sm:col-span-2 p-4 rounded-xl bg-muted/20 border border-border/30">
+                            <div class="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                Address Information
+                            </div>
+
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <!-- Village -->
+                                <div class="relative space-y-2">
+                                    <label class="text-sm font-medium leading-none text-foreground/80" for="village">Village</label>
+                                    <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" 
+                                           id="village" name="village" x-model="village"
+                                           @focus="activeLookupField = 'village'; lookupAddressOnFocus('village')"
+                                           @input.debounce.300ms="activeLookupField = 'village'; lookupAddress('village', $el.value)"
+                                           placeholder="Enter Village Name">
+                                    
+                                    <!-- Suggestions Dropdown -->
+                                    <div x-show="addressSuggestions.length && activeLookupField === 'village'"
+                                         class="absolute z-50 w-full mt-1 rounded-xl border border-border bg-background shadow-xl max-h-48 overflow-auto animate-in fade-in zoom-in-95 duration-200">
+                                        <template x-for="item in addressSuggestions">
+                                            <div @click="fillAddress(item.data)"
+                                                 class="px-4 py-2.5 text-sm hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors border-b last:border-0 border-border/50"
+                                                 x-text="item.label"></div>
+                                        </template>
+                                    </div>
+                                    @error('village') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Pincode -->
+                                <div class="relative space-y-2">
+                                    <label class="text-sm font-medium leading-none text-foreground/80" for="pincode">Pincode</label>
+                                    <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" 
+                                           id="pincode" name="pincode" x-model="pincode" maxlength="6"
+                                           @focus="activeLookupField = 'pincode'; lookupAddressOnFocus('pincode')"
+                                           @input.debounce.300ms="activeLookupField = 'pincode'; lookupAddress('pincode', $el.value)"
+                                           placeholder="6-digit Pincode">
+                                    
+                                    <!-- Suggestions Dropdown -->
+                                    <div x-show="addressSuggestions.length && activeLookupField === 'pincode'"
+                                         class="absolute z-50 w-full mt-1 rounded-xl border border-border bg-background shadow-xl max-h-48 overflow-auto animate-in fade-in zoom-in-95 duration-200">
+                                        <template x-for="item in addressSuggestions">
+                                            <div @click="fillAddress(item.data)"
+                                                 class="px-4 py-2.5 text-sm hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors border-b last:border-0 border-border/50"
+                                                 x-text="item.label"></div>
+                                        </template>
+                                    </div>
+                                    @error('pincode') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Post Office -->
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none text-foreground/80" for="post_office">Post Office</label>
+                                    <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" 
+                                           id="post_office" name="post_office" x-model="post_office" placeholder="Post Office">
+                                    @error('post_office') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- Taluka -->
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none text-foreground/80" for="taluka">Taluka</label>
+                                    <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" 
+                                           id="taluka" name="taluka" x-model="taluka" placeholder="Taluka">
+                                    @error('taluka') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- District -->
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none text-foreground/80" for="district">District</label>
+                                    <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" 
+                                           id="district" name="district" x-model="district" placeholder="District">
+                                    @error('district') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                                </div>
+
+                                <!-- State -->
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium leading-none text-foreground/80" for="state">State</label>
+                                    <input class="flex h-10 w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" 
+                                           id="state" name="state" x-model="state" placeholder="State">
+                                    @error('state') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+
+                            <!-- Full Address (Concatenated or Detailed) -->
+                            <div class="space-y-2">
+                                <label class="text-sm font-medium leading-none text-foreground/80" for="address">Full Address / House No.</label>
+                                <textarea class="flex min-h-[80px] w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30" 
+                                          id="address" name="address" x-model="address" placeholder="Residential Address / House No., Street, etc."></textarea>
+                                @error('address') <p class="text-[0.8rem] font-medium text-destructive mt-1">{{ $message }}</p> @enderror
+                            </div>
                         </div>
 
                         <!-- Bio -->

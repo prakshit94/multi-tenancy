@@ -25,7 +25,7 @@ class User extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'phone', 'location', 'designation', 'status']);
+            ->logOnly(['first_name', 'middle_name', 'last_name', 'name', 'email', 'phone', 'location', 'designation', 'status', 'village', 'pincode', 'post_office', 'taluka', 'district', 'state', 'address']);
     }
 
     /**
@@ -34,6 +34,9 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'first_name',
+        'middle_name',
+        'last_name',
         'name',
         'email',
         'phone',
@@ -45,6 +48,18 @@ class User extends Authenticatable
         'last_seen_at',
         'last_login_at',
         'last_login_ip',
+        'date_of_birth',
+        'joining_date',
+        'employee_id',
+        'department',
+        'gender',
+        'address',
+        'village',
+        'pincode',
+        'post_office',
+        'taluka',
+        'district',
+        'state',
     ];
 
     /**
@@ -69,6 +84,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_seen_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'date_of_birth' => 'date',
+            'joining_date' => 'date',
         ];
     }
 

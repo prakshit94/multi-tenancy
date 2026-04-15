@@ -102,7 +102,9 @@ class UserController extends Controller
         $this->authorize('users create');
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'roles' => ['nullable', 'array'],
@@ -111,15 +113,44 @@ class UserController extends Controller
             'location' => ['nullable', 'string', 'max:255'],
             'designation' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string'],
+            'date_of_birth' => ['nullable', 'date'],
+            'joining_date' => ['nullable', 'date'],
+            'employee_id' => ['nullable', 'string', 'max:255'],
+            'department' => ['nullable', 'string', 'max:255'],
+            'gender' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string'],
+            'village' => ['nullable', 'string', 'max:255'],
+            'pincode' => ['nullable', 'string', 'max:10'],
+            'post_office' => ['nullable', 'string', 'max:255'],
+            'taluka' => ['nullable', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:255'],
+            'state' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $display_name = trim(($validated['first_name'] ?? '') . ' ' . ($validated['middle_name'] ?? '') . ' ' . ($validated['last_name'] ?? ''));
+
         $user = User::create([
-            'name' => $validated['name'],
+            'first_name' => $validated['first_name'] ?? null,
+            'middle_name' => $validated['middle_name'] ?? null,
+            'last_name' => $validated['last_name'] ?? null,
+            'name' => $display_name,
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
             'location' => $validated['location'] ?? null,
             'designation' => $validated['designation'] ?? null,
             'bio' => $validated['bio'] ?? null,
+            'date_of_birth' => $validated['date_of_birth'] ?? null,
+            'joining_date' => $validated['joining_date'] ?? null,
+            'employee_id' => $validated['employee_id'] ?? null,
+            'department' => $validated['department'] ?? null,
+            'gender' => $validated['gender'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'village' => $validated['village'] ?? null,
+            'pincode' => $validated['pincode'] ?? null,
+            'post_office' => $validated['post_office'] ?? null,
+            'taluka' => $validated['taluka'] ?? null,
+            'district' => $validated['district'] ?? null,
+            'state' => $validated['state'] ?? null,
             'password' => Hash::make($validated['password']),
             'status' => $validated['status'] ?? 'active',
         ]);
@@ -158,7 +189,9 @@ class UserController extends Controller
         $this->authorize('users edit');
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'roles' => ['nullable', 'array'],
@@ -167,15 +200,44 @@ class UserController extends Controller
             'location' => ['nullable', 'string', 'max:255'],
             'designation' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string'],
+            'date_of_birth' => ['nullable', 'date'],
+            'joining_date' => ['nullable', 'date'],
+            'employee_id' => ['nullable', 'string', 'max:255'],
+            'department' => ['nullable', 'string', 'max:255'],
+            'gender' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string'],
+            'village' => ['nullable', 'string', 'max:255'],
+            'pincode' => ['nullable', 'string', 'max:10'],
+            'post_office' => ['nullable', 'string', 'max:255'],
+            'taluka' => ['nullable', 'string', 'max:255'],
+            'district' => ['nullable', 'string', 'max:255'],
+            'state' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $display_name = trim(($validated['first_name'] ?? '') . ' ' . ($validated['middle_name'] ?? '') . ' ' . ($validated['last_name'] ?? ''));
+
         $user->update([
-            'name' => $validated['name'],
+            'first_name' => $validated['first_name'] ?? $user->first_name,
+            'middle_name' => $validated['middle_name'] ?? $user->middle_name,
+            'last_name' => $validated['last_name'] ?? $user->last_name,
+            'name' => $display_name,
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? $user->phone,
             'location' => $validated['location'] ?? $user->location,
             'designation' => $validated['designation'] ?? $user->designation,
             'bio' => $validated['bio'] ?? $user->bio,
+            'date_of_birth' => $validated['date_of_birth'] ?? $user->date_of_birth,
+            'joining_date' => $validated['joining_date'] ?? $user->joining_date,
+            'employee_id' => $validated['employee_id'] ?? $user->employee_id,
+            'department' => $validated['department'] ?? $user->department,
+            'gender' => $validated['gender'] ?? $user->gender,
+            'address' => $validated['address'] ?? $user->address,
+            'village' => $validated['village'] ?? $user->village,
+            'pincode' => $validated['pincode'] ?? $user->pincode,
+            'post_office' => $validated['post_office'] ?? $user->post_office,
+            'taluka' => $validated['taluka'] ?? $user->taluka,
+            'district' => $validated['district'] ?? $user->district,
+            'state' => $validated['state'] ?? $user->state,
             'status' => $validated['status'] ?? $user->status,
         ]);
 
