@@ -131,8 +131,8 @@
 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-8">
     <div class="flex items-center gap-4">
         <div class="flex items-center px-3 py-2 rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-gray-200 transition-all cursor-pointer group" title="Select All Visible">
-            <input type="checkbox" x-on:change=\"$el.checked ? selected = allIds : selected = []\"
-                x-bind:checked=\"selected.length === allIds.length && allIds.length > 0\"
+            <input type="checkbox" x-on:change="$el.checked ? selected = [...new Set([...selected, ...allIds])] : selected = selected.filter(id => !allIds.includes(id))"
+                x-bind:checked="allIds.length > 0 && allIds.every(id => selected.includes(id))"
                 class="h-5 w-5 rounded-lg border-gray-300 text-gray-900 focus:ring-gray-900/10 cursor-pointer transition-all">
         </div>
 

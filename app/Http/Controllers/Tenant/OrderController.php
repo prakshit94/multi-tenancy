@@ -346,9 +346,11 @@ class OrderController extends Controller
         try {
             DB::transaction(function () use ($validated, $order) {
                 // Central Logic: Check if reserved
-                $isReservedState = in_array($order->status, ['confirmed', 'processing', 'ready_to_ship']);
+                $wasReservedState = in_array($order->status, ['confirmed', 'processing', 'ready_to_ship']);
+                $newStatus = $validated['order_status'] ?? $order->status;
+                $willBeReservedState = in_array($newStatus, ['confirmed', 'processing', 'ready_to_ship']);
 
-                if ($isReservedState) {
+                if ($wasReservedState) {
                     $this->orderService->releaseReserves($order);
                 }
 
@@ -416,12 +418,6 @@ class OrderController extends Controller
                     $order->items()->create($pItem);
                 }
 
-                // Re-apply reserves if needed
-                if ($isReservedState) {
-                    $order->refresh();
-                    $this->orderService->applyReserves($order);
-                }
-
                 $order->update([
                     'customer_id' => $validated['customer_id'],
                     'warehouse_id' => $validated['warehouse_id'],
@@ -437,9 +433,15 @@ class OrderController extends Controller
                     'shipping_address_id' => $validated['shipping_address_id'] ?? null,
                     'payment_method' => $validated['payment_method'] ?? $order->payment_method,
                     'shipping_method' => $validated['shipping_method'] ?? $order->shipping_method,
-                    'status' => $validated['order_status'] ?? $order->status,
+                    'status' => $newStatus,
                     'updated_by' => auth()->id(),
                 ]);
+
+                // Re-apply reserves if needed
+                if ($willBeReservedState) {
+                    $order->refresh();
+                    $this->orderService->applyReserves($order);
+                }
             });
 
             $order->creator->notify(new OrderNotification($order, 'updated'));

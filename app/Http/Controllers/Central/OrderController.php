@@ -618,8 +618,11 @@ class OrderController extends Controller
                  * If the order is already confirmed/processing, we need to release
                  * the reserves of the OLD items before deleting them.
                  */
-                $isReservedState = in_array($order->status, ['confirmed', 'processing', 'ready_to_ship']);
-                if ($isReservedState) {
+                $wasReservedState = in_array($order->status, ['confirmed', 'processing', 'ready_to_ship']);
+                $newStatus = $validated['order_status'] ?? $order->status;
+                $willBeReservedState = in_array($newStatus, ['confirmed', 'processing', 'ready_to_ship']);
+
+                if ($wasReservedState) {
                     $this->orderService->releaseReserves($order);
                 }
 
@@ -681,17 +684,6 @@ class OrderController extends Controller
 
                 // NO INVENTORY TOUCH HERE
 
-                /**
-                 * If the order was in a reserved state, we MUST apply reserves
-                 * to the NEW items now.
-                 */
-                if ($isReservedState) {
-                    // We refresh the order to get the new items
-                    $order->refresh();
-                    $this->orderService->applyReserves($order);
-                }
-
-
                 $order->update([
                     'customer_id' => $validated['customer_id'],
                     'warehouse_id' => $validated['warehouse_id'],
@@ -707,9 +699,19 @@ class OrderController extends Controller
                     'shipping_address_id' => $validated['shipping_address_id'] ?? null,
                     'payment_method' => $validated['payment_method'] ?? $order->payment_method,
                     'shipping_method' => $validated['shipping_method'] ?? $order->shipping_method,
-                    'status' => $validated['order_status'] ?? $order->status,
+                    'status' => $newStatus,
                     'updated_by' => auth()->id(),
                 ]);
+
+                /**
+                 * If the order will be in a reserved state, we MUST apply reserves
+                 * to the NEW items now.
+                 */
+                if ($willBeReservedState) {
+                    // We refresh the order to get the new items
+                    $order->refresh();
+                    $this->orderService->applyReserves($order);
+                }
             });
             $order->creator->notify(new OrderNotification($order, 'updated'));
             if ($request->wantsJson()) {

@@ -49,7 +49,7 @@ class OrderService
 
             $available = $stock->quantity - $stock->reserve_quantity;
 
-            if ($available < $item->quantity && !$item->product->manage_stock) {
+            if ($available < $item->quantity && $item->product->manage_stock) {
                 if (!$item->product->allow_oversell) {
                     throw new Exception(
                         "Insufficient stock for Product ID {$item->product_id}. 
@@ -281,7 +281,7 @@ class OrderService
 
         $available = $stock->quantity - $stock->reserve_quantity;
 
-        if ($available < $item->quantity && !$item->product->manage_stock) {
+        if ($available < $item->quantity && $item->product->manage_stock) {
             if (!$item->product->allow_oversell) {
                 throw new Exception(
                     "Insufficient stock for Product ID {$item->product_id}. 

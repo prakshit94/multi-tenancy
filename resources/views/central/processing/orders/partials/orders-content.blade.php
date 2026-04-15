@@ -859,18 +859,24 @@
 
                     {{-- Searchable State --}}
                     <div class="prem-dropdown" x-data="{
-                        open: false, search: '', options: @js($states ?? []), selected: '{{ request('state') }}' ? '{{ request('state') }}'.split(',') : [],
+                        open: window.__open_filter === 'state', search: window.__open_filter === 'state' ? (window.__filter_search || '') : '', options: @js($states ?? []), selected: '{{ request('state') }}' ? '{{ request('state') }}'.split(',') : [],
                         get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
                         toggle(val) {
+                            window.__open_filter = 'state'; window.__filter_search = this.search;
                             if(this.selected.includes(val)) { this.selected = this.selected.filter(i => i !== val); }
                             else { this.selected.push(val); }
                             $nextTick(() => { $refs.stateInput.value = this.selected.join(','); $refs.stateInput.dispatchEvent(new Event('change')); performFilter(); });
                         },
-                        clear() {
-                            this.selected = [];
-                            $nextTick(() => { $refs.stateInput.value = ''; $refs.stateInput.dispatchEvent(new Event('change')); performFilter(); });
+                        toggleAll() {
+                            window.__open_filter = 'state'; window.__filter_search = this.search;
+                            if (this.selected.length === this.options.length && this.options.length > 0) {
+                                this.selected = [];
+                            } else {
+                                this.selected = [...this.options];
+                            }
+                            $nextTick(() => { $refs.stateInput.value = this.selected.join(','); $refs.stateInput.dispatchEvent(new Event('change')); performFilter(); });
                         }
-                    }" @click.away="open = false">
+                    }" @click.away="open = false; window.__open_filter = null; window.__filter_search = null;">
                         <input type="hidden" name="state" x-ref="stateInput" value="{{ request('state') }}">
                         <button type="button" @click="open = !open" class="prem-dropdown-btn">
                             <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'State'" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
@@ -879,9 +885,11 @@
                         <div x-show="open" x-transition.origin.top class="prem-dropdown-panel">
                             <input type="text" x-model="search" placeholder="Search state…" class="prem-dropdown-search">
                             <div class="prem-dropdown-list">
-                                <button type="button" @click="clear()" class="prem-dropdown-item" style="color:var(--text-3);font-weight:800;">
+                                <button type="button" @click="toggleAll()" class="prem-dropdown-item" style="color:var(--brand);font-weight:800;">
                                     All States
-                                    <span x-show="selected.length > 0" x-text="selected.length" style="background:var(--surface-3);padding:1px 6px;border-radius:6px;font-size:9px;"></span>
+                                    <div class="prem-check" :class="selected.length === options.length && options.length > 0 ? 'checked' : ''">
+                                        <svg x-show="selected.length === options.length && options.length > 0" style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
                                 </button>
                                 <template x-for="opt in filteredOptions" :key="opt">
                                     <button type="button" @click="toggle(opt)" class="prem-dropdown-item" :class="selected.includes(opt) ? 'selected' : ''">
@@ -897,18 +905,24 @@
 
                     {{-- Searchable District --}}
                     <div class="prem-dropdown" x-data="{
-                        open: false, search: '', options: @js($districts), selected: '{{ request('district') }}' ? '{{ request('district') }}'.split(',') : [],
+                        open: window.__open_filter === 'district', search: window.__open_filter === 'district' ? (window.__filter_search || '') : '', options: @js($districts), selected: '{{ request('district') }}' ? '{{ request('district') }}'.split(',') : [],
                         get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
                         toggle(val) {
+                            window.__open_filter = 'district'; window.__filter_search = this.search;
                             if(this.selected.includes(val)) { this.selected = this.selected.filter(i => i !== val); }
                             else { this.selected.push(val); }
                             $nextTick(() => { $refs.districtInput.value = this.selected.join(','); $refs.districtInput.dispatchEvent(new Event('change')); performFilter(); });
                         },
-                        clear() {
-                            this.selected = [];
-                            $nextTick(() => { $refs.districtInput.value = ''; $refs.districtInput.dispatchEvent(new Event('change')); performFilter(); });
+                        toggleAll() {
+                            window.__open_filter = 'district'; window.__filter_search = this.search;
+                            if (this.selected.length === this.options.length && this.options.length > 0) {
+                                this.selected = [];
+                            } else {
+                                this.selected = [...this.options];
+                            }
+                            $nextTick(() => { $refs.districtInput.value = this.selected.join(','); $refs.districtInput.dispatchEvent(new Event('change')); performFilter(); });
                         }
-                    }" @click.away="open = false">
+                    }" @click.away="open = false; window.__open_filter = null; window.__filter_search = null;">
                         <input type="hidden" name="district" x-ref="districtInput" value="{{ request('district') }}">
                         <button type="button" @click="open = !open" class="prem-dropdown-btn">
                             <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'District'" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
@@ -917,9 +931,11 @@
                         <div x-show="open" x-transition.origin.top class="prem-dropdown-panel">
                             <input type="text" x-model="search" placeholder="Search district…" class="prem-dropdown-search">
                             <div class="prem-dropdown-list">
-                                <button type="button" @click="clear()" class="prem-dropdown-item" style="color:var(--text-3);font-weight:800;">
+                                <button type="button" @click="toggleAll()" class="prem-dropdown-item" style="color:var(--brand);font-weight:800;">
                                     All Districts
-                                    <span x-show="selected.length > 0" x-text="selected.length" style="background:var(--surface-3);padding:1px 6px;border-radius:6px;font-size:9px;"></span>
+                                    <div class="prem-check" :class="selected.length === options.length && options.length > 0 ? 'checked' : ''">
+                                        <svg x-show="selected.length === options.length && options.length > 0" style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
                                 </button>
                                 <template x-for="opt in filteredOptions" :key="opt">
                                     <button type="button" @click="toggle(opt)" class="prem-dropdown-item" :class="selected.includes(opt) ? 'selected' : ''">
@@ -935,18 +951,24 @@
 
                     {{-- Searchable Taluka --}}
                     <div class="prem-dropdown" x-data="{
-                        open: false, search: '', options: @js($talukas), selected: '{{ request('taluka') }}' ? '{{ request('taluka') }}'.split(',') : [],
+                        open: window.__open_filter === 'taluka', search: window.__open_filter === 'taluka' ? (window.__filter_search || '') : '', options: @js($talukas), selected: '{{ request('taluka') }}' ? '{{ request('taluka') }}'.split(',') : [],
                         get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
                         toggle(val) {
+                            window.__open_filter = 'taluka'; window.__filter_search = this.search;
                             if(this.selected.includes(val)) { this.selected = this.selected.filter(i => i !== val); }
                             else { this.selected.push(val); }
                             $nextTick(() => { $refs.talukaInput.value = this.selected.join(','); $refs.talukaInput.dispatchEvent(new Event('change')); performFilter(); });
                         },
-                        clear() {
-                            this.selected = [];
-                            $nextTick(() => { $refs.talukaInput.value = ''; $refs.talukaInput.dispatchEvent(new Event('change')); performFilter(); });
+                        toggleAll() {
+                            window.__open_filter = 'taluka'; window.__filter_search = this.search;
+                            if (this.selected.length === this.options.length && this.options.length > 0) {
+                                this.selected = [];
+                            } else {
+                                this.selected = [...this.options];
+                            }
+                            $nextTick(() => { $refs.talukaInput.value = this.selected.join(','); $refs.talukaInput.dispatchEvent(new Event('change')); performFilter(); });
                         }
-                    }" @click.away="open = false">
+                    }" @click.away="open = false; window.__open_filter = null; window.__filter_search = null;">
                         <input type="hidden" name="taluka" x-ref="talukaInput" value="{{ request('taluka') }}">
                         <button type="button" @click="open = !open" class="prem-dropdown-btn">
                             <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'Taluka'" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
@@ -955,9 +977,11 @@
                         <div x-show="open" x-transition.origin.top class="prem-dropdown-panel">
                             <input type="text" x-model="search" placeholder="Search taluka…" class="prem-dropdown-search">
                             <div class="prem-dropdown-list">
-                                <button type="button" @click="clear()" class="prem-dropdown-item" style="color:var(--text-3);font-weight:800;">
+                                <button type="button" @click="toggleAll()" class="prem-dropdown-item" style="color:var(--brand);font-weight:800;">
                                     All Talukas
-                                    <span x-show="selected.length > 0" x-text="selected.length" style="background:var(--surface-3);padding:1px 6px;border-radius:6px;font-size:9px;"></span>
+                                    <div class="prem-check" :class="selected.length === options.length && options.length > 0 ? 'checked' : ''">
+                                        <svg x-show="selected.length === options.length && options.length > 0" style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
                                 </button>
                                 <template x-for="opt in filteredOptions" :key="opt">
                                     <button type="button" @click="toggle(opt)" class="prem-dropdown-item" :class="selected.includes(opt) ? 'selected' : ''">
@@ -973,18 +997,24 @@
 
                     {{-- Courier Filter --}}
                     <div class="prem-dropdown" x-data="{
-                        open: false, search: '', options: @js($couriers), selected: '{{ request('courier') }}' ? '{{ request('courier') }}'.split(',') : [],
+                        open: window.__open_filter === 'courier', search: window.__open_filter === 'courier' ? (window.__filter_search || '') : '', options: @js($couriers), selected: '{{ request('courier') }}' ? '{{ request('courier') }}'.split(',') : [],
                         get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
                         toggle(val) {
+                            window.__open_filter = 'courier'; window.__filter_search = this.search;
                             if(this.selected.includes(val)) { this.selected = this.selected.filter(i => i !== val); }
                             else { this.selected.push(val); }
                             $nextTick(() => { $refs.courierInput.value = this.selected.join(','); $refs.courierInput.dispatchEvent(new Event('change')); performFilter(); });
                         },
-                        clear() {
-                            this.selected = [];
-                            $nextTick(() => { $refs.courierInput.value = ''; $refs.courierInput.dispatchEvent(new Event('change')); performFilter(); });
+                        toggleAll() {
+                            window.__open_filter = 'courier'; window.__filter_search = this.search;
+                            if (this.selected.length === this.options.length && this.options.length > 0) {
+                                this.selected = [];
+                            } else {
+                                this.selected = [...this.options];
+                            }
+                            $nextTick(() => { $refs.courierInput.value = this.selected.join(','); $refs.courierInput.dispatchEvent(new Event('change')); performFilter(); });
                         }
-                    }" @click.away="open = false">
+                    }" @click.away="open = false; window.__open_filter = null; window.__filter_search = null;">
                         <input type="hidden" name="courier" x-ref="courierInput" value="{{ request('courier') }}">
                         <button type="button" @click="open = !open" class="prem-dropdown-btn">
                             <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'Courier'" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
@@ -993,9 +1023,11 @@
                         <div x-show="open" x-transition.origin.top class="prem-dropdown-panel">
                             <input type="text" x-model="search" placeholder="Search courier…" class="prem-dropdown-search">
                             <div class="prem-dropdown-list">
-                                <button type="button" @click="clear()" class="prem-dropdown-item" style="color:var(--text-3);font-weight:800;">
+                                <button type="button" @click="toggleAll()" class="prem-dropdown-item" style="color:var(--brand);font-weight:800;">
                                     All Couriers
-                                    <span x-show="selected.length > 0" x-text="selected.length" style="background:var(--surface-3);padding:1px 6px;border-radius:6px;font-size:9px;"></span>
+                                    <div class="prem-check" :class="selected.length === options.length && options.length > 0 ? 'checked' : ''">
+                                        <svg x-show="selected.length === options.length && options.length > 0" style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
                                 </button>
                                 <template x-for="opt in filteredOptions" :key="opt">
                                     <button type="button" @click="toggle(opt)" class="prem-dropdown-item" :class="selected.includes(opt) ? 'selected' : ''">
@@ -1011,18 +1043,24 @@
 
                     {{-- Product Filter --}}
                     <div class="prem-dropdown" x-data="{
-                        open: false, search: '', options: @js($products ?? []), selected: '{{ request('product') }}' ? '{{ request('product') }}'.split(',') : [],
+                        open: window.__open_filter === 'product', search: window.__open_filter === 'product' ? (window.__filter_search || '') : '', options: @js($products ?? []), selected: '{{ request('product') }}' ? '{{ request('product') }}'.split(',') : [],
                         get filteredOptions() { return !this.search ? this.options : this.options.filter(o => o.toLowerCase().includes(this.search.toLowerCase())); },
                         toggle(val) {
+                            window.__open_filter = 'product'; window.__filter_search = this.search;
                             if(this.selected.includes(val)) { this.selected = this.selected.filter(i => i !== val); }
                             else { this.selected.push(val); }
                             $nextTick(() => { $refs.productInput.value = this.selected.join(','); $refs.productInput.dispatchEvent(new Event('change')); performFilter(); });
                         },
-                        clear() {
-                            this.selected = [];
-                            $nextTick(() => { $refs.productInput.value = ''; $refs.productInput.dispatchEvent(new Event('change')); performFilter(); });
+                        toggleAll() {
+                            window.__open_filter = 'product'; window.__filter_search = this.search;
+                            if (this.selected.length === this.options.length && this.options.length > 0) {
+                                this.selected = [];
+                            } else {
+                                this.selected = [...this.options];
+                            }
+                            $nextTick(() => { $refs.productInput.value = this.selected.join(','); $refs.productInput.dispatchEvent(new Event('change')); performFilter(); });
                         }
-                    }" @click.away="open = false">
+                    }" @click.away="open = false; window.__open_filter = null; window.__filter_search = null;">
                         <input type="hidden" name="product" x-ref="productInput" value="{{ request('product') }}">
                         <button type="button" @click="open = !open" class="prem-dropdown-btn">
                             <span x-text="selected.length > 0 ? selected.length + ' Selected' : 'Product'" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
@@ -1031,9 +1069,11 @@
                         <div x-show="open" x-transition.origin.top class="prem-dropdown-panel">
                             <input type="text" x-model="search" placeholder="Search product…" class="prem-dropdown-search">
                             <div class="prem-dropdown-list">
-                                <button type="button" @click="clear()" class="prem-dropdown-item" style="color:var(--text-3);font-weight:800;">
+                                <button type="button" @click="toggleAll()" class="prem-dropdown-item" style="color:var(--brand);font-weight:800;">
                                     All Products
-                                    <span x-show="selected.length > 0" x-text="selected.length" style="background:var(--surface-3);padding:1px 6px;border-radius:6px;font-size:9px;"></span>
+                                    <div class="prem-check" :class="selected.length === options.length && options.length > 0 ? 'checked' : ''">
+                                        <svg x-show="selected.length === options.length && options.length > 0" style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
                                 </button>
                                 <template x-for="opt in filteredOptions" :key="opt">
                                     <button type="button" @click="toggle(opt)" class="prem-dropdown-item" :class="selected.includes(opt) ? 'selected' : ''">
@@ -1175,8 +1215,8 @@ $stats = [
         <div style="display:flex; align-items:center; padding:6px; border-radius:8px; cursor:pointer;"
              title="Select All on Page">
             <input type="checkbox"
-                   x-on:change="$el.checked ? selected = allIds : selected = []"
-                   x-bind:checked="selected.length === allIds.length && allIds.length > 0"
+                   x-on:change="$el.checked ? selected = [...new Set([...selected, ...allIds])] : selected = selected.filter(id => !allIds.includes(id))"
+                   x-bind:checked="allIds.length > 0 && allIds.every(id => selected.includes(id))"
                    class="prem-checkbox">
         </div>
 
