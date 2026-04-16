@@ -76,7 +76,8 @@ class OrderVerificationController extends Controller
                 'items',
                 'verifications.user',
                 'billingAddress',
-                'shippingAddress'
+                'shippingAddress',
+                'creator'
             ])
             ->orderBy('placed_at', $sortDirection);
 

@@ -1171,8 +1171,11 @@
                               class="font-bold text-primary hover:underline text-sm tracking-tight transition-colors">
                            {{ $order->order_number }}
                            </a>
-                           <span
-                              class="text-[10px] font-mono text-muted-foreground">{{ $order->created_at->format('M d, H:i') }}</span>
+                           <div class="flex flex-col">
+                               <span
+                                  class="text-[10px] font-mono text-muted-foreground">{{ $order->created_at->format('M d, H:i') }}</span>
+                               <span class="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold mt-0.5">By: {{ $order->creator->name ?? 'System' }}</span>
+                           </div>
                         </div>
                      </td>
                      <td class="p-4 px-4 align-middle">
