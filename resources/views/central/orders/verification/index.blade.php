@@ -79,9 +79,9 @@
          x-transition
          class="flex flex-wrap gap-2">
          @foreach($districtCounts as $stat)
-         <a href="{{ request()->fullUrlWithQuery(['district' => $stat->district]) }}"
+         <a href="{{ request()->fullUrlWithQuery(['district' => [$stat->district]]) }}"
             class="group flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/50 bg-background/60 backdrop-blur-md text-xs font-medium shadow-sm hover:shadow-md hover:-translate-y-[1px] transition-all
-            {{ request('district') == $stat->district ? 'ring-2 ring-primary/20 bg-primary/5 border-primary/40' : '' }}">
+            {{ in_array($stat->district, (array)request('district', [])) ? 'ring-2 ring-primary/20 bg-primary/5 border-primary/40' : '' }}">
          <span class="text-foreground/80 group-hover:text-primary transition">
          {{ $stat->district ?: 'Unknown' }}
          </span>
@@ -795,7 +795,7 @@
       </div>
       <!-- Control Bar -->
       <div
-         class="flex flex-wrap items-center justify-between gap-4 p-2 pl-3 bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] mb-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+         class="relative z-[60] flex flex-wrap items-center justify-between gap-4 p-2 pl-3 bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/5 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] mb-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
          <div class="flex items-center gap-3">
             <!-- Search Form -->
             <form id="search-form" method="GET" action="{{ url()->current() }}"
@@ -803,7 +803,13 @@
                <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
                @foreach(request()->only(['date_from', 'date_to', 'state', 'district', 'taluka', 'village', 'per_page', 'sort_direction']) as $key => $value)
                @if($value)
-               <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                   @if(is_array($value))
+                       @foreach($value as $v)
+                       <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                       @endforeach
+                   @else
+                       <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                   @endif
                @endif
                @endforeach
                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -853,54 +859,181 @@
                      class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30">
                </div>
                <!-- State -->
-               <div class="flex flex-col">
-                  <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">State</span>
-                  <select name="state"
-                     class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer appearance-none">
-                     <option value="">All States</option>
-                     @foreach ($states as $state)
-                     <option value="{{ $state }}" @selected(request('state') == $state)>
-                     {{ $state }}
-                     </option>
-                     @endforeach
-                  </select>
+               <div class="flex flex-col relative filter-dropdown" data-filter-level="state" x-data="{
+                  open: false,
+                  search: '',
+                  options: Object.values({{ json_encode($states ?? []) }}).map(String),
+                  selected: {{ json_encode((array) request('state', [])) }}.map(String),
+                  get isAllSelected() { return this.options.length > 0 && this.selected.length === this.options.length; },
+                  toggleAll() {
+                     if (this.isAllSelected) { this.selected = []; }
+                     else { this.selected = [...this.options]; }
+                  },
+                  get filteredOptions() {
+                     let qs = this.search.toLowerCase();
+                     let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
+                     return filtered.sort((a, b) => {
+                        let aSel = this.selected.includes(a);
+                        let bSel = this.selected.includes(b);
+                        if (aSel && !bSel) return -1;
+                        if (!aSel && bSel) return 1;
+                        return 0;
+                     });
+                  }
+               }" @click.away="open = false">
+                  <div class="flex items-center justify-between ml-1 leading-none mb-0.5">
+                     <span class="text-[8px] uppercase font-bold text-muted-foreground">State</span>
+                     <span class="text-[8px] font-mono text-muted-foreground/60" x-show="options.length > 0" x-cloak x-text="`(${options.length})`"></span>
+                  </div>
+                  <div @click="open = !open" 
+                     class="border border-border/50 bg-background/50 rounded-lg px-2 text-xs focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer flex justify-between items-center h-[26px]">
+                     <span class="truncate" x-text="selected.length === 0 ? 'All States' : (selected.length === options.length ? 'All States' : selected.length + ' Selected')"></span>
+                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                  <div x-show="open" style="display: none;" 
+                     class="absolute z-50 top-full left-0 mt-1 w-48 bg-background border border-border/50 rounded-lg shadow-[0_4px_20px_rgb(0,0,0,0.15)] flex flex-col max-h-60 overflow-hidden">
+                     <div class="px-2 py-1.5 border-b border-border/40 shrink-0">
+                         <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search states..." autocomplete="off"
+                             class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
+                     </div>
+                     <div class="p-1 flex flex-col gap-0.5 overflow-y-auto custom-scrollbar">
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
+                           <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
+                              :checked="isAllSelected" @change="toggleAll()">
+                           <span class="font-bold">Select All</span>
+                        </label>
+                        <div class="h-px bg-border/40 my-0.5 shrink-0"></div>
+                        <template x-for="option in filteredOptions" :key="option">
+                           <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
+                              <input type="checkbox" name="state[]" :value="option" x-model="selected"
+                                 class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
+                              <span x-text="option" class="truncate"></span>
+                           </label>
+                        </template>
+                        <div x-show="filteredOptions.length === 0" class="px-2 py-2 text-center text-xs text-muted-foreground shrink-0">
+                            No options found
+                        </div>
+                     </div>
+                  </div>
                </div>
                <!-- District -->
-               <div class="flex flex-col">
-                  <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">District</span>
-                  <select name="district"
-                     class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer appearance-none">
-                     <option value="">All Districts</option>
-                     @foreach ($districts as $district)
-                     <option value="{{ $district }}" @selected(request('district') == $district)>
-                     {{ $district }}
-                     </option>
-                     @endforeach
-                  </select>
+               <div class="flex flex-col relative filter-dropdown" data-filter-level="district" x-data="{
+                  open: false,
+                  search: '',
+                  options: Object.values({{ json_encode($districts ?? []) }}).map(String),
+                  selected: {{ json_encode((array) request('district', [])) }}.map(String),
+                  get isAllSelected() { return this.options.length > 0 && this.selected.length === this.options.length; },
+                  toggleAll() {
+                     if (this.isAllSelected) { this.selected = []; }
+                     else { this.selected = [...this.options]; }
+                  },
+                  get filteredOptions() {
+                     let qs = this.search.toLowerCase();
+                     let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
+                     return filtered.sort((a, b) => {
+                        let aSel = this.selected.includes(a);
+                        let bSel = this.selected.includes(b);
+                        if (aSel && !bSel) return -1;
+                        if (!aSel && bSel) return 1;
+                        return 0;
+                     });
+                  }
+               }" @click.away="open = false">
+                  <div class="flex items-center justify-between ml-1 leading-none mb-0.5">
+                     <span class="text-[8px] uppercase font-bold text-muted-foreground">District</span>
+                     <span class="text-[8px] font-mono text-muted-foreground/60" x-show="options.length > 0" x-cloak x-text="`(${options.length})`"></span>
+                  </div>
+                  <div @click="open = !open" 
+                     class="border border-border/50 bg-background/50 rounded-lg px-2 text-xs focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer flex justify-between items-center h-[26px]">
+                     <span class="truncate" x-text="selected.length === 0 ? 'All Districts' : (selected.length === options.length ? 'All Districts' : selected.length + ' Selected')"></span>
+                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                  <div x-show="open" style="display: none;" 
+                     class="absolute z-50 top-full left-0 mt-1 w-48 bg-background border border-border/50 rounded-lg shadow-[0_4px_20px_rgb(0,0,0,0.15)] flex flex-col max-h-60 overflow-hidden">
+                     <div class="px-2 py-1.5 border-b border-border/40 shrink-0">
+                         <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search districts..." autocomplete="off"
+                             class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
+                     </div>
+                     <div class="p-1 flex flex-col gap-0.5 overflow-y-auto custom-scrollbar">
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
+                           <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
+                              :checked="isAllSelected" @change="toggleAll()">
+                           <span class="font-bold">Select All</span>
+                        </label>
+                        <div class="h-px bg-border/40 my-0.5 shrink-0"></div>
+                        <template x-for="option in filteredOptions" :key="option">
+                           <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
+                              <input type="checkbox" name="district[]" :value="option" x-model="selected"
+                                 class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
+                              <span x-text="option" class="truncate"></span>
+                           </label>
+                        </template>
+                        <div x-show="filteredOptions.length === 0" class="px-2 py-2 text-center text-xs text-muted-foreground shrink-0">
+                            No options found
+                        </div>
+                     </div>
+                  </div>
                </div>
                <!-- Taluka -->
-               <div class="flex flex-col">
-                  <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">Taluka</span>
-                  <select name="taluka"
-                     class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer appearance-none">
-                     <option value="">All Talukas</option>
-                     @foreach ($talukas as $taluka)
-                     <option value="{{ $taluka }}" @selected(request('taluka') == $taluka)>
-                     {{ $taluka }}
-                     </option>
-                     @endforeach
-                  </select>
+               <div class="flex flex-col relative filter-dropdown" data-filter-level="taluka" x-data="{
+                  open: false,
+                  search: '',
+                  options: Object.values({{ json_encode($talukas ?? []) }}).map(String),
+                  selected: {{ json_encode((array) request('taluka', [])) }}.map(String),
+                  get isAllSelected() { return this.options.length > 0 && this.selected.length === this.options.length; },
+                  toggleAll() {
+                     if (this.isAllSelected) { this.selected = []; }
+                     else { this.selected = [...this.options]; }
+                  },
+                  get filteredOptions() {
+                     let qs = this.search.toLowerCase();
+                     let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
+                     return filtered.sort((a, b) => {
+                        let aSel = this.selected.includes(a);
+                        let bSel = this.selected.includes(b);
+                        if (aSel && !bSel) return -1;
+                        if (!aSel && bSel) return 1;
+                        return 0;
+                     });
+                  }
+               }" @click.away="open = false">
+                  <div class="flex items-center justify-between ml-1 leading-none mb-0.5">
+                     <span class="text-[8px] uppercase font-bold text-muted-foreground">Taluka</span>
+                     <span class="text-[8px] font-mono text-muted-foreground/60" x-show="options.length > 0" x-cloak x-text="`(${options.length})`"></span>
+                  </div>
+                  <div @click="open = !open" 
+                     class="border border-border/50 bg-background/50 rounded-lg px-2 text-xs focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer flex justify-between items-center h-[26px]">
+                     <span class="truncate" x-text="selected.length === 0 ? 'All Talukas' : (selected.length === options.length ? 'All Talukas' : selected.length + ' Selected')"></span>
+                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                  <div x-show="open" style="display: none;" 
+                     class="absolute z-50 top-full left-0 mt-1 w-48 bg-background border border-border/50 rounded-lg shadow-[0_4px_20px_rgb(0,0,0,0.15)] flex flex-col max-h-60 overflow-hidden">
+                     <div class="px-2 py-1.5 border-b border-border/40 shrink-0">
+                         <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search talukas..." autocomplete="off"
+                             class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
+                     </div>
+                     <div class="p-1 flex flex-col gap-0.5 overflow-y-auto custom-scrollbar">
+                        <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
+                           <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
+                              :checked="isAllSelected" @change="toggleAll()">
+                           <span class="font-bold">Select All</span>
+                        </label>
+                        <div class="h-px bg-border/40 my-0.5 shrink-0"></div>
+                        <template x-for="option in filteredOptions" :key="option">
+                           <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
+                              <input type="checkbox" name="taluka[]" :value="option" x-model="selected"
+                                 class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
+                              <span x-text="option" class="truncate"></span>
+                           </label>
+                        </template>
+                        <div x-show="filteredOptions.length === 0" class="px-2 py-2 text-center text-xs text-muted-foreground shrink-0">
+                            No options found
+                        </div>
+                     </div>
+                  </div>
                </div>
-               <!-- Village -->
-               <div class="flex flex-col">
-                  <span class="text-[8px] uppercase font-bold text-muted-foreground ml-1">Village</span>
-                  <input type="text" name="village" value="{{ request('village') }}" placeholder="Village name..."
-                     class="border-border/50 bg-background/50 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-primary/30 w-32">
-               </div>
-               <button type="submit"
-                  class="bg-primary text-white hover:bg-primary/90 px-4 py-1 rounded-lg text-xs font-bold shadow-sm transition-all mt-3">
-               Filter
-               </button>
+               <!-- Village search removed as requested -->
+               <!-- Removed manual filter button as it uses AJAX auto-submit -->
                @if (request()->anyFilled(['date_from', 'date_to', 'state', 'district', 'taluka', 'village']))
                <a href="{{ request()->fullUrlWithQuery(['date_from' => null, 'date_to' => null, 'state' => null, 'district' => null, 'taluka' => null, 'village' => null]) }}"
                   class="text-[10px] font-bold text-destructive hover:underline mt-3 ml-1">
@@ -959,7 +1092,13 @@
                   <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
                   @foreach(request()->only(['search', 'date_from', 'date_to', 'state', 'district', 'taluka', 'village']) as $key => $value)
                   @if($value)
-                  <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                      @if(is_array($value))
+                          @foreach($value as $v)
+                          <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                          @endforeach
+                      @else
+                          <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                      @endif
                   @endif
                   @endforeach
                   <label for="per_page"
@@ -1220,8 +1359,8 @@
        });
    
        container.addEventListener('change', (e) => {
-           if (e.target.id === 'per_page') {
-               const form = e.target.closest('form');
+           const form = e.target.closest('form');
+           if (form && (form.id === 'advanced-filter-form' || form.id === 'search-form' || e.target.id === 'per_page')) {
                const url = new URL(form.action);
                const params = new URLSearchParams(new FormData(form));
                loadContent(`${url.origin}${url.pathname}?${params.toString()}`);

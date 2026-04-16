@@ -33,24 +33,38 @@ class OrderVerificationController extends Controller
             ->pluck('state_name');
 
         $districts = Village::query()
-            ->when($request->filled('state'), fn($q) =>
-                $q->where('state_name', $request->state)
-            )
+            ->when($request->filled('state'), function($q) use ($request) {
+                $states = is_array($request->state) ? $request->state : [$request->state];
+                return $q->whereIn('state_name', $states);
+            })
             ->select('district_name')
             ->distinct()
             ->whereNotNull('district_name')
             ->orderBy('district_name')
             ->pluck('district_name');
 
+        if ($request->filled('district')) {
+            $reqDistricts = is_array($request->district) ? $request->district : [$request->district];
+            $validDistricts = array_values(array_intersect($reqDistricts, $districts->toArray()));
+            $request->merge(['district' => empty($validDistricts) ? null : $validDistricts]);
+        }
+
         $talukas = Village::query()
-            ->when($request->filled('district'), fn($q) =>
-                $q->where('district_name', $request->district)
-            )
+            ->when($request->filled('district'), function($q) use ($request) {
+                $districts = is_array($request->district) ? $request->district : [$request->district];
+                return $q->whereIn('district_name', $districts);
+            })
             ->select('taluka_name')
             ->distinct()
             ->whereNotNull('taluka_name')
             ->orderBy('taluka_name')
             ->pluck('taluka_name');
+
+        if ($request->filled('taluka')) {
+            $reqTalukas = is_array($request->taluka) ? $request->taluka : [$request->taluka];
+            $validTalukas = array_values(array_intersect($reqTalukas, $talukas->toArray()));
+            $request->merge(['taluka' => empty($validTalukas) ? null : $validTalukas]);
+        }
 
         $status = $request->input('status', 'unverified');
         $sortDirection = $request->input('sort_direction', 'desc');
@@ -159,35 +173,50 @@ class OrderVerificationController extends Controller
         */
 
         if ($request->filled('state')) {
-            $state = trim($request->state);
-            $query->where(function ($q) use ($state) {
-                $q->whereHas('shippingAddress', fn($sub) =>
-                    $sub->where('state', 'like', "%{$state}%")
-                )->orWhereHas('billingAddress', fn($sub) =>
-                    $sub->where('state', 'like', "%{$state}%")
-                );
+            $statesParam = is_array($request->state) ? $request->state : [$request->state];
+            $query->where(function ($block) use ($statesParam) {
+                foreach ($statesParam as $st) {
+                    $st = trim($st);
+                    $block->orWhere(function ($q) use ($st) {
+                        $q->whereHas('shippingAddress', fn($sub) =>
+                            $sub->where('state', 'like', "%{$st}%")
+                        )->orWhereHas('billingAddress', fn($sub) =>
+                            $sub->where('state', 'like', "%{$st}%")
+                        );
+                    });
+                }
             });
         }
 
         if ($request->filled('district')) {
-            $district = trim($request->district);
-            $query->where(function ($q) use ($district) {
-                $q->whereHas('shippingAddress', fn($sub) =>
-                    $sub->where('district', 'like', "%{$district}%")
-                )->orWhereHas('billingAddress', fn($sub) =>
-                    $sub->where('district', 'like', "%{$district}%")
-                );
+            $districtsParam = is_array($request->district) ? $request->district : [$request->district];
+            $query->where(function ($block) use ($districtsParam) {
+                foreach ($districtsParam as $dist) {
+                    $dist = trim($dist);
+                    $block->orWhere(function ($q) use ($dist) {
+                        $q->whereHas('shippingAddress', fn($sub) =>
+                            $sub->where('district', 'like', "%{$dist}%")
+                        )->orWhereHas('billingAddress', fn($sub) =>
+                            $sub->where('district', 'like', "%{$dist}%")
+                        );
+                    });
+                }
             });
         }
 
         if ($request->filled('taluka')) {
-            $taluka = trim($request->taluka);
-            $query->where(function ($q) use ($taluka) {
-                $q->whereHas('shippingAddress', fn($sub) =>
-                    $sub->where('taluka', 'like', "%{$taluka}%")
-                )->orWhereHas('billingAddress', fn($sub) =>
-                    $sub->where('taluka', 'like', "%{$taluka}%")
-                );
+            $talukasParam = is_array($request->taluka) ? $request->taluka : [$request->taluka];
+            $query->where(function ($block) use ($talukasParam) {
+                foreach ($talukasParam as $tal) {
+                    $tal = trim($tal);
+                    $block->orWhere(function ($q) use ($tal) {
+                        $q->whereHas('shippingAddress', fn($sub) =>
+                            $sub->where('taluka', 'like', "%{$tal}%")
+                        )->orWhereHas('billingAddress', fn($sub) =>
+                            $sub->where('taluka', 'like', "%{$tal}%")
+                        );
+                    });
+                }
             });
         }
 
