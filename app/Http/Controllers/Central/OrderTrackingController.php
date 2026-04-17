@@ -60,6 +60,19 @@ class OrderTrackingController extends Controller
             });
         }
 
+        // Dispatch Age Filter
+        if ($request->filled('dispatch_age')) {
+            $age = $request->input('dispatch_age');
+            $baseQuery->whereHas('shipments', function ($q) use ($age) {
+                if ($age === '5+') {
+                    $q->whereDate('shipped_at', '<=', now()->subDays(5)->toDateString());
+                } else {
+                    $days = (int) $age;
+                    $q->whereDate('shipped_at', now()->subDays($days)->toDateString());
+                }
+            });
+        }
+
         // Tab Counts
         $counts = [
             'shipped' => (clone $baseQuery)->where('status', 'shipped')->where('shipping_status', 'shipped')

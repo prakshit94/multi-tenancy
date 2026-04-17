@@ -790,6 +790,31 @@
                         </div>
                     </div>
 
+                    <!-- Dispatch Age -->
+                    <div class="relative w-full sm:w-48">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                        <select name="dispatch_age"
+                            class="block w-full rounded-xl border-border/50 py-2 pl-9 pr-8 text-foreground bg-background/50 focus:bg-background focus:ring-2 focus:ring-primary/20 text-sm appearance-none outline-none transition-all shadow-sm cursor-pointer hover:bg-background/80">
+                            <option value="">Any Dispatch Age</option>
+                            <option value="1" {{ request('dispatch_age') == '1' ? 'selected' : '' }}>1 Day Old</option>
+                            <option value="2" {{ request('dispatch_age') == '2' ? 'selected' : '' }}>2 Days Old</option>
+                            <option value="3" {{ request('dispatch_age') == '3' ? 'selected' : '' }}>3 Days Old</option>
+                            <option value="4" {{ request('dispatch_age') == '4' ? 'selected' : '' }}>4 Days Old</option>
+                            <option value="5" {{ request('dispatch_age') == '5' ? 'selected' : '' }}>5 Days Old</option>
+                            <option value="5+" {{ request('dispatch_age') == '5+' ? 'selected' : '' }}>Older than 5 Days</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-muted-foreground/60">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+
                     <!-- Combined Action -->
                     <div class="flex items-center gap-2 ml-auto">
                         <button type="submit"
