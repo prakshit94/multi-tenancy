@@ -806,7 +806,9 @@
                             <option value="3" {{ request('dispatch_age') == '3' ? 'selected' : '' }}>3 Days Old</option>
                             <option value="4" {{ request('dispatch_age') == '4' ? 'selected' : '' }}>4 Days Old</option>
                             <option value="5" {{ request('dispatch_age') == '5' ? 'selected' : '' }}>5 Days Old</option>
-                            <option value="5+" {{ request('dispatch_age') == '5+' ? 'selected' : '' }}>Older than 5 Days</option>
+                            <option value="6" {{ request('dispatch_age') == '6' ? 'selected' : '' }}>6 Days Old</option>
+                            <option value="7" {{ request('dispatch_age') == '7' ? 'selected' : '' }}>7 Days Old</option>
+                            <option value="7+" {{ request('dispatch_age') == '7+' ? 'selected' : '' }}>Older than 7 Days</option>
                         </select>
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-muted-foreground/60">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

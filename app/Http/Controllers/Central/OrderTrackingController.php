@@ -64,8 +64,9 @@ class OrderTrackingController extends Controller
         if ($request->filled('dispatch_age')) {
             $age = $request->input('dispatch_age');
             $baseQuery->whereHas('shipments', function ($q) use ($age) {
-                if ($age === '5+') {
-                    $q->whereDate('shipped_at', '<=', now()->subDays(5)->toDateString());
+                if (str_ends_with($age, '+')) {
+                    $days = (int) rtrim($age, '+');
+                    $q->whereDate('shipped_at', '<=', now()->subDays($days)->toDateString());
                 } else {
                     $days = (int) $age;
                     $q->whereDate('shipped_at', now()->subDays($days)->toDateString());
