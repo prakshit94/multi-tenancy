@@ -22,7 +22,24 @@
 
    </div>
 
-   <div id="orders-table-container" x-data="{ selected: [] }">
+   <div id="orders-table-wrapper" x-data="{ 
+       selected: [],
+       allIds: [{{ $orders->pluck('id')->join(',') }}],
+       toggleAll() {
+           if (this.selected.length === this.allIds.length && this.allIds.length > 0) {
+               this.selected = [];
+           } else {
+               this.selected = [...this.allIds];
+           }
+       },
+       isAllSelected() {
+           return this.allIds.length > 0 && this.allIds.every(id => this.selected.includes(id));
+       },
+       isSomeSelected() {
+           return this.selected.length > 0 && !this.isAllSelected();
+       }
+   }">
+      <div id="orders-table-container">
       
       <!-- Control Bar (Glassmorphism) -->
       <div class="flex flex-wrap items-center justify-between gap-5 p-3 pl-4 bg-white/60 dark:bg-black/30 border border-white/50 dark:border-white/10 backdrop-blur-3xl rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.05)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] mb-8 transition-all duration-500 hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] group/control relative z-20">
@@ -99,7 +116,17 @@
                       <kbd class="hidden sm:inline-flex h-5 items-center gap-1 rounded bg-muted/40 px-1.5 font-mono text-[10px] font-bold text-muted-foreground/80 ring-1 ring-border/20"><span class="text-xs">/</span></kbd>
                   </div>
                </div>
-            </form>
+                        </form>
+ 
+            <!-- Per Page Control -->
+            <div class="flex items-center gap-2 ml-auto">
+                <select name="per_page" form="search-form" @change="updateFilters($event.target.value)" class="appearance-none h-10 rounded-xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-black/40 text-[13px] font-bold text-foreground cursor-pointer shadow-sm hover:bg-white/80 dark:hover:bg-black/60 transition-colors focus:ring-2 focus:ring-primary/30 outline-none pl-4 pr-9 {!! $bgStr !!} bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat">
+                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10 / page</option>
+                    <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25 / page</option>
+                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 / page</option>
+                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100 / page</option>
+                </select>
+            </div>
          </div>
 
 
@@ -181,12 +208,16 @@
             @endif
          </div>
          <div class="relative w-full overflow-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-            <table class="w-full caption-bottom text-sm relative">
+                         <table class="w-full caption-bottom text-sm relative mb-32">
                <thead class="[&_tr]:border-b relative z-10">
                   <tr class="border-b border-white/40 dark:border-white/10 bg-white/60 dark:bg-black/40 backdrop-blur-xl transition-colors">
                      <th class="h-10 w-[40px] px-4 text-left align-middle">
                         <div class="flex items-center">
-                           <input type="checkbox" class="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary/20 bg-background cursor-pointer transition-all checked:bg-primary checked:border-primary shadow-sm" @click="selected = $event.target.checked ? [{{ $orders->pluck('id')->join(',') }}] : []">
+                           <input type="checkbox" 
+                                  class="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary/20 bg-background cursor-pointer transition-all checked:bg-primary checked:border-primary shadow-sm" 
+                                  @click="toggleAll()"
+                                  :checked="isAllSelected()"
+                                  :class="isSomeSelected() ? 'opacity-50' : ''">
                         </div>
                      </th>
                      <th class="h-10 px-4 text-left align-middle font-bold text-muted-foreground/60 uppercase tracking-widest text-[10px]">Order & Date</th>
@@ -510,7 +541,10 @@
        let searchTimeout;
    
        async function loadContent(url, pushState = true) {
-           if (loading) loading.style.opacity = '1';
+           if (loading) {
+               loading.style.opacity = '1';
+               loading.classList.remove('pointer-events-none');
+           }
            try {
                const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                if (!res.ok) throw new Error('Network response was not ok');
@@ -520,15 +554,24 @@
                const newContent = doc.getElementById('orders-table-container');
                if (newContent) {
                    container.innerHTML = newContent.innerHTML;
+                   const rawIds = Array.from(newContent.querySelectorAll('input[type="checkbox"][value]')).map(cb => parseInt(cb.value)).filter(id => !isNaN(id));
+                   if (typeof Alpine !== 'undefined') {
+                       const wrapper = document.getElementById('orders-table-wrapper');
+                       if (wrapper && Alpine.$data(wrapper)) Alpine.$data(wrapper).allIds = rawIds;
+                       Alpine.initTree(container);
+                   }
                    if (pushState) window.history.pushState({}, '', url);
-                   if (typeof Alpine !== 'undefined') Alpine.initTree(container);
                } else {
                    window.location.href = url;
                }
            } catch (err) {
+               console.error('AJAX Load Error:', err);
                window.location.href = url;
            } finally {
-               if (loading) loading.style.opacity = '0';
+               if (loading) {
+                   loading.style.opacity = '0';
+                   loading.classList.add('pointer-events-none');
+               }
            }
        }
    

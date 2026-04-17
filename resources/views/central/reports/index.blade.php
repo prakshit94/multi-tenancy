@@ -46,6 +46,10 @@
                         Orders Report
                     </option>
 
+                    <option value="unfulfillable" {{ old('report_type') == 'unfulfillable' ? 'selected' : '' }}>
+                        Unfulfillable Orders Report (Out of Stock)
+                    </option>
+
                     <option value="inventory" {{ old('report_type') == 'inventory' ? 'selected' : '' }}>
                         Inventory / Stock Report
                     </option>

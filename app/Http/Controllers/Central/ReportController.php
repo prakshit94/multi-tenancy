@@ -30,7 +30,7 @@ class ReportController extends Controller
         $this->authorize('finance view');
 
         $request->validate([
-            'report_type' => 'required|string|in:orders,inventory,customers,interactions',
+            'report_type' => 'required|string|in:orders,inventory,customers,interactions,unfulfillable',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'format' => 'required|string|in:csv,xlsx,pdf',
@@ -48,6 +48,13 @@ class ReportController extends Controller
 
             case 'orders':
                 $exportClass = new OrdersExport([
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ]);
+                break;
+                
+            case 'unfulfillable':
+                $exportClass = new \App\Exports\UnfulfillableOrdersExport([
                     'start_date' => $startDate,
                     'end_date' => $endDate,
                 ]);
@@ -106,11 +113,11 @@ class ReportController extends Controller
 
             case 'custom':
                 $startDate = $request->input('start_date')
-                    ? \Carbon\Carbon::parse($request->input('start_date'))
+                    ? \Carbon\Carbon::parse($request->input('start_date'))->startOfDay()
                     : now()->startOfMonth();
 
                 $endDate = $request->input('end_date')
-                    ? \Carbon\Carbon::parse($request->input('end_date'))
+                    ? \Carbon\Carbon::parse($request->input('end_date'))->endOfDay()
                     : now()->endOfMonth();
                 break;
 
