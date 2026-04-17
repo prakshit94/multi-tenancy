@@ -734,7 +734,7 @@
                             Order Complaints
                         </h3>
                         <button onclick="document.getElementById('complaint-dialog').showModal()" class="text-[10px] font-bold uppercase tracking-wider bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-black transition-colors shadow-sm">
-                            Log Issue
+                            Create Complaint
                         </button>
                     </div>
 
@@ -757,8 +757,33 @@
                                                                                                                                                 <p class="text-[10px] text-gray-500 font-medium mt-1">by {{ $complaint->user->name ?? 'System' }}</p>
                                                                                                                                             </div>
                                                                                                                                         </div>
-                                                                                                                                        <p class="text-sm font-bold text-gray-900 leading-snug">{{ $complaint->subject }}</p>
-                                                                                                                                        <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ $complaint->description }}</p>
+                                                                                                                                        <div class="mt-2">
+                                                                                                                                            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                                                                                                                                <p class="text-sm font-bold text-gray-900 leading-snug">{{ $complaint->subject }}</p>
+                                                                                                                                                @if($complaint->type)
+                                                                                                                                                    <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-200 text-gray-700 border border-gray-300">{{ str_replace('_', ' ', $complaint->type) }}</span>
+                                                                                                                                                @endif
+                                                                                                                                                @if($complaint->priority)
+                                                                                                                                                    <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border {{ $complaint->priority === 'high' || $complaint->priority === 'urgent' ? 'bg-red-50 text-red-700 border-red-200' : ($complaint->priority === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200') }}">{{ $complaint->priority }}</span>
+                                                                                                                                                @endif
+                                                                                                                                            </div>
+
+                                                                                                                                            <div class="bg-white rounded-md p-2 border border-gray-100 text-[11px] text-gray-600 whitespace-pre-wrap leading-snug max-h-24 overflow-y-auto custom-scrollbar">
+                                                                                                                                                {{ $complaint->description }}
+                                                                                                                                            </div>
+
+                                                                                                                                            @if($complaint->resolution)
+                                                                                                                                                <div class="mt-2 bg-emerald-50/50 rounded-md p-2 border border-emerald-100">
+                                                                                                                                                    <div class="flex items-center justify-between mb-0.5">
+                                                                                                                                                        <span class="text-[9px] font-bold uppercase tracking-widest text-emerald-700">Resolution Details</span>
+                                                                                                                                                        @if($complaint->resolved_at)
+                                                                                                                                                            <span class="text-[9px] text-emerald-600 font-medium">{{ $complaint->resolved_at->format('M d, Y h:i A') }}</span>
+                                                                                                                                                        @endif
+                                                                                                                                                    </div>
+                                                                                                                                                    <p class="text-[11px] text-emerald-900 whitespace-pre-wrap leading-snug max-h-20 overflow-y-auto custom-scrollbar">{{ $complaint->resolution }}</p>
+                                                                                                                                                </div>
+                                                                                                                                            @endif
+                                                                                                                                        </div>
                                                                                                                                         <div class="mt-3 pt-3 border-t border-gray-100/80 flex justify-end">
                                                                                                                                             <a href="{{ route('central.complaints.index', ['search' => $complaint->reference_number]) }}" class="text-[10px] font-bold uppercase text-primary hover:text-indigo-700 hover:underline">View Details Record &rarr;</a>
                                                                                                                                         </div>
