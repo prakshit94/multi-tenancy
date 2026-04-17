@@ -62,11 +62,13 @@ class ComplaintController extends Controller
         // $this->authorize('complaints create');
 
         $validated = $request->validate([
-            'order_id' => 'required|exists:orders,id',
+            'order_id' => 'required|exists:orders,id|unique:complaints,order_id',
             'type' => 'required|string',
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high,urgent',
+        ], [
+            'order_id.unique' => 'A complaint has already been logged for this order.',
         ]);
 
         try {
