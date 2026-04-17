@@ -101,7 +101,7 @@ class ComplaintController extends Controller
         // $this->authorize('complaints edit');
 
         $validated = $request->validate([
-            'status' => 'required|in:open,in_progress,resolved,closed',
+            'status' => 'required|in:open,in_progress,resolved',
             'resolution' => 'nullable|string',
         ]);
 
@@ -113,7 +113,7 @@ class ComplaintController extends Controller
                     $data['resolution'] = $validated['resolution'];
                 }
 
-                if (in_array($validated['status'], ['resolved', 'closed']) && !$complaint->resolved_at) {
+                if ($validated['status'] === 'resolved' && !$complaint->resolved_at) {
                     $data['resolved_at'] = now();
                 }
 

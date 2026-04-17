@@ -110,7 +110,6 @@
                         ['label' => 'Open', 'value' => 'open'],
                         ['label' => 'In Progress', 'value' => 'in_progress'],
                         ['label' => 'Resolved', 'value' => 'resolved'],
-                        ['label' => 'Closed', 'value' => 'closed'],
                     ];
                 @endphp
                 @foreach($filters as $filter)
@@ -390,7 +389,7 @@
                             <div>
                                 <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">Case
                                     Status</label>
-                                <div class="grid grid-cols-2 gap-3">
+                                <div class="grid grid-cols-3 gap-3">
                                     <label class="cursor-pointer">
                                         <input type="radio" x-model="status" name="status" value="open"
                                             class="peer sr-only">
@@ -415,23 +414,15 @@
                                             Resolved
                                         </div>
                                     </label>
-                                    <label class="cursor-pointer">
-                                        <input type="radio" x-model="status" name="status" value="closed"
-                                            class="peer sr-only">
-                                        <div
-                                            class="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-gray-50 peer-checked:border-gray-500 peer-checked:bg-gray-100 peer-checked:text-gray-700 peer-focus:ring-2 peer-focus:ring-gray-500/20 transition-all text-center">
-                                            Closed
-                                        </div>
-                                    </label>
                                 </div>
                             </div>
 
-                            <div x-show="status === 'resolved' || status === 'closed'" x-transition class="space-y-2">
+                            <div x-show="status === 'resolved'" x-transition class="space-y-2">
                                 <label
                                     class="block text-[11px] font-bold uppercase tracking-widest text-gray-500">Resolution
                                     Summary (Required)</label>
                                 <textarea name="resolution" x-model="resolution" rows="3"
-                                    :required="status === 'resolved' || status === 'closed'"
+                                    :required="status === 'resolved'"
                                     placeholder="Explain how this issue was resolved..."
                                     class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none shadow-sm"></textarea>
                             </div>
