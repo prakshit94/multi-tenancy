@@ -1125,9 +1125,9 @@
                   <div>
                   <div class="flex items-center gap-3 mb-1">
                   <h4 class="text-lg font-black text-foreground cursor-pointer hover:text-indigo-500 transition-colors"
-                     title="Click to copy"
+                     title="Click to copy ID and view order"
                      x-text="order.order_number"
-                     @click="window.copyToClipboardFallback(order.order_number); window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'success', message: 'Order ID copied to clipboard' } }));">
+                     @click="window.copyToClipboardFallback(order.order_number); window.dispatchEvent(new CustomEvent('notify', { detail: { type: 'success', message: 'Order ID copied to clipboard' } })); window.open('/orders/' + order.id, '_blank');">
                   </h4>
                   <span
                      class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-secondary text-foreground"
