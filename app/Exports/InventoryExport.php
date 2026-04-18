@@ -37,10 +37,10 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
             'Stock Health Status',
             
             // Order Activity (Based on Date Filter)
-            'Total Orders Count (Selected Date)',
-            'Total Ordered Qty (Selected Date)',
-            'Dispatched Qty (Selected Date)',
-            'Pending Qty (Selected Date)',
+            'Total Orders Count (All Time / Filtered)',
+            'Total Ordered Qty (All Time / Filtered)',
+            'Dispatched Qty (All Time / Filtered)',
+            'Pending Qty (All Time / Filtered)',
             
             // Financials
             'Unit Cost Price',
@@ -52,8 +52,8 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
 
     public function map($stock): array
     {
-        $startDate = !empty($this->filters['start_date']) ? $this->filters['start_date'] : now()->startOfDay()->toDateString();
-        $endDate = !empty($this->filters['end_date']) ? $this->filters['end_date'] : now()->endOfDay()->toDateString();
+        $startDate = !empty($this->filters['start_date']) ? $this->filters['start_date'] : null;
+        $endDate = !empty($this->filters['end_date']) ? $this->filters['end_date'] : null;
 
         $baseOrderQuery = \App\Models\OrderItem::where('product_id', $stock->product_id)
             ->whereHas('order', function ($q) use ($stock) {
