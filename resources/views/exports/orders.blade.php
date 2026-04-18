@@ -65,7 +65,8 @@
                 <th>KYC Status</th>
 
                 <!-- Products -->
-                <th>Ordered Products</th>
+                <th>Ordered Product Name</th>
+                <th>Ordered Product Qty</th>
 
                 <!-- Billing Address -->
                 <th>Billing Label</th>
@@ -106,12 +107,8 @@
                     // Shipments
                     $couriers = $order->shipments->pluck('carrier')->filter()->unique()->implode(', ');
                     $trackingNumbers = $order->shipments->pluck('tracking_number')->filter()->unique()->implode(', ');
-
-                    // Products String
-                    $orderedProducts = $order->items->map(function ($item) {
-                        return $item->product_name . ' (' . floatval($item->quantity) . 'x)';
-                    })->implode(', ');
                 @endphp
+                @foreach($order->items as $item)
                 <tr>
                     <td>{{ $order->order_number }}</td>
                     <td>{{ $order->created_at->format('Y-m-d') }}</td>
@@ -135,7 +132,8 @@
                     <td>{{ $order->customer?->kyc_completed ? 'Completed' : 'Pending' }}</td>
 
                     <!-- Products -->
-                    <td>{{ $orderedProducts }}</td>
+                    <td>{{ $item->product_name }}</td>
+                    <td>{{ floatval($item->quantity) }}</td>
 
                     <!-- Billing -->
                     <td>{{ $order->billingAddress?->label ?? 'N/A' }}</td>
@@ -169,6 +167,7 @@
                     <td>{{ $couriers ?: 'N/A' }}</td>
                     <td>{{ $trackingNumbers ?: 'N/A' }}</td>
                 </tr>
+                @endforeach
             @endforeach
         </tbody>
     </table>

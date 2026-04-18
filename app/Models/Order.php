@@ -48,6 +48,70 @@ class Order extends Model
                 $order->order_number = self::generateOrderNumber();
             }
         });
+
+        static::created(function (Order $order) {
+            if ($order->billing_address_id && $billing = $order->billingAddress) {
+                $order->addresses()->create([
+                    'type' => 'billing',
+                    'name' => $billing->contact_name ?: ($order->customer->name ?? 'N/A'),
+                    'address_line_1' => $billing->address_line1,
+                    'address_line_2' => $billing->address_line2,
+                    'city' => $billing->district ?? $billing->village ?? $billing->taluka ?? 'N/A',
+                    'state' => $billing->state,
+                    'postal_code' => $billing->pincode,
+                    'country' => $billing->country ?: 'India',
+                    'phone' => $billing->contact_phone ?: ($order->customer->phone ?? null),
+                ]);
+            }
+
+            if ($order->shipping_address_id && $shipping = $order->shippingAddress) {
+                $order->addresses()->create([
+                    'type' => 'shipping',
+                    'name' => $shipping->contact_name ?: ($order->customer->name ?? 'N/A'),
+                    'address_line_1' => $shipping->address_line1,
+                    'address_line_2' => $shipping->address_line2,
+                    'city' => $shipping->district ?? $shipping->village ?? $shipping->taluka ?? 'N/A',
+                    'state' => $shipping->state,
+                    'postal_code' => $shipping->pincode,
+                    'country' => $shipping->country ?: 'India',
+                    'phone' => $shipping->contact_phone ?: ($order->customer->phone ?? null),
+                ]);
+            }
+        });
+
+        static::updated(function (Order $order) {
+            if ($order->wasChanged('billing_address_id') && $order->billing_address_id && $billing = $order->billingAddress) {
+                $order->addresses()->updateOrCreate(
+                    ['type' => 'billing'],
+                    [
+                        'name' => $billing->contact_name ?: ($order->customer->name ?? 'N/A'),
+                        'address_line_1' => $billing->address_line1,
+                        'address_line_2' => $billing->address_line2,
+                        'city' => $billing->district ?? $billing->village ?? $billing->taluka ?? 'N/A',
+                        'state' => $billing->state,
+                        'postal_code' => $billing->pincode,
+                        'country' => $billing->country ?: 'India',
+                        'phone' => $billing->contact_phone ?: ($order->customer->phone ?? null),
+                    ]
+                );
+            }
+
+            if ($order->wasChanged('shipping_address_id') && $order->shipping_address_id && $shipping = $order->shippingAddress) {
+                $order->addresses()->updateOrCreate(
+                    ['type' => 'shipping'],
+                    [
+                        'name' => $shipping->contact_name ?: ($order->customer->name ?? 'N/A'),
+                        'address_line_1' => $shipping->address_line1,
+                        'address_line_2' => $shipping->address_line2,
+                        'city' => $shipping->district ?? $shipping->village ?? $shipping->taluka ?? 'N/A',
+                        'state' => $shipping->state,
+                        'postal_code' => $shipping->pincode,
+                        'country' => $shipping->country ?: 'India',
+                        'phone' => $shipping->contact_phone ?: ($order->customer->phone ?? null),
+                    ]
+                );
+            }
+        });
     }
 
     /**
