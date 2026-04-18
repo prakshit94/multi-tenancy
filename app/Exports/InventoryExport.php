@@ -25,28 +25,28 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
     {
         return [
             // Identification
-            'Product Name',
+            'Product',
             'SKU',
-            'Warehouse Location',
+            'Warehouse',
             
             // Physical Stock Status
-            'Total Physical Stock',
-            'Stock Reserved For Orders',
-            'Stock Available To Sell',
-            'Shortage (Need to buy)',
-            'Stock Health Status',
+            'Physical Stock in Warehouse',
+            'Reserved for Customer Orders',
+            'Available to Sell Now',
+            'Stock Shortage (Need to Buy)',
+            'Inventory Status',
             
             // Order Activity (Based on Date Filter)
-            'Total Orders Count (All Time / Filtered)',
-            'Total Ordered Qty (All Time / Filtered)',
-            'Dispatched Qty (All Time / Filtered)',
-            'Pending Qty (All Time / Filtered)',
+            'Number of Orders Placed',
+            'Total Items Ordered',
+            'Items Shipped Out',
+            'Items Waiting to Ship',
             
             // Financials
-            'Unit Cost Price',
-            'Unit Selling Price',
-            'Total Physical Stock Value',
-            'Expected Revenue (Available Stock)'
+            'Cost Per Item',
+            'Selling Price Per Item',
+            'Total Value of Physical Stock',
+            'Potential Revenue of Available Stock'
         ];
     }
 
