@@ -85,7 +85,8 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
 
         $allTimePendingQty = (float) \App\Models\OrderItem::where('product_id', $stock->product_id)
             ->whereHas('order', function ($q) use ($stock) {
-                $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship', 'scheduled'])
+                // Matched EXACTLY with InventoryController logic
+                $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship'])
                   ->where('warehouse_id', $stock->warehouse_id);
             })->sum('quantity');
 
@@ -104,12 +105,11 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
         $totalPhysicalValue = $physicalQty * $costPrice;
         $totalExpectedRevenue = $availableToSell * $sellingPrice;
 
+        // Status calculation aligned EXACTLY with InventoryController special filters
         $status = 'In Stock';
-        if ($shortage > 0) {
-            $status = 'Deficit / Unfulfillable';
-        } elseif ($availableToSell <= 0) {
+        if ($physicalQty <= 0) {
             $status = 'Out of Stock';
-        } elseif ($availableToSell <= ($stock->product?->reorder_level ?? 5)) {
+        } elseif ($physicalQty <= ($stock->product?->reorder_level ?? 5)) {
             $status = 'Low Stock';
         }
 
