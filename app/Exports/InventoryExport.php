@@ -24,21 +24,28 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
     public function headings(): array
     {
         return [
+            // Identification
             'Product Name',
             'SKU',
-            'Warehouse',
-            'Total Qty Ordered (Today/Filtered)',
-            'Qty Dispatched (Fulfilled)',
-            'Qty Pending (Unfulfilled)',
-            'Physical Quantity',
-            'System Reserved Quantity',
-            'Available To Sell',
-            'Shortage / Unfulfillable',
+            'Warehouse Location',
+            
+            // Physical Stock Status
+            'Total Physical Stock',
+            'Stock Reserved For Orders',
+            'Stock Available To Sell',
+            'Shortage (Need to buy)',
+            'Stock Health Status',
+            
+            // Order Activity (Based on Date Filter)
+            'Orders Placed (Selected Date)',
+            'Orders Dispatched (Selected Date)',
+            'Orders Pending (Selected Date)',
+            
+            // Financials
             'Unit Cost Price',
             'Unit Selling Price',
-            'Total Physical Value (Cost)',
-            'Total Expected Revenue',
-            'Stock Status'
+            'Total Physical Stock Value',
+            'Expected Revenue (Available Stock)'
         ];
     }
 
@@ -96,21 +103,28 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
         }
 
         return [
+            // Identification
             $stock->product?->name ?? 'N/A',
             $stock->product?->sku ?? 'N/A',
             $stock->warehouse?->name ?? 'N/A',
-            $totalOrdered,
-            $qtyDispatched,
-            $qtyPending,
+            
+            // Physical Stock Status
             $physicalQty,
             $reservedQty,
             $availableToSell,
             $shortage,
+            $status,
+            
+            // Order Activity
+            $totalOrdered,
+            $qtyDispatched,
+            $qtyPending,
+            
+            // Financials
             $costPrice,
             $sellingPrice,
             $totalPhysicalValue,
-            $totalExpectedRevenue,
-            $status
+            $totalExpectedRevenue
         ];
     }
 }
