@@ -37,9 +37,10 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
             'Stock Health Status',
             
             // Order Activity (Based on Date Filter)
-            'Orders Placed (Selected Date)',
-            'Orders Dispatched (Selected Date)',
-            'Orders Pending (Selected Date)',
+            'Total Orders Count (Selected Date)',
+            'Total Ordered Qty (Selected Date)',
+            'Dispatched Qty (Selected Date)',
+            'Pending Qty (Selected Date)',
             
             // Financials
             'Unit Cost Price',
@@ -68,7 +69,8 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
         }
 
         // Enterprise Granular Breakdown
-        $totalOrdered = (float) (clone $baseOrderQuery)->sum('quantity');
+        $orderCount = (clone $baseOrderQuery)->distinct('order_id')->count('order_id');
+        $qtyOrdered = (float) (clone $baseOrderQuery)->sum('quantity');
         
         $qtyDispatched = (float) (clone $baseOrderQuery)
             ->whereHas('order', function ($q) {
@@ -116,7 +118,8 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
             $status,
             
             // Order Activity
-            $totalOrdered,
+            $orderCount,
+            $qtyOrdered,
             $qtyDispatched,
             $qtyPending,
             
