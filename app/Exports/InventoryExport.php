@@ -83,8 +83,17 @@ class InventoryExport implements FromCollection, WithHeadings, WithMapping
             })->sum('quantity');
 
 
+        $allTimePendingQty = (float) \App\Models\OrderItem::where('product_id', $stock->product_id)
+            ->whereHas('order', function ($q) use ($stock) {
+                $q->whereIn('status', ['pending', 'confirmed', 'processing', 'ready_to_ship', 'scheduled'])
+                  ->where('warehouse_id', $stock->warehouse_id);
+            })->sum('quantity');
+
         $physicalQty = (float) $stock->quantity;
-        $reservedQty = (float) $stock->reserve_quantity;
+        
+        // Dynamically calculate actual reserved stock based on all live unfulfilled orders,
+        // ignoring date filters so the true available stock is perfectly accurate.
+        $reservedQty = $allTimePendingQty; 
         
         $availableToSell = max(0, $physicalQty - $reservedQty);
         $shortage = max(0, $reservedQty - $physicalQty);
