@@ -475,10 +475,10 @@
                               </tr>
                            </thead>
                            <tbody class="divide-y divide-border/30 bg-card">
-                              <template x-for="item in activeOrder?.items" :key="item.id">
+                              <template x-for="item in (activeOrder?.items || [])" :key="item.id">
                                  <tr class="hover:bg-muted/10 transition-colors">
                                     <td class="px-4 py-3">
-                                       <div class="font-medium text-foreground" x-text="item.product_name">
+                                       <div class="font-medium text-foreground" x-text="item.product_name || item.product?.name || 'Unnamed Product'">
                                        </div>
                                        <div class="text-[11px] text-muted-foreground font-mono mt-0.5"
                                           x-text="'SKU: ' + item.sku">
@@ -803,13 +803,13 @@
                <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
                @foreach(request()->only(['date_from', 'date_to', 'state', 'district', 'taluka', 'village', 'per_page', 'sort_direction']) as $key => $value)
                @if($value)
-                   @if(is_array($value))
-                       @foreach($value as $v)
-                       <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
-                       @endforeach
-                   @else
-                       <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                   @endif
+               @if(is_array($value))
+               @foreach($value as $v)
+               <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+               @endforeach
+               @else
+               <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+               @endif
                @endif
                @endforeach
                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -866,21 +866,21 @@
                   selected: {{ json_encode((array) request('state', [])) }}.map(String),
                   get isAllSelected() { return this.options.length > 0 && this.selected.length === this.options.length; },
                   toggleAll() {
-                     if (this.isAllSelected) { this.selected = []; }
-                     else { this.selected = [...this.options]; }
+                  if (this.isAllSelected) { this.selected = []; }
+                  else { this.selected = [...this.options]; }
                   },
                   get filteredOptions() {
-                     let qs = this.search.toLowerCase();
-                     let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
-                     return filtered.sort((a, b) => {
-                        let aSel = this.selected.includes(a);
-                        let bSel = this.selected.includes(b);
-                        if (aSel && !bSel) return -1;
-                        if (!aSel && bSel) return 1;
-                        return 0;
-                     });
+                  let qs = this.search.toLowerCase();
+                  let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
+                  return filtered.sort((a, b) => {
+                  let aSel = this.selected.includes(a);
+                  let bSel = this.selected.includes(b);
+                  if (aSel && !bSel) return -1;
+                  if (!aSel && bSel) return 1;
+                  return 0;
+                  });
                   }
-               }" @click.away="open = false">
+                  }" @click.away="open = false">
                   <div class="flex items-center justify-between ml-1 leading-none mb-0.5">
                      <span class="text-[8px] uppercase font-bold text-muted-foreground">State</span>
                      <span class="text-[8px] font-mono text-muted-foreground/60" x-show="options.length > 0" x-cloak x-text="`(${options.length})`"></span>
@@ -888,30 +888,32 @@
                   <div @click="open = !open" 
                      class="border border-border/50 bg-background/50 rounded-lg px-2 text-xs focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer flex justify-between items-center h-[26px]">
                      <span class="truncate" x-text="selected.length === 0 ? 'All States' : (selected.length === options.length ? 'All States' : selected.length + ' Selected')"></span>
-                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                     </svg>
                   </div>
                   <div x-show="open" style="display: none;" 
                      class="absolute z-50 top-full left-0 mt-1 w-48 bg-background border border-border/50 rounded-lg shadow-[0_4px_20px_rgb(0,0,0,0.15)] flex flex-col max-h-60 overflow-hidden">
                      <div class="px-2 py-1.5 border-b border-border/40 shrink-0">
-                         <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search states..." autocomplete="off"
-                             class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
+                        <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search states..." autocomplete="off"
+                           class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
                      </div>
                      <div class="p-1 flex flex-col gap-0.5 overflow-y-auto custom-scrollbar">
                         <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
-                           <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
-                              :checked="isAllSelected" @change="toggleAll()">
-                           <span class="font-bold">Select All</span>
+                        <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
+                           :checked="isAllSelected" @change="toggleAll()">
+                        <span class="font-bold">Select All</span>
                         </label>
                         <div class="h-px bg-border/40 my-0.5 shrink-0"></div>
                         <template x-for="option in filteredOptions" :key="option">
                            <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
-                              <input type="checkbox" name="state[]" :value="option" x-model="selected"
-                                 class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
-                              <span x-text="option" class="truncate"></span>
+                           <input type="checkbox" name="state[]" :value="option" x-model="selected"
+                              class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
+                           <span x-text="option" class="truncate"></span>
                            </label>
                         </template>
                         <div x-show="filteredOptions.length === 0" class="px-2 py-2 text-center text-xs text-muted-foreground shrink-0">
-                            No options found
+                           No options found
                         </div>
                      </div>
                   </div>
@@ -924,21 +926,21 @@
                   selected: {{ json_encode((array) request('district', [])) }}.map(String),
                   get isAllSelected() { return this.options.length > 0 && this.selected.length === this.options.length; },
                   toggleAll() {
-                     if (this.isAllSelected) { this.selected = []; }
-                     else { this.selected = [...this.options]; }
+                  if (this.isAllSelected) { this.selected = []; }
+                  else { this.selected = [...this.options]; }
                   },
                   get filteredOptions() {
-                     let qs = this.search.toLowerCase();
-                     let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
-                     return filtered.sort((a, b) => {
-                        let aSel = this.selected.includes(a);
-                        let bSel = this.selected.includes(b);
-                        if (aSel && !bSel) return -1;
-                        if (!aSel && bSel) return 1;
-                        return 0;
-                     });
+                  let qs = this.search.toLowerCase();
+                  let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
+                  return filtered.sort((a, b) => {
+                  let aSel = this.selected.includes(a);
+                  let bSel = this.selected.includes(b);
+                  if (aSel && !bSel) return -1;
+                  if (!aSel && bSel) return 1;
+                  return 0;
+                  });
                   }
-               }" @click.away="open = false">
+                  }" @click.away="open = false">
                   <div class="flex items-center justify-between ml-1 leading-none mb-0.5">
                      <span class="text-[8px] uppercase font-bold text-muted-foreground">District</span>
                      <span class="text-[8px] font-mono text-muted-foreground/60" x-show="options.length > 0" x-cloak x-text="`(${options.length})`"></span>
@@ -946,30 +948,32 @@
                   <div @click="open = !open" 
                      class="border border-border/50 bg-background/50 rounded-lg px-2 text-xs focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer flex justify-between items-center h-[26px]">
                      <span class="truncate" x-text="selected.length === 0 ? 'All Districts' : (selected.length === options.length ? 'All Districts' : selected.length + ' Selected')"></span>
-                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                     </svg>
                   </div>
                   <div x-show="open" style="display: none;" 
                      class="absolute z-50 top-full left-0 mt-1 w-48 bg-background border border-border/50 rounded-lg shadow-[0_4px_20px_rgb(0,0,0,0.15)] flex flex-col max-h-60 overflow-hidden">
                      <div class="px-2 py-1.5 border-b border-border/40 shrink-0">
-                         <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search districts..." autocomplete="off"
-                             class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
+                        <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search districts..." autocomplete="off"
+                           class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
                      </div>
                      <div class="p-1 flex flex-col gap-0.5 overflow-y-auto custom-scrollbar">
                         <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
-                           <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
-                              :checked="isAllSelected" @change="toggleAll()">
-                           <span class="font-bold">Select All</span>
+                        <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
+                           :checked="isAllSelected" @change="toggleAll()">
+                        <span class="font-bold">Select All</span>
                         </label>
                         <div class="h-px bg-border/40 my-0.5 shrink-0"></div>
                         <template x-for="option in filteredOptions" :key="option">
                            <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
-                              <input type="checkbox" name="district[]" :value="option" x-model="selected"
-                                 class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
-                              <span x-text="option" class="truncate"></span>
+                           <input type="checkbox" name="district[]" :value="option" x-model="selected"
+                              class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
+                           <span x-text="option" class="truncate"></span>
                            </label>
                         </template>
                         <div x-show="filteredOptions.length === 0" class="px-2 py-2 text-center text-xs text-muted-foreground shrink-0">
-                            No options found
+                           No options found
                         </div>
                      </div>
                   </div>
@@ -982,21 +986,21 @@
                   selected: {{ json_encode((array) request('taluka', [])) }}.map(String),
                   get isAllSelected() { return this.options.length > 0 && this.selected.length === this.options.length; },
                   toggleAll() {
-                     if (this.isAllSelected) { this.selected = []; }
-                     else { this.selected = [...this.options]; }
+                  if (this.isAllSelected) { this.selected = []; }
+                  else { this.selected = [...this.options]; }
                   },
                   get filteredOptions() {
-                     let qs = this.search.toLowerCase();
-                     let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
-                     return filtered.sort((a, b) => {
-                        let aSel = this.selected.includes(a);
-                        let bSel = this.selected.includes(b);
-                        if (aSel && !bSel) return -1;
-                        if (!aSel && bSel) return 1;
-                        return 0;
-                     });
+                  let qs = this.search.toLowerCase();
+                  let filtered = this.options.filter(opt => opt.toLowerCase().includes(qs));
+                  return filtered.sort((a, b) => {
+                  let aSel = this.selected.includes(a);
+                  let bSel = this.selected.includes(b);
+                  if (aSel && !bSel) return -1;
+                  if (!aSel && bSel) return 1;
+                  return 0;
+                  });
                   }
-               }" @click.away="open = false">
+                  }" @click.away="open = false">
                   <div class="flex items-center justify-between ml-1 leading-none mb-0.5">
                      <span class="text-[8px] uppercase font-bold text-muted-foreground">Taluka</span>
                      <span class="text-[8px] font-mono text-muted-foreground/60" x-show="options.length > 0" x-cloak x-text="`(${options.length})`"></span>
@@ -1004,30 +1008,32 @@
                   <div @click="open = !open" 
                      class="border border-border/50 bg-background/50 rounded-lg px-2 text-xs focus:ring-1 focus:ring-primary/30 w-32 cursor-pointer flex justify-between items-center h-[26px]">
                      <span class="truncate" x-text="selected.length === 0 ? 'All Talukas' : (selected.length === options.length ? 'All Talukas' : selected.length + ' Selected')"></span>
-                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                     <svg class="w-3 h-3 text-muted-foreground ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                     </svg>
                   </div>
                   <div x-show="open" style="display: none;" 
                      class="absolute z-50 top-full left-0 mt-1 w-48 bg-background border border-border/50 rounded-lg shadow-[0_4px_20px_rgb(0,0,0,0.15)] flex flex-col max-h-60 overflow-hidden">
                      <div class="px-2 py-1.5 border-b border-border/40 shrink-0">
-                         <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search talukas..." autocomplete="off"
-                             class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
+                        <input type="text" x-model="search" @keydown.enter.prevent placeholder="Search talukas..." autocomplete="off"
+                           class="w-full bg-background border border-border/50 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-primary/30 outline-none">
                      </div>
                      <div class="p-1 flex flex-col gap-0.5 overflow-y-auto custom-scrollbar">
                         <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
-                           <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
-                              :checked="isAllSelected" @change="toggleAll()">
-                           <span class="font-bold">Select All</span>
+                        <input type="checkbox" class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3"
+                           :checked="isAllSelected" @change="toggleAll()">
+                        <span class="font-bold">Select All</span>
                         </label>
                         <div class="h-px bg-border/40 my-0.5 shrink-0"></div>
                         <template x-for="option in filteredOptions" :key="option">
                            <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-muted/50 rounded cursor-pointer text-xs transition-colors shrink-0">
-                              <input type="checkbox" name="taluka[]" :value="option" x-model="selected"
-                                 class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
-                              <span x-text="option" class="truncate"></span>
+                           <input type="checkbox" name="taluka[]" :value="option" x-model="selected"
+                              class="rounded border-border/50 text-primary focus:ring-primary/30 w-3 h-3">
+                           <span x-text="option" class="truncate"></span>
                            </label>
                         </template>
                         <div x-show="filteredOptions.length === 0" class="px-2 py-2 text-center text-xs text-muted-foreground shrink-0">
-                            No options found
+                           No options found
                         </div>
                      </div>
                   </div>
@@ -1092,13 +1098,13 @@
                   <input type="hidden" name="status" value="{{ request('status', 'unverified') }}">
                   @foreach(request()->only(['search', 'date_from', 'date_to', 'state', 'district', 'taluka', 'village']) as $key => $value)
                   @if($value)
-                      @if(is_array($value))
-                          @foreach($value as $v)
-                          <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
-                          @endforeach
-                      @else
-                          <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                      @endif
+                  @if(is_array($value))
+                  @foreach($value as $v)
+                  <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                  @endforeach
+                  @else
+                  <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                  @endif
                   @endif
                   @endforeach
                   <label for="per_page"
@@ -1133,6 +1139,9 @@
                      <th
                         class="h-10 px-4 text-left align-middle font-bold text-muted-foreground/60 uppercase tracking-widest text-[10px]">
                         Customer
+                     </th>
+                     <th class="h-10 px-4 text-left align-middle font-bold text-muted-foreground/60 uppercase tracking-widest text-[10px]">
+                        Products
                      </th>
                      <th
                         class="h-10 px-4 text-left align-middle font-bold text-muted-foreground/60 uppercase tracking-widest text-[10px]">
@@ -1172,9 +1181,9 @@
                            {{ $order->order_number }}
                            </a>
                            <div class="flex flex-col">
-                               <span
-                                  class="text-[10px] font-mono text-muted-foreground">{{ $order->created_at->format('M d, H:i') }}</span>
-                               <span class="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold mt-0.5">By: {{ $order->creator->name ?? 'System' }}</span>
+                              <span
+                                 class="text-[10px] font-mono text-muted-foreground">{{ $order->created_at->format('M d, H:i') }}</span>
+                              <span class="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold mt-0.5">By: {{ $order->creator->name ?? 'System' }}</span>
                            </div>
                         </div>
                      </td>
@@ -1192,6 +1201,20 @@
                                  class="text-[10px] text-muted-foreground leading-none mt-0.5">{{ $order->customer->mobile }}</span>
                               @endif
                            </div>
+                        </div>
+                     </td>
+                     <td class="p-4 px-4 align-middle">
+                        <div class="flex flex-col gap-1">
+                           @forelse($order->items as $item)
+                           <div class="text-xs font-medium text-foreground leading-tight">
+                              {{ $item->product_name ?? ($item->product->name ?? 'Unnamed Product') }}
+                           </div>
+                           <div class="text-[10px] text-muted-foreground font-mono leading-none">
+                              SKU: {{ $item->sku }} | Qty: {{ $item->quantity }}
+                           </div>
+                           @empty
+                           <span class="text-xs text-muted-foreground">No items</span>
+                           @endforelse
                         </div>
                      </td>
                      <td class="p-4 px-4 align-middle">
@@ -1251,35 +1274,35 @@
                      </td>
                      @endif
                      @php
-                        $hasZeroStockItem = $order->items->contains(function ($item) use ($zeroAvlProductIds) {
-                            return $item->product_id && in_array($item->product_id, $zeroAvlProductIds);
-                        });
+                     $hasZeroStockItem = $order->items->contains(function ($item) use ($zeroAvlProductIds) {
+                     return $item->product_id && in_array($item->product_id, $zeroAvlProductIds);
+                     });
                      @endphp
                      <td class="p-4 px-4 align-middle text-right">
                         @if($hasZeroStockItem)
-                           <span
-                              title="One or more items in this order have zero inventory. Restock before verifying."
-                              class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive cursor-not-allowed select-none">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
-                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                 stroke-linejoin="round">
-                                 <circle cx="12" cy="12" r="10"/>
-                                 <line x1="12" y1="8" x2="12" y2="12"/>
-                                 <line x1="12" y1="16" x2="12.01" y2="16"/>
-                              </svg>
-                              Out of Stock
-                           </span>
+                        <span
+                           title="One or more items in this order have zero inventory. Restock before verifying."
+                           class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive cursor-not-allowed select-none">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round">
+                              <circle cx="12" cy="12" r="10"/>
+                              <line x1="12" y1="8" x2="12" y2="12"/>
+                              <line x1="12" y1="16" x2="12.01" y2="16"/>
+                           </svg>
+                           Out of Stock
+                        </span>
                         @else
-                           <button @click="activeOrder = {{ $order->toJson() }}; verifyModalOpen = true"
-                              class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                 stroke-linejoin="round">
-                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                 <polyline points="22 4 12 14.01 9 11.01" />
-                              </svg>
-                              Verify
-                           </button>
+                        <button @click="activeOrder = @js($order->load('items.product', 'customer', 'billingAddress', 'shippingAddress', 'verifications.user')); verifyModalOpen = true"
+                           class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                              stroke-linejoin="round">
+                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                              <polyline points="22 4 12 14.01 9 11.01" />
+                           </svg>
+                           Verify
+                        </button>
                         @endif
                      </td>
                   </tr>
