@@ -73,7 +73,7 @@ class OrderVerificationController extends Controller
         $query = Order::query()
             ->with([
                 'customer',
-                'items',
+                'items.product',
                 'verifications.user',
                 'billingAddress',
                 'shippingAddress',
@@ -236,12 +236,48 @@ class OrderVerificationController extends Controller
         $orders = $query->paginate($request->get('per_page', 10))
             ->withQueryString();
 
+        /*
+        |--------------------------------------------------------------------------
+        | INVENTORY AVL QTY CHECK — same logic as InventoryController
+        | sellable_qty = stock_on_hand - pending_order_qty
+        | Any product whose sellable_qty <= 0 blocks the Verify button.
+        |--------------------------------------------------------------------------
+        */
+        $orderProductIds = $orders->flatMap(fn($o) => $o->items->pluck('product_id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $zeroAvlProductIds = [];
+
+        if ($orderProductIds->isNotEmpty()) {
+            // Sum of quantities already reserved by active orders (same statuses as InventoryController)
+            $pendingQtys = \App\Models\OrderItem::whereIn('product_id', $orderProductIds)
+    ->whereHas('order', function ($q) {
+        $q->whereIn('status', ['confirmed', 'processing', 'ready_to_ship']);
+    })
+                ->selectRaw('product_id, SUM(quantity) as total_pending')
+                ->groupBy('product_id')
+                ->pluck('total_pending', 'product_id');
+
+            $zeroAvlProductIds = \App\Models\Product::whereIn('id', $orderProductIds)
+                ->get(['id', 'stock_on_hand'])
+                ->filter(function ($product) use ($pendingQtys) {
+                    $pending  = (float) $pendingQtys->get($product->id, 0);
+                    $sellable = (float) $product->stock_on_hand - $pending;
+                    return $sellable <= 0;
+                })
+                ->pluck('id')
+                ->toArray();
+        }
+
         return view('central.orders.verification.index', compact(
             'orders',
             'states',
             'districts',
             'talukas',
-            'districtCounts'
+            'districtCounts',
+            'zeroAvlProductIds'
         ));
     }
 

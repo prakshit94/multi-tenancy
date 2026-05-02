@@ -1250,17 +1250,37 @@
                         </span>
                      </td>
                      @endif
+                     @php
+                        $hasZeroStockItem = $order->items->contains(function ($item) use ($zeroAvlProductIds) {
+                            return $item->product_id && in_array($item->product_id, $zeroAvlProductIds);
+                        });
+                     @endphp
                      <td class="p-4 px-4 align-middle text-right">
-                        <button @click="activeOrder = {{ $order->toJson() }}; verifyModalOpen = true"
-                           class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                              stroke-linejoin="round">
-                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                              <polyline points="22 4 12 14.01 9 11.01" />
-                           </svg>
-                           Verify
-                        </button>
+                        @if($hasZeroStockItem)
+                           <span
+                              title="One or more items in this order have zero inventory. Restock before verifying."
+                              class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-destructive/10 border border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive cursor-not-allowed select-none">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                 stroke-linejoin="round">
+                                 <circle cx="12" cy="12" r="10"/>
+                                 <line x1="12" y1="8" x2="12" y2="12"/>
+                                 <line x1="12" y1="16" x2="12.01" y2="16"/>
+                              </svg>
+                              Out of Stock
+                           </span>
+                        @else
+                           <button @click="activeOrder = {{ $order->toJson() }}; verifyModalOpen = true"
+                              class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-95">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                 stroke-linejoin="round">
+                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                 <polyline points="22 4 12 14.01 9 11.01" />
+                              </svg>
+                              Verify
+                           </button>
+                        @endif
                      </td>
                   </tr>
                   @empty
