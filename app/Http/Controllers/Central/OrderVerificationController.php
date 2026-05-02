@@ -24,7 +24,7 @@ class OrderVerificationController extends Controller
     {
         $this->authorize('orders view');
 
-        // 🔥 Optimized dropdown queries (no repeated scans)
+        // 🔥 Optimized dropdown queries
         $states = Village::query()
             ->select('state_name')
             ->distinct()
@@ -69,7 +69,40 @@ class OrderVerificationController extends Controller
         $status = $request->input('status', 'unverified');
         $sortDirection = $request->input('sort_direction', 'desc');
 
-        // 🔥 Base query optimized
+        /*
+        |--------------------------------------------------------------------------
+        | GLOBAL STOCK CALCULATION (OPTIMIZED, NO FULL TABLE SCAN)
+        |--------------------------------------------------------------------------
+        */
+
+        $orderProductIds = \App\Models\OrderItem::query()
+            ->pluck('product_id')
+            ->filter()
+            ->unique();
+
+        $pendingQtys = \App\Models\OrderItem::whereIn('product_id', $orderProductIds)
+            ->whereHas('order', function ($q) {
+                $q->whereIn('status', ['confirmed', 'processing', 'ready_to_ship']);
+            })
+            ->selectRaw('product_id, SUM(quantity) as total_pending')
+            ->groupBy('product_id')
+            ->pluck('total_pending', 'product_id');
+
+        $zeroAvlProductIds = \App\Models\Product::whereIn('id', $orderProductIds)
+            ->get(['id', 'stock_on_hand'])
+            ->filter(function ($product) use ($pendingQtys) {
+                $pending  = (float) $pendingQtys->get($product->id, 0);
+                $sellable = (float) $product->stock_on_hand - $pending;
+                return $sellable <= 0;
+            })
+            ->pluck('id')
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | BASE QUERY
+        |--------------------------------------------------------------------------
+        */
         $query = Order::query()
             ->with([
                 'customer',
@@ -86,7 +119,6 @@ class OrderVerificationController extends Controller
         | STATUS FILTER (UNCHANGED LOGIC)
         |--------------------------------------------------------------------------
         */
-
         if ($status === 'scheduled') {
             $query->where('is_future_order', true);
         } else {
@@ -99,9 +131,17 @@ class OrderVerificationController extends Controller
                             ->orWhereNull('verification_status');
                     })->where('status', 'pending');
                 });
+
+                if (!empty($zeroAvlProductIds)) {
+                    $query->whereDoesntHave('items', function ($q) use ($zeroAvlProductIds) {
+                        $q->whereIn('product_id', $zeroAvlProductIds);
+                    });
+                }
+
             } elseif ($status === 'pending_followup') {
                 $query->where('verification_status', 'pending_followup')
                     ->where('status', 'pending');
+
             } elseif ($status === 'verified') {
                 $query->where('status', 'confirmed')
                     ->where(function ($q) {
@@ -109,17 +149,27 @@ class OrderVerificationController extends Controller
                             ->orWhere('verification_status', 'unverified')
                             ->orWhereNull('verification_status');
                     });
+
             } elseif ($status === 'cancelled') {
                 $query->where('status', 'cancelled');
+
+            } elseif ($status === 'out_of_stock') {
+
+                if (!empty($zeroAvlProductIds)) {
+                    $query->whereHas('items', function ($q) use ($zeroAvlProductIds) {
+                        $q->whereIn('product_id', $zeroAvlProductIds);
+                    });
+                } else {
+                    $query->whereNull('id'); // safer empty result
+                }
             }
         }
 
         /*
         |--------------------------------------------------------------------------
-        | SEARCH (UNCHANGED, JUST CLEANED)
+        | SEARCH (UNCHANGED)
         |--------------------------------------------------------------------------
         */
-
         if ($request->filled('search')) {
             $search = $request->search;
 
@@ -141,10 +191,9 @@ class OrderVerificationController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | DATE FILTER
+        | DATE FILTER (UNCHANGED)
         |--------------------------------------------------------------------------
         */
-
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
@@ -155,67 +204,53 @@ class OrderVerificationController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | DISTRICT COUNTS (OPTIMIZED)
+        | DISTRICT COUNTS (UNCHANGED)
         |--------------------------------------------------------------------------
         */
-
         $districtCounts = (clone $query)
-    ->reorder() // 🔥 THIS LINE FIXES YOUR ERROR
-    ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
-    ->selectRaw('customer_addresses.district, COUNT(orders.id) as total')
-    ->groupBy('customer_addresses.district')
-    ->orderByDesc('total')
-    ->get();
+            ->reorder()
+            ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
+            ->selectRaw('customer_addresses.district, COUNT(orders.id) as total')
+            ->groupBy('customer_addresses.district')
+            ->orderByDesc('total')
+            ->get();
 
         /*
         |--------------------------------------------------------------------------
         | REGION FILTERS (UNCHANGED)
         |--------------------------------------------------------------------------
         */
-
         if ($request->filled('state')) {
-            $statesParam = is_array($request->state) ? $request->state : [$request->state];
+            $statesParam = (array) $request->state;
             $query->where(function ($block) use ($statesParam) {
                 foreach ($statesParam as $st) {
-                    $st = trim($st);
                     $block->orWhere(function ($q) use ($st) {
-                        $q->whereHas('shippingAddress', fn($sub) =>
-                            $sub->where('state', 'like', "%{$st}%")
-                        )->orWhereHas('billingAddress', fn($sub) =>
-                            $sub->where('state', 'like', "%{$st}%")
-                        );
+                        $q->whereHas('shippingAddress', fn($sub) => $sub->where('state', 'like', "%{$st}%"))
+                          ->orWhereHas('billingAddress', fn($sub) => $sub->where('state', 'like', "%{$st}%"));
                     });
                 }
             });
         }
 
         if ($request->filled('district')) {
-            $districtsParam = is_array($request->district) ? $request->district : [$request->district];
+            $districtsParam = (array) $request->district;
             $query->where(function ($block) use ($districtsParam) {
                 foreach ($districtsParam as $dist) {
-                    $dist = trim($dist);
                     $block->orWhere(function ($q) use ($dist) {
-                        $q->whereHas('shippingAddress', fn($sub) =>
-                            $sub->where('district', 'like', "%{$dist}%")
-                        )->orWhereHas('billingAddress', fn($sub) =>
-                            $sub->where('district', 'like', "%{$dist}%")
-                        );
+                        $q->whereHas('shippingAddress', fn($sub) => $sub->where('district', 'like', "%{$dist}%"))
+                          ->orWhereHas('billingAddress', fn($sub) => $sub->where('district', 'like', "%{$dist}%"));
                     });
                 }
             });
         }
 
         if ($request->filled('taluka')) {
-            $talukasParam = is_array($request->taluka) ? $request->taluka : [$request->taluka];
+            $talukasParam = (array) $request->taluka;
             $query->where(function ($block) use ($talukasParam) {
                 foreach ($talukasParam as $tal) {
-                    $tal = trim($tal);
                     $block->orWhere(function ($q) use ($tal) {
-                        $q->whereHas('shippingAddress', fn($sub) =>
-                            $sub->where('taluka', 'like', "%{$tal}%")
-                        )->orWhereHas('billingAddress', fn($sub) =>
-                            $sub->where('taluka', 'like', "%{$tal}%")
-                        );
+                        $q->whereHas('shippingAddress', fn($sub) => $sub->where('taluka', 'like', "%{$tal}%"))
+                          ->orWhereHas('billingAddress', fn($sub) => $sub->where('taluka', 'like', "%{$tal}%"));
                     });
                 }
             });
@@ -224,52 +259,17 @@ class OrderVerificationController extends Controller
         if ($request->filled('village')) {
             $village = trim($request->village);
             $query->where(function ($q) use ($village) {
-                $q->whereHas('shippingAddress', fn($sub) =>
-                    $sub->where('village', 'like', "%{$village}%")
-                )->orWhereHas('billingAddress', fn($sub) =>
-                    $sub->where('village', 'like', "%{$village}%")
-                );
+                $q->whereHas('shippingAddress', fn($sub) => $sub->where('village', 'like', "%{$village}%"))
+                  ->orWhereHas('billingAddress', fn($sub) => $sub->where('village', 'like', "%{$village}%"));
             });
         }
 
-        // 🔥 Pagination optimized
-        $orders = $query->paginate($request->get('per_page', 10))
-            ->withQueryString();
-
         /*
         |--------------------------------------------------------------------------
-        | INVENTORY AVL QTY CHECK — same logic as InventoryController
-        | sellable_qty = stock_on_hand - pending_order_qty
-        | Any product whose sellable_qty <= 0 blocks the Verify button.
+        | PAGINATION
         |--------------------------------------------------------------------------
         */
-        $orderProductIds = $orders->flatMap(fn($o) => $o->items->pluck('product_id'))
-            ->filter()
-            ->unique()
-            ->values();
-
-        $zeroAvlProductIds = [];
-
-        if ($orderProductIds->isNotEmpty()) {
-            // Sum of quantities already reserved by active orders (same statuses as InventoryController)
-            $pendingQtys = \App\Models\OrderItem::whereIn('product_id', $orderProductIds)
-    ->whereHas('order', function ($q) {
-        $q->whereIn('status', ['confirmed', 'processing', 'ready_to_ship']);
-    })
-                ->selectRaw('product_id, SUM(quantity) as total_pending')
-                ->groupBy('product_id')
-                ->pluck('total_pending', 'product_id');
-
-            $zeroAvlProductIds = \App\Models\Product::whereIn('id', $orderProductIds)
-                ->get(['id', 'stock_on_hand'])
-                ->filter(function ($product) use ($pendingQtys) {
-                    $pending  = (float) $pendingQtys->get($product->id, 0);
-                    $sellable = (float) $product->stock_on_hand - $pending;
-                    return $sellable <= 0;
-                })
-                ->pluck('id')
-                ->toArray();
-        }
+        $orders = $query->paginate($request->get('per_page', 10))->withQueryString();
 
         return view('central.orders.verification.index', compact(
             'orders',

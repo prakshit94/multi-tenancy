@@ -24,6 +24,10 @@
          {{ request('status') === 'pending_followup' ? 'selected' : '' }}>
          🔵 Pending Follow-up
          </option>
+         <option value="{{ request()->fullUrlWithQuery(['status' => 'out_of_stock']) }}"
+    {{ request('status') === 'out_of_stock' ? 'selected' : '' }}>
+    🔴 Out of Stock
+</option>
          <option value="{{ request()->fullUrlWithQuery(['status' => 'scheduled']) }}"
          {{ request('status') === 'scheduled' ? 'selected' : '' }}>
          🟣 Scheduled
