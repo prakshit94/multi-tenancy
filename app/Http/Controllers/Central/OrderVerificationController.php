@@ -155,14 +155,23 @@ class OrderVerificationController extends Controller
 
             } elseif ($status === 'out_of_stock') {
 
-                if (!empty($zeroAvlProductIds)) {
-                    $query->whereHas('items', function ($q) use ($zeroAvlProductIds) {
-                        $q->whereIn('product_id', $zeroAvlProductIds);
-                    });
-                } else {
-                    $query->whereNull('id'); // safer empty result
-                }
-            }
+    // ✅ Same base condition as unverified
+    $query->where(function ($q) {
+        $q->where(function ($sub) {
+            $sub->where('verification_status', 'unverified')
+                ->orWhereNull('verification_status');
+        })->where('status', 'pending');
+    });
+
+    // ✅ Only orders with out-of-stock products
+    if (!empty($zeroAvlProductIds)) {
+        $query->whereHas('items', function ($q) use ($zeroAvlProductIds) {
+            $q->whereIn('product_id', $zeroAvlProductIds);
+        });
+    } else {
+        $query->whereNull('id');
+    }
+}
         }
 
         /*
