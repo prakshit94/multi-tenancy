@@ -1203,20 +1203,84 @@
                            </div>
                         </div>
                      </td>
-                     <td class="p-4 px-4 align-middle">
-                        <div class="flex flex-col gap-1">
-                           @forelse($order->items as $item)
-                           <div class="text-xs font-medium text-foreground leading-tight">
-                              {{ $item->product_name ?? ($item->product->name ?? 'Unnamed Product') }}
-                           </div>
-                           <div class="text-[10px] text-muted-foreground font-mono leading-none">
-                              SKU: {{ $item->sku }} | Qty: {{ $item->quantity }}
-                           </div>
-                           @empty
-                           <span class="text-xs text-muted-foreground">No items</span>
-                           @endforelse
+
+
+                     <td class="px-4 py-3 text-center relative group">
+
+    <!-- Product Icon Wrapper -->
+    <div class="relative inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary cursor-pointer">
+
+        <!-- Product Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  d="M20 7l-8-4-8 4m16 0v10l-8 4m8-14l-8 4m0 0L4 7m8 4v10"/>
+        </svg>
+
+        <!-- Product Count Badge -->
+        <span class="absolute -top-1 -right-1 bg-primary text-white text-[10px] px-1.5 rounded-full">
+            {{ $order->items->count() }}
+        </span>
+
+        <!-- Out Of Stock Indicator -->
+        @if(collect($order->items)->pluck('product_id')->intersect($zeroAvlProductIds)->isNotEmpty())
+            <span class="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+        @endif
+
+    </div>
+
+    <!-- Hover Tooltip -->
+    <div class="absolute z-50 hidden group-hover:block top-11 left-1/2 -translate-x-1/2 w-72
+                transition-all duration-200 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0">
+
+        <div class="bg-white border border-border rounded-xl shadow-xl p-3 text-left">
+
+            <!-- Title -->
+            <h4 class="text-xs font-semibold mb-2 text-muted-foreground">
+                Products ({{ $order->items->count() }})
+            </h4>
+
+            <!-- Product List -->
+            <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+
+                @foreach($order->items as $item)
+                    @php
+                        $isOut = in_array($item->product_id, $zeroAvlProductIds);
+                    @endphp
+
+                    <div class="flex justify-between items-center text-xs px-2 py-1.5 rounded-md transition
+                        {{ $isOut ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-muted/30' }}">
+
+                        <div class="flex flex-col text-left">
+                            <span class="truncate font-medium">
+                                {{ $item->product_name }}
+                            </span>
+
+                            <span class="text-[10px] text-muted-foreground font-mono">
+                                SKU: {{ $item->sku }}
+                            </span>
                         </div>
-                     </td>
+
+                        <span class="font-mono font-semibold">
+                            x{{ $item->quantity }}
+                        </span>
+                    </div>
+
+                @endforeach
+
+            </div>
+
+            <!-- Legend -->
+            <div class="mt-3 pt-2 border-t border-border/50 text-[10px] text-muted-foreground flex items-center gap-2">
+                <span class="text-red-500 font-bold">●</span>
+                <span>Out of stock item</span>
+            </div>
+
+        </div>
+    </div>
+
+</td>
+
                      <td class="p-4 px-4 align-middle">
                         <span class="font-bold text-sm">Rs {{ number_format($order->grand_total, 2) }}</span>
                      </td>
