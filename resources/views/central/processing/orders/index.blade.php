@@ -1,13 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
-    <div x-data="{ 
+<div x-data="{ 
     selected: [], 
     search: '{{ request('search') }}',
     activeStatus: '{{ request('status', 'confirmed') }}',
 
+    // ✅ FIX: scope checkboxes to current content only
     get allIds() { 
-        return Array.from(document.querySelectorAll(`input[type='checkbox'][data-status]`))
+        return Array.from(document.querySelectorAll(`#orders-content input[type='checkbox'][data-status]`))
             .map(el => el.value); 
     },
 
@@ -17,29 +18,24 @@
         if (this.selected.length === 0) return false;
 
         const selectedStatuses = this.selected.map(id => {
-            const checkbox = document.querySelector(`input[type='checkbox'][value='${id}']`);
-            return checkbox ? checkbox.getAttribute('data-status') : null;
+const checkbox = document.querySelector(`#orders-content input[type='checkbox'][value='${id}']`);            return checkbox ? checkbox.getAttribute('data-status') : null;
         }).filter(s => s !== null);
 
         if (selectedStatuses.length === 0) return false;
 
-        // ✅ Normalize once and reuse everywhere
         const normalizedStatuses = selectedStatuses.map(s => 
             s === 'completed' ? 'delivered' : s
         );
 
-        // ✅ Prevent mixed-status bulk actions
         const uniqueStatuses = [...new Set(normalizedStatuses)];
         if (uniqueStatuses.length > 1) return false;
 
-        // Cancel logic
         if (targetStatus === 'cancelled') {
             return normalizedStatuses.every(current =>
                 current !== 'delivered' && current !== 'cancelled'
             );
         }
 
-        // Bulk Delivery Rule (ONLY shipped → delivered)
         if (targetStatus === 'delivered') {
             return normalizedStatuses.every(current => current === 'shipped');
         }
@@ -51,7 +47,6 @@
             const currentIndex = this.statusFlow.indexOf(current);
             if (currentIndex === -1) return false;
 
-            // ✅ Only allow NEXT step
             return targetIndex === currentIndex + 1;
         });
     },
@@ -82,11 +77,21 @@
                         window.Alpine.initTree(container);
                     }
                 }
-                
+
+                // ✅ FIX: clear selection after reload
+                this.selected = [];
+
                 window.history.pushState({}, '', pushUrl.toString());
                 
                 const finalUrl = new URL(window.location.href);
-                this.activeStatus = finalUrl.searchParams.get('status') || 'confirmed';
+
+                // ✅ FIX: reset if status changed
+                const newStatus = finalUrl.searchParams.get('status') || 'confirmed';
+                if (this.activeStatus !== newStatus) {
+                    this.selected = [];
+                }
+
+                this.activeStatus = newStatus;
                 this.search = finalUrl.searchParams.get('search') || '';
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -118,49 +123,67 @@
         this.loadData(url.toString());
     }
 }"
-    @click="if ($event.target.closest('nav a')) { $event.preventDefault(); loadData($event.target.closest('nav a').href); }"
-    @pagination-click.window="loadData($event.detail.url)"
-    @refresh-orders.window="loadData(window.location.href)"
-    class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full">
+@click="if ($event.target.closest('nav a')) { $event.preventDefault(); loadData($event.target.closest('nav a').href); }"
+@pagination-click.window="loadData($event.detail.url)"
+@refresh-orders.window="loadData(window.location.href)"
+class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full">
 
         <!-- Header Area -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
-            <div class="space-y-1">
-                <h1
-                    class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                    Order Processing
-                </h1>
-            </div>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
+    <div class="space-y-1">
+        <h1
+            class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            Order Processing
+        </h1>
+    </div>
+</div>
 
+<!-- Smart Search & Results Export -->
+<div class="bg-white border border-gray-100/50 rounded-[40px] p-4 mb-8 shadow-sm ring-1 ring-black/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+    <!-- Search -->
+    <div class="flex-1 max-w-2xl relative group">
+        <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+            </svg>
         </div>
 
-        <!-- Smart Search & Results Export (Fixed to preserve typing focus) -->
-        <div class="bg-white border border-gray-100/50 rounded-[40px] p-4 mb-8 shadow-sm ring-1 ring-black/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div class="flex-1 max-w-2xl relative group">
-                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-                </div>
-                <input type="text" name="search" x-model="search" @input.debounce.300ms="performFilter()"
-                    placeholder="Scan order ID, reference, customer name or phone..."
-                    class="w-full h-12 pl-12 pr-6 bg-white border border-gray-100 rounded-3xl text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all shadow-sm outline-none placeholder:text-gray-400">
-            </div>
+        <input 
+            type="search"
+            name="search" 
+            x-model="search" 
+            @input.debounce.300ms="performFilter()"
+            autocomplete="off"
+            placeholder="Scan order ID, reference, customer name or phone..."
+            class="w-full h-12 pl-12 pr-6 bg-white border border-gray-100 rounded-3xl text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all shadow-sm outline-none placeholder:text-gray-400">
+    </div>
 
-            <div class="flex items-center gap-3">
-                <form action="{{ route('central.orders.export') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="status" :value="activeStatus">
-                    <input type="hidden" name="search" :value="search">
-                    <input type="hidden" name="ids" :value="selected.join(',')">
-                    <button type="submit"
-                        class="inline-flex items-center gap-2.5 h-12 px-6 rounded-3xl bg-primary text-white text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:bg-black transition-all transform hover:-translate-y-0.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                        </svg>
-                        Export Orders
-                    </button>
-                </form>
-            </div>
-        </div>
+    <!-- Export -->
+    <div class="flex items-center gap-3">
+        <form action="{{ route('central.orders.export') }}" method="POST">
+            @csrf
+
+            <input type="hidden" name="status" :value="activeStatus">
+            <input type="hidden" name="search" :value="search">
+            <input type="hidden" name="ids" :value="selected.join(',')">
+
+            <button type="submit"
+                class="inline-flex items-center gap-2.5 h-12 px-6 rounded-3xl bg-primary text-white text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:bg-black transition-all transform hover:-translate-y-0.5">
+
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
+                    </path>
+                </svg>
+
+                Export Orders
+            </button>
+        </form>
+    </div>
+
+</div>
 
         <div id="orders-content">
             @include('central.processing.orders.partials.orders-content')
