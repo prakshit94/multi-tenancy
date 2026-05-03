@@ -1242,35 +1242,49 @@ $stats = [
                     <div class="bulk-section-label">Update Status</div>
 
                     <form action="{{ route('central.processing.orders.bulk-status') }}" method="POST">
-                        @csrf
-                        <template x-for="id in selected" :key="id">
-                            <input type="hidden" name="ids[]" :value="id">
-                        </template>
+    @csrf
 
-                        <button type="submit" name="status" value="confirmed"
-                                x-show="isStatusValid('confirmed')"
-                                @click="if(!confirm('Mark ' + selected.length + ' orders as Confirmed?')) $event.preventDefault()"
-                                class="bulk-item">
-                            <span class="bulk-dot" style="background:#2563eb;"></span>
-                            Mark as Confirmed
-                        </button>
+    <template x-for="id in selected" :key="id">
+        <input type="hidden" name="ids[]" :value="id">
+    </template>
 
-                        <button type="submit" name="status" value="processing"
-                                x-show="isStatusValid('processing')"
-                                @click="if(!confirm('Mark ' + selected.length + ' orders as Processing?')) $event.preventDefault()"
-                                class="bulk-item">
-                            <span class="bulk-dot" style="background:#7c3aed;"></span>
-                            Mark as Processing
-                        </button>
+    <!-- Confirmed -->
+    <button type="submit" name="status" value="confirmed"
+            x-show="isStatusValid('confirmed')"
+            @click="if(!confirm('Mark ' + selected.length + ' orders as Confirmed?')) $event.preventDefault()"
+            class="bulk-item">
+        <span class="bulk-dot" style="background:#2563eb;"></span>
+        Mark as Confirmed
+    </button>
 
-                        <button type="submit" name="status" value="shipped"
-                                x-show="isStatusValid('shipped')"
-                                @click="if(!confirm('Dispatch ' + selected.length + ' orders?')) $event.preventDefault()"
-                                class="bulk-item">
-                            <span class="bulk-dot" style="background:#4f46e5;"></span>
-                            Mark as Dispatched
-                        </button>
-                    </form>
+    <!-- Processing -->
+    <button type="submit" name="status" value="processing"
+            x-show="isStatusValid('processing')"
+            @click="if(!confirm('Mark ' + selected.length + ' orders as Processing?')) $event.preventDefault()"
+            class="bulk-item">
+        <span class="bulk-dot" style="background:#7c3aed;"></span>
+        Mark as Processing
+    </button>
+
+    <!-- Dispatched -->
+    <button type="submit" name="status" value="shipped"
+            x-show="isStatusValid('shipped')"
+            @click="if(!confirm('Dispatch ' + selected.length + ' orders?')) $event.preventDefault()"
+            class="bulk-item">
+        <span class="bulk-dot" style="background:#4f46e5;"></span>
+        Mark as Dispatched
+    </button>
+
+    <!-- ✅ NEW: Delivered -->
+    <button type="submit" name="status" value="delivered"
+            x-show="isStatusValid('delivered')"
+            @click="if(!confirm('Mark ' + selected.length + ' orders as Delivered?')) $event.preventDefault()"
+            class="bulk-item">
+        <span class="bulk-dot" style="background:#16a34a;"></span>
+        Mark as Delivered
+    </button>
+
+</form>
 
                     <div class="bulk-divider"></div>
                     <div class="bulk-section-label">Printing</div>

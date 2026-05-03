@@ -36,185 +36,231 @@ class OrderProcessingController extends Controller
      */
   public function index(Request $request): View
 {
-    $query = Order::with(['customer', 'items', 'warehouse', 'shipments', 'invoices'])
-        ->latest();
+    $query = Order::with([
+        'customer',
+        'items.product',
+        'warehouse',
+        'shipments',
+        'invoices'
+    ])->latest();
 
+    /*
+    |--------------------------------------------------------------------------
+    | SEARCH
+    |--------------------------------------------------------------------------
+    */
     if ($request->filled('search')) {
-        $search = $request->input('search');
+        $search = trim($request->input('search'));
+
         $query->where(function ($q) use ($search) {
             $q->where('order_number', 'like', "%{$search}%")
                 ->orWhere('id', $search)
-                ->orWhereHas('customer', function ($c) use ($search) {
-                    $c->search($search);
-                });
+                ->orWhereHas('customer', fn($c) => $c->search($search));
         });
     }
 
-    // ✅ Product Filtering
+    /*
+    |--------------------------------------------------------------------------
+    | PRODUCT FILTER
+    |--------------------------------------------------------------------------
+    */
     if ($request->filled('product')) {
-        $productArray = array_map('trim', explode(',', $request->product));
+        $products = array_filter(array_map('trim', explode(',', $request->product)));
 
-        $query->whereHas('items', function ($q) use ($productArray) {
-            $q->whereHas('product', function ($p) use ($productArray) {
-                $p->whereIn('name', $productArray);
-            });
+        $query->whereHas('items.product', function ($q) use ($products) {
+            $q->whereIn('name', $products);
         });
     }
 
-    // Date Filtering
+    /*
+    |--------------------------------------------------------------------------
+    | DATE FILTER
+    |--------------------------------------------------------------------------
+    */
     if ($request->filled('date_filter')) {
         $dateFilter = $request->input('date_filter');
-        switch ($dateFilter) {
-            case 'today':
-                $query->whereDate('created_at', now());
-                break;
-            case 'yesterday':
-                $query->whereDate('created_at', now()->subDay());
-                break;
-            case 'this_week':
-                $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'this_month':
-                $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
-                break;
-            case 'custom':
-                if ($request->filled('start_date')) {
-                    $query->whereDate('created_at', '>=', $request->input('start_date'));
-                }
-                if ($request->filled('end_date')) {
-                    $query->whereDate('created_at', '<=', $request->input('end_date'));
-                }
-                break;
-        }
+
+        match ($dateFilter) {
+            'today' => $query->whereDate('created_at', now()),
+            'yesterday' => $query->whereDate('created_at', now()->subDay()),
+            'this_week' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'this_month' => $query->whereMonth('created_at', now()->month)
+                                 ->whereYear('created_at', now()->year),
+            'custom' => $query
+                ->when($request->filled('start_date'), fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
+                ->when($request->filled('end_date'), fn($q) => $q->whereDate('created_at', '<=', $request->end_date)),
+            default => null,
+        };
     }
 
-    // Regional Filtering
-    if ($request->filled('state')) {
-        $stateArray = array_map('trim', explode(',', $request->state));
-        $query->where(function ($q) use ($stateArray) {
-            $q->whereHas('shippingAddress', function ($sub) use ($stateArray) {
-                $sub->whereIn('state', $stateArray);
-            })
-            ->orWhereHas('billingAddress', function ($sub) use ($stateArray) {
-                $sub->whereIn('state', $stateArray);
-            });
+    /*
+    |--------------------------------------------------------------------------
+    | REGION FILTER (Reusable)
+    |--------------------------------------------------------------------------
+    */
+    $applyAddressFilter = function ($field, $values) use ($query) {
+        $query->where(function ($q) use ($field, $values) {
+            $q->whereHas('shippingAddress', fn($sub) => $sub->whereIn($field, $values))
+              ->orWhereHas('billingAddress', fn($sub) => $sub->whereIn($field, $values));
         });
+    };
+
+    if ($request->filled('state')) {
+        $applyAddressFilter('state', array_map('trim', explode(',', $request->state)));
     }
 
     if ($request->filled('district')) {
-        $districtArray = array_map('trim', explode(',', $request->district));
-        $query->where(function ($q) use ($districtArray) {
-            $q->whereHas('shippingAddress', function ($sub) use ($districtArray) {
-                $sub->whereIn('district', $districtArray);
-            })
-            ->orWhereHas('billingAddress', function ($sub) use ($districtArray) {
-                $sub->whereIn('district', $districtArray);
-            });
-        });
+        $applyAddressFilter('district', array_map('trim', explode(',', $request->district)));
     }
 
     if ($request->filled('taluka')) {
-        $talukaArray = array_map('trim', explode(',', $request->taluka));
-        $query->where(function ($q) use ($talukaArray) {
-            $q->whereHas('shippingAddress', function ($sub) use ($talukaArray) {
-                $sub->whereIn('taluka', $talukaArray);
-            })
-            ->orWhereHas('billingAddress', function ($sub) use ($talukaArray) {
-                $sub->whereIn('taluka', $talukaArray);
-            });
-        });
+        $applyAddressFilter('taluka', array_map('trim', explode(',', $request->taluka)));
     }
 
     if ($request->filled('village')) {
         $village = trim($request->village);
+
         $query->where(function ($q) use ($village) {
-            $q->whereHas('shippingAddress', function ($sub) use ($village) {
-                $sub->where('village', 'like', "%{$village}%");
-            })
-            ->orWhereHas('billingAddress', function ($sub) use ($village) {
-                $sub->where('village', 'like', "%{$village}%");
-            });
+            $q->whereHas('shippingAddress', fn($sub) => $sub->where('village', 'like', "%{$village}%"))
+              ->orWhereHas('billingAddress', fn($sub) => $sub->where('village', 'like', "%{$village}%"));
         });
     }
 
-    // Dispatch Filtering
+    /*
+    |--------------------------------------------------------------------------
+    | DISPATCH FILTER
+    |--------------------------------------------------------------------------
+    */
     if ($request->filled('courier')) {
-        $courierArray = array_map('trim', explode(',', $request->courier));
-        $query->whereHas('shipments', function ($q) use ($courierArray) {
-            $q->whereIn('carrier', $courierArray);
-        });
+        $couriers = array_filter(array_map('trim', explode(',', $request->courier)));
+
+        $query->whereHas('shipments', fn($q) => $q->whereIn('carrier', $couriers));
     }
 
     if ($request->filled('tracking_number')) {
-        $query->whereHas('shipments', function ($q) use ($request) {
-            $q->where('tracking_number', 'like', "%{$request->tracking_number}%");
-        });
+        $tracking = trim($request->tracking_number);
+
+        $query->whereHas('shipments', fn($q) => $q->where('tracking_number', 'like', "%{$tracking}%"));
     }
 
-    $countsQuery = clone $query;
-
-    $stats = $countsQuery->reorder()->select(
-        'status',
-        DB::raw('count(*) as total'),
-        DB::raw('sum(grand_total) as amount')
-    )
-    ->groupBy('status')
-    ->get();
+    /*
+    |--------------------------------------------------------------------------
+    | STATS (CLONE SAFE)
+    |--------------------------------------------------------------------------
+    */
+    $stats = (clone $query)
+        ->reorder()
+        ->select(
+            'status',
+            DB::raw('COUNT(*) as total'),
+            DB::raw('SUM(grand_total) as amount')
+        )
+        ->groupBy('status')
+        ->get();
 
     $counts = $stats->pluck('total', 'status')->toArray();
     $amounts = $stats->pluck('amount', 'status')->toArray();
 
     $counts['active'] = ($counts['confirmed'] ?? 0) + ($counts['processing'] ?? 0);
-    $counts['all'] = array_sum(array_diff_key($counts, ['active' => 0, 'all' => 0]));
+    $counts['all'] = array_sum($counts);
 
     $amounts['active'] = ($amounts['confirmed'] ?? 0) + ($amounts['processing'] ?? 0);
-    $amounts['all'] = array_sum(array_diff_key($amounts, ['active' => 0, 'all' => 0]));
+    $amounts['all'] = array_sum($amounts);
 
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS FILTER
+    |--------------------------------------------------------------------------
+    */
     if (!$request->has('status')) {
         $query->where('status', 'confirmed');
-    } elseif ($request->input('status') !== 'all') {
-        $query->where('status', $request->input('status'));
+    } elseif ($request->status !== 'all') {
+        $query->where('status', $request->status);
     }
 
-    $orders = $query->paginate((int)$request->input('per_page', 15))->withQueryString();
+    /*
+    |--------------------------------------------------------------------------
+    | PAGINATION
+    |--------------------------------------------------------------------------
+    */
+    $orders = $query->paginate((int) $request->input('per_page', 15))->withQueryString();
 
-    $districtCounts = Order::query()
-        ->join('customer_addresses', 'orders.shipping_address_id', '=', 'customer_addresses.id')
-        ->select('customer_addresses.district', DB::raw('count(orders.id) as total'))
-        ->groupBy('customer_addresses.district')
-        ->orderByDesc('total')
-        ->get();
+    /*
+    |--------------------------------------------------------------------------
+    | DISTRICT COUNTS
+    |--------------------------------------------------------------------------
+    */
+    $districtCounts = (clone $query)
+    ->reorder()
+    ->leftJoin('customer_addresses as sa', 'orders.shipping_address_id', '=', 'sa.id')
+    ->leftJoin('customer_addresses as ba', 'orders.billing_address_id', '=', 'ba.id')
+    ->selectRaw('COALESCE(sa.district, ba.district) as district, COUNT(orders.id) as total')
+    ->groupBy('district')
+    ->orderByDesc('total')
+    ->get();
 
+    /*
+    |--------------------------------------------------------------------------
+    | FILTER DROPDOWNS
+    |--------------------------------------------------------------------------
+    */
     $states = Village::distinct()->pluck('state_name')->filter()->sort()->values();
 
-    $districts = Village::when($request->filled('state'), function ($q) use ($request) {
-        return $q->whereIn('state_name', array_map('trim', explode(',', $request->state)));
-    })->distinct()->pluck('district_name')->filter()->sort()->values();
+    $districts = Village::when($request->filled('state'), fn($q) =>
+        $q->whereIn('state_name', array_map('trim', explode(',', $request->state)))
+    )->distinct()->pluck('district_name')->filter()->sort()->values();
 
-    $talukas = Village::when($request->filled('district'), function ($q) use ($request) {
-        return $q->whereIn('district_name', array_map('trim', explode(',', $request->district)));
-    })->distinct()->pluck('taluka_name')->filter()->sort()->values();
+    $talukas = Village::when($request->filled('district'), fn($q) =>
+        $q->whereIn('district_name', array_map('trim', explode(',', $request->district)))
+    )->distinct()->pluck('taluka_name')->filter()->sort()->values();
 
-    $couriers = \App\Models\Shipment::distinct()->whereNotNull('carrier')->pluck('carrier')->sort()->values();
+    $couriers = \App\Models\Shipment::distinct()
+        ->whereNotNull('carrier')
+        ->pluck('carrier')
+        ->sort()
+        ->values();
 
-    // ✅ Products list
     $products = \App\Models\Product::distinct()
         ->pluck('name')
         ->filter()
         ->sort()
         ->values();
 
-    // ✅ FIXED HERE (added $products)
+    /*
+    |--------------------------------------------------------------------------
+    | AJAX RESPONSE
+    |--------------------------------------------------------------------------
+    */
     if ($request->ajax() || $request->has('ajax')) {
         return view(
             'central.processing.orders.partials.orders-content',
-            compact('orders', 'counts', 'amounts', 'districtCounts', 'districts', 'talukas', 'couriers', 'states', 'products')
+            compact(
+                'orders',
+                'counts',
+                'amounts',
+                'districtCounts',
+                'districts',
+                'talukas',
+                'couriers',
+                'states',
+                'products'
+            )
         );
     }
 
     return view(
         'central.processing.orders.index',
-        compact('orders', 'counts', 'amounts', 'states', 'districts', 'talukas', 'districtCounts', 'couriers', 'products')
+        compact(
+            'orders',
+            'counts',
+            'amounts',
+            'states',
+            'districts',
+            'talukas',
+            'districtCounts',
+            'couriers',
+            'products'
+        )
     );
 }
 

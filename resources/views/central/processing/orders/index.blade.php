@@ -2,94 +2,122 @@
 
 @section('content')
     <div x-data="{ 
-        selected: [], 
-        search: '{{ request('search') }}',
-        activeStatus: '{{ request('status', 'confirmed') }}',
-        get allIds() { return Array.from(document.querySelectorAll(`input[type='checkbox'][data-status]`)).map(el => el.value); },
-        statusFlow: ['placed', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'],
-        isStatusValid(targetStatus) {
-            if (this.selected.length === 0) return false;
+    selected: [], 
+    search: '{{ request('search') }}',
+    activeStatus: '{{ request('status', 'confirmed') }}',
 
-            const selectedStatuses = this.selected.map(id => {
-                const checkbox = document.querySelector(`input[type='checkbox'][value='${id}']`);
-                return checkbox ? checkbox.getAttribute('data-status') : null;
-            }).filter(s => s !== null);
+    get allIds() { 
+        return Array.from(document.querySelectorAll(`input[type='checkbox'][data-status]`))
+            .map(el => el.value); 
+    },
 
-            if (selectedStatuses.length === 0) return false;
+    statusFlow: ['placed', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'],
 
-            if (targetStatus === 'cancelled') {
-                return selectedStatuses.every(current => current !== 'delivered' && current !== 'cancelled');
-            }
+    isStatusValid(targetStatus) {
+        if (this.selected.length === 0) return false;
 
-            const targetIndex = this.statusFlow.indexOf(targetStatus);
-            if (targetIndex === -1) return false;
+        const selectedStatuses = this.selected.map(id => {
+            const checkbox = document.querySelector(`input[type='checkbox'][value='${id}']`);
+            return checkbox ? checkbox.getAttribute('data-status') : null;
+        }).filter(s => s !== null);
 
-            return selectedStatuses.some(current => {
-                let normalizedCurrent = current === 'completed' ? 'delivered' : current;
-                const currentIndex = this.statusFlow.indexOf(normalizedCurrent);
-                if (currentIndex === -1) return false; 
-                return targetIndex > currentIndex;
-            });
-        },
-        async loadData(urlStr) {
-            try {
-                const url = new URL(urlStr, window.location.origin);
-                const pushUrl = new URL(urlStr, window.location.origin);
-                pushUrl.searchParams.delete('ajax');
-                
-                url.searchParams.set('ajax', '1');
-                
-                const response = await fetch(url.toString(), { 
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' } 
-                });
-                
-                if (response.ok) { 
-                    const html = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const newContent = doc.getElementById('orders-content') || doc.body;
+        if (selectedStatuses.length === 0) return false;
 
-                    const container = document.getElementById('orders-content');
-                    if (container && newContent) {
-                        container.innerHTML = newContent.id === 'orders-content' ? newContent.innerHTML : html;
-                        
-                        if (window.Alpine) {
-                            window.Alpine.initTree(container);
-                        }
-                    }
-                    
-                    window.history.pushState({}, '', pushUrl.toString());
-                    
-                    const finalUrl = new URL(window.location.href);
-                    this.activeStatus = finalUrl.searchParams.get('status') || 'confirmed';
-                    this.search = finalUrl.searchParams.get('search') || '';
+        // ✅ Normalize once and reuse everywhere
+        const normalizedStatuses = selectedStatuses.map(s => 
+            s === 'completed' ? 'delivered' : s
+        );
 
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            } catch (error) { console.error('Request Failed:', error); }
-        },
-        performFilter() {
-            const url = new URL(window.location.origin + window.location.pathname);
-            
-            url.searchParams.set('status', this.activeStatus);
-            if (this.search) {
-                url.searchParams.set('search', this.search);
-            }
-            
-            const filterForm = document.getElementById('filter-form');
-            if (filterForm) {
-                const formData = new FormData(filterForm);
-                for (let [key, value] of formData.entries()) {
-                    if (key === 'status' || key === 'search' || key === 'page' || key === 'ajax') continue;
-                    if (value) {
-                        url.searchParams.set(key, value);
-                    }
-                }
-            }
-            
-            this.loadData(url.toString());
+        // ✅ Prevent mixed-status bulk actions
+        const uniqueStatuses = [...new Set(normalizedStatuses)];
+        if (uniqueStatuses.length > 1) return false;
+
+        // Cancel logic
+        if (targetStatus === 'cancelled') {
+            return normalizedStatuses.every(current =>
+                current !== 'delivered' && current !== 'cancelled'
+            );
         }
-    }"
+
+        // Bulk Delivery Rule (ONLY shipped → delivered)
+        if (targetStatus === 'delivered') {
+            return normalizedStatuses.every(current => current === 'shipped');
+        }
+
+        const targetIndex = this.statusFlow.indexOf(targetStatus);
+        if (targetIndex === -1) return false;
+
+        return normalizedStatuses.every(current => {
+            const currentIndex = this.statusFlow.indexOf(current);
+            if (currentIndex === -1) return false;
+
+            // ✅ Only allow NEXT step
+            return targetIndex === currentIndex + 1;
+        });
+    },
+
+    async loadData(urlStr) {
+        try {
+            const url = new URL(urlStr, window.location.origin);
+            const pushUrl = new URL(urlStr, window.location.origin);
+            pushUrl.searchParams.delete('ajax');
+            
+            url.searchParams.set('ajax', '1');
+            
+            const response = await fetch(url.toString(), { 
+                headers: { 'X-Requested-With': 'XMLHttpRequest' } 
+            });
+            
+            if (response.ok) { 
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContent = doc.getElementById('orders-content') || doc.body;
+
+                const container = document.getElementById('orders-content');
+                if (container && newContent) {
+                    container.innerHTML = newContent.id === 'orders-content' ? newContent.innerHTML : html;
+                    
+                    if (window.Alpine) {
+                        window.Alpine.initTree(container);
+                    }
+                }
+                
+                window.history.pushState({}, '', pushUrl.toString());
+                
+                const finalUrl = new URL(window.location.href);
+                this.activeStatus = finalUrl.searchParams.get('status') || 'confirmed';
+                this.search = finalUrl.searchParams.get('search') || '';
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } catch (error) { 
+            console.error('Request Failed:', error); 
+        }
+    },
+
+    performFilter() {
+        const url = new URL(window.location.origin + window.location.pathname);
+        
+        url.searchParams.set('status', this.activeStatus);
+        if (this.search) {
+            url.searchParams.set('search', this.search);
+        }
+        
+        const filterForm = document.getElementById('filter-form');
+        if (filterForm) {
+            const formData = new FormData(filterForm);
+            for (let [key, value] of formData.entries()) {
+                if (key === 'status' || key === 'search' || key === 'page' || key === 'ajax') continue;
+                if (value) {
+                    url.searchParams.set(key, value);
+                }
+            }
+        }
+        
+        this.loadData(url.toString());
+    }
+}"
     @click="if ($event.target.closest('nav a')) { $event.preventDefault(); loadData($event.target.closest('nav a').href); }"
     @pagination-click.window="loadData($event.detail.url)"
     @refresh-orders.window="loadData(window.location.href)"
