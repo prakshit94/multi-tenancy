@@ -56,6 +56,16 @@
                                 <span>Due: {{ $invoice->due_date?->format('M d, Y') ?? '-' }}</span>
                                 <span class="w-1 h-1 rounded-full bg-border"></span>
                                 <span class="text-foreground">Ord #{{ $invoice->order->order_number ?? 'Manual' }}</span>
+                                @if($invoice->order && in_array($invoice->order->status, ['delivered', 'returned', 'cancelled']))
+                                    <span class="w-1 h-1 rounded-full bg-border"></span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-1.5 py-0.5 rounded-[4px] text-[9px] font-black uppercase tracking-wider 
+                                            {{ $invoice->order->status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 
+                                               'bg-red-50 text-red-700 border border-red-100' }}">
+                                            Order: {{ str_replace('_', ' ', $invoice->order->status) }}
+                                        </span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

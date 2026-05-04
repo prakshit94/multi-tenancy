@@ -58,7 +58,12 @@ class InvoiceController extends Controller
         }
 
         if ($request->filled('status') && $request->input('status') !== 'all') {
-            $query->where('status', (string) $request->input('status'));
+            $status = $request->input('status');
+            if ($status === 'pending') {
+                $query->whereIn('status', ['unpaid', 'sent', 'partial']);
+            } else {
+                $query->where('status', (string) $status);
+            }
         }
 
         // Stats for cards and tabs
@@ -71,14 +76,14 @@ class InvoiceController extends Controller
             // Tab counts
             'all_count' => Invoice::count(),
             'paid_count' => Invoice::where('status', 'paid')->count(),
-            'pending_count' => Invoice::where('status', 'sent')->count(), // assuming 'sent' is pending
+            'pending_count' => Invoice::whereIn('status', ['unpaid', 'sent'])->count(),
             'partial_count' => Invoice::where('status', 'partial')->count(),
             'overdue_tab_count' => Invoice::where('status', 'overdue')->count(),
         ];
         
         // Correcting pending vs partial logic if needed - standardizing on UI tabs: Paid, Pending, Overdue
         // If the code uses 'sent', 'partial', 'overdue', we should sum them or show them correctly.
-        $stats['pending_total_count'] = Invoice::whereIn('status', ['sent', 'partial'])->count();
+        $stats['pending_total_count'] = Invoice::whereIn('status', ['unpaid', 'sent', 'partial'])->count();
 
         $perPage = (int) $request->input('per_page', 10);
         $perPage = ($perPage > 0 && $perPage <= 100) ? $perPage : 10;
