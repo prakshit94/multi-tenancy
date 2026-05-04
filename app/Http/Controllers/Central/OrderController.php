@@ -768,7 +768,7 @@ class OrderController extends Controller
         $filename = 'orders-' . date('Y-m-d');
 
         // Extract Filters
-        $filters = $request->only(['status', 'search', 'district', 'taluka', 'village', 'start_date', 'end_date', 'payment_status', 'shipping_status']);
+        $filters = $request->only(['status', 'search', 'district', 'taluka', 'village', 'start_date', 'end_date', 'payment_status', 'shipping_status', 'id_search']);
 
         // Handle Selected IDs
         if ($request->filled('ids')) {

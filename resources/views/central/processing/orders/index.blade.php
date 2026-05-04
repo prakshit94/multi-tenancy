@@ -4,6 +4,7 @@
 <div x-data="{ 
     selected: [], 
     search: '{{ request('search') }}',
+    id_search: '{{ request('id_search') }}',
     activeStatus: '{{ request('status', 'confirmed') }}',
 
     // ✅ FIX: scope checkboxes to current content only
@@ -93,6 +94,7 @@ const checkbox = document.querySelector(`#orders-content input[type='checkbox'][
 
                 this.activeStatus = newStatus;
                 this.search = finalUrl.searchParams.get('search') || '';
+                this.id_search = finalUrl.searchParams.get('id_search') || '';
 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
@@ -108,6 +110,9 @@ const checkbox = document.querySelector(`#orders-content input[type='checkbox'][
         if (this.search) {
             url.searchParams.set('search', this.search);
         }
+        if (this.id_search) {
+            url.searchParams.set('id_search', this.id_search);
+        }
         
         const filterForm = document.getElementById('filter-form');
         if (filterForm) {
@@ -120,6 +125,28 @@ const checkbox = document.querySelector(`#orders-content input[type='checkbox'][
             }
         }
         
+        this.loadData(url.toString());
+    },
+
+    resetFilters() {
+        this.search = '';
+        this.id_search = '';
+        
+        // Reset filter-form
+        const filterForm = document.getElementById('filter-form');
+        if (filterForm) {
+            filterForm.reset();
+            // Manually clear hidden inputs because reset() doesn't clear them
+            filterForm.querySelectorAll('input[type=hidden]').forEach(i => {
+                if (!['per_page', '_token', 'status'].includes(i.name)) {
+                    i.value = '';
+                }
+            });
+        }
+
+        // Reload with only the active status
+        const url = new URL(window.location.origin + window.location.pathname);
+        url.searchParams.set('status', this.activeStatus);
         this.loadData(url.toString());
     }
 }"
@@ -137,59 +164,9 @@ class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full">
         </h1>
     </div>
 </div>
-
-<!-- Smart Search & Results Export -->
-<div class="bg-white border border-gray-100/50 rounded-[40px] p-4 mb-8 shadow-sm ring-1 ring-black/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
-
-    <!-- Search -->
-    <div class="flex-1 max-w-2xl relative group">
-        <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-primary transition-colors">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-            </svg>
-        </div>
-
-        <input 
-            type="search"
-            name="search" 
-            x-model="search" 
-            @input.debounce.300ms="performFilter()"
-            autocomplete="off"
-            placeholder="Scan order ID, reference, customer name or phone..."
-            class="w-full h-12 pl-12 pr-6 bg-white border border-gray-100 rounded-3xl text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all shadow-sm outline-none placeholder:text-gray-400">
-    </div>
-
-    <!-- Export -->
-    <div class="flex items-center gap-3">
-        <form action="{{ route('central.orders.export') }}" method="POST">
-            @csrf
-
-            <input type="hidden" name="status" :value="activeStatus">
-            <input type="hidden" name="search" :value="search">
-            <input type="hidden" name="ids" :value="selected.join(',')">
-
-            <button type="submit"
-                class="inline-flex items-center gap-2.5 h-12 px-6 rounded-3xl bg-primary text-white text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:bg-black transition-all transform hover:-translate-y-0.5">
-
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
-                    </path>
-                </svg>
-
-                Export Orders
-            </button>
-        </form>
-    </div>
-
+<div id="orders-content">
+    @include('central.processing.orders.partials.orders-content')
 </div>
-
-        <div id="orders-content">
-            @include('central.processing.orders.partials.orders-content')
-        </div>
-    </div>
-
     <!-- Dispatch / Ready Modal -->
     <div x-data="{ open: false, orderId: '', orderNumber: '', actionUrl: '', modalMode: '', courier: 'India Post', trackingNumber: '' }"
         x-on:open-dispatch-modal.window="open = true; orderId = $event.detail.orderId; orderNumber = $event.detail.orderNumber; actionUrl = $event.detail.actionUrl; modalMode = $event.detail.mode || 'dispatch'; courier = 'India Post'; trackingNumber = '';"
@@ -458,4 +435,5 @@ style="display: none;"
             </div>
         </div>
     </div>
+</div>
 @endsection

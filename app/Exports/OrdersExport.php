@@ -82,6 +82,15 @@ class OrdersExport implements FromView, ShouldAutoSize, WithEvents
                       ->orWhereHas('billingAddress', fn($sub) => $sub->where('village', 'like', "%{$village}%"));
                 });
             }
+
+            // 6. Apply Unified ID Search (Order ID or Tracking ID)
+            if (!empty($this->filters['id_search'])) {
+                $idSearch = trim($this->filters['id_search']);
+                $query->where(function ($q) use ($idSearch) {
+                    $q->where('order_number', 'like', "%{$idSearch}%")
+                        ->orWhereHas('shipments', fn($sq) => $sq->where('tracking_number', 'like', "%{$idSearch}%"));
+                });
+            }
         }
 
         return view('exports.orders', [

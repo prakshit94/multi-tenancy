@@ -130,7 +130,7 @@
 
 .filter-panel {
     display: flex;
-    flex-col: column;
+    flex-direction: column;
     gap: 12px;
     padding: 16px 20px;
     background: var(--surface);
@@ -298,13 +298,46 @@
     transition: all 0.15s;
 }
 
-.prem-tracking-input:focus {
-    border-color: var(--brand);
-    background: var(--brand-light);
-    box-shadow: 0 0 0 3px rgba(108,71,255,0.12);
+.prem-tracking-input:focus { border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(108,71,255,0.1); }
+.prem-tracking-input::placeholder { color: var(--text-3); }
+
+/* Clear Filters Button */
+.prem-clear-btn {
+    height: 40px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1.5px solid #fee2e2;
+    border-radius: var(--radius-md);
+    color: #ef4444;
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
 }
 
-.prem-tracking-input::placeholder { color: var(--text-3); }
+.prem-clear-btn:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+}
+
+.prem-clear-btn:active {
+    transform: translateY(0);
+}
+
+.prem-clear-icon {
+    width: 14px;
+    height: 14px;
+}
+
 
 /* ── Stats Grid ───────────────────────────────────────────── */
 .stats-grid {
@@ -1087,16 +1120,24 @@
                         </div>
                     </div>
 
-                    {{-- Tracking Number --}}
+                    {{-- Unified ID Search --}}
                     <div class="prem-tracking">
                         <svg class="prem-tracking-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <input type="text" name="tracking_number" value="{{ request('tracking_number') }}"
-                            @input.debounce.500ms="performFilter()"
-                            placeholder="Tracking ID"
+                        <input type="text" x-model="id_search"
+                            @input.debounce.300ms="performFilter()"
+                            placeholder="Order / Tracking ID"
                             class="prem-tracking-input">
                     </div>
+
+                    {{-- Clear Filters --}}
+                    <button type="button" @click="resetFilters()" class="prem-clear-btn">
+                        <svg class="prem-clear-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span>Clear All</span>
+                    </button>
 
                 </form>
             </div>
@@ -1384,6 +1425,7 @@ $stats = [
             @csrf
             @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
             @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
+            @if(request('id_search')) <input type="hidden" name="id_search" value="{{ request('id_search') }}"> @endif
             @if(request('date_filter'))
                 <input type="hidden" name="date_filter" value="{{ request('date_filter') }}">
                 @if(request('start_date')) <input type="hidden" name="start_date" value="{{ request('start_date') }}"> @endif

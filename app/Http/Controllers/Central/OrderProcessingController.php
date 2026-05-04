@@ -59,6 +59,14 @@ class OrderProcessingController extends Controller
         });
     }
 
+    if ($request->filled('id_search')) {
+        $idSearch = trim($request->id_search);
+        $query->where(function ($q) use ($idSearch) {
+            $q->where('order_number', 'like', "%{$idSearch}%")
+                ->orWhereHas('shipments', fn($sq) => $sq->where('tracking_number', 'like', "%{$idSearch}%"));
+        });
+    }
+
     /*
     |--------------------------------------------------------------------------
     | PRODUCT FILTER
