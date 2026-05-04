@@ -118,6 +118,25 @@
                     this.$watch('selected', value => {
                         this.selectAll = value.length === this.allIds.length && this.allIds.length > 0;
                     });
+                    
+                    // Intercept pagination clicks
+                    document.addEventListener('click', (e) => {
+                        const link = e.target.closest('#invoices-list-container nav[role=navigation] a');
+                        if (link && link.href) {
+                            e.preventDefault();
+                            this.performSearch(null, link.href);
+                        }
+                    });
+
+                    // Handle per page dropdown change from pagination component
+                    window.addEventListener('per-page-change', (e) => {
+                        if (e.detail && e.detail.value) {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('per_page', e.detail.value);
+                            url.searchParams.delete('page');
+                            this.performSearch(null, url.toString());
+                        }
+                    });
                 },
                 exportSelected() {
                     let url = new URL('{{ route('central.invoices.export') }}', window.location.origin);
@@ -136,29 +155,26 @@
 
                     window.location.href = url.toString();
                 },
-                async performSearch(event) {
-                    const url = new URL(window.location.href);
-
-                    if (event?.target?.name === 'search') {
-                        url.searchParams.set('search', event.target.value);
-                    }
-                    if (event?.target?.name === 'start_date') {
-                        url.searchParams.set('start_date', event.target.value);
-                    }
-                    if (event?.target?.name === 'end_date') {
-                        url.searchParams.set('end_date', event.target.value);
-                    }
-
-                    if (event?.target?.name === 'per_page') {
-                        url.searchParams.set('per_page', event.target.value);
+                async performSearch(event, overrideUrl = null) {
+                    let url;
+                    
+                    if (overrideUrl) {
+                        url = new URL(overrideUrl);
                     } else {
-                        const perPageSelect = document.getElementById('per_page');
-                        if(perPageSelect) {
-                            url.searchParams.set('per_page', perPageSelect.value);
-                        }
-                    }
+                        url = new URL(window.location.href);
 
-                    url.searchParams.delete('page'); 
+                        if (event?.target?.name === 'search') {
+                            url.searchParams.set('search', event.target.value);
+                        }
+                        if (event?.target?.name === 'start_date') {
+                            url.searchParams.set('start_date', event.target.value);
+                        }
+                        if (event?.target?.name === 'end_date') {
+                            url.searchParams.set('end_date', event.target.value);
+                        }
+
+                        url.searchParams.delete('page'); 
+                    }
 
                     const newUrl = url.toString();
                     window.history.pushState({}, '', newUrl);
@@ -217,19 +233,6 @@
                 <div class="flex flex-col lg:flex-row items-center gap-4 w-full xl:w-auto flex-wrap">
                     <!-- Per Page & Search -->
                     <div class="flex items-center gap-3 w-full lg:w-auto">
-                        <!-- Per Page -->
-                        <div class="flex items-center gap-2 px-3 h-[42px] rounded-xl bg-white border border-gray-100 shadow-sm shrink-0">
-                            <label for="per_page" class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Show</label>
-                            <select id="per_page" name="per_page" @change="performSearch"
-                                class="border-none bg-transparent p-0 pr-8 text-sm font-bold focus:ring-0 cursor-pointer">
-                                @foreach([10, 25, 50] as $size)
-                                    <option value="{{ $size }}" {{ request('per_page', 10) == $size ? 'selected' : '' }}>
-                                        {{ $size }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
                         <!-- Search -->
                         <div class="relative flex-1 lg:w-64">
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">

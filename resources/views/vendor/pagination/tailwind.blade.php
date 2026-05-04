@@ -1,4 +1,3 @@
-@if ($paginator->hasPages())
     <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-between">
         
         <!-- Mobile View (Simple Previous/Next) -->
@@ -46,7 +45,7 @@
                             @change="$dispatch('per-page-change', { value: $event.target.value })"
                             class="w-full h-8 pl-3 pr-8 bg-background border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest focus:ring-2 focus:ring-primary/20 transition-all shadow-sm appearance-none cursor-pointer">
                             @foreach([5, 10, 15, 20, 50, 100] as $v) 
-                                <option value="{{ $v }}" {{ request('per_page', 15) == $v ? 'selected' : '' }}>{{ $v }} / Page</option> 
+                                <option value="{{ $v }}" {{ request('per_page', 10) == $v ? 'selected' : '' }}>{{ $v }} / Page</option> 
                             @endforeach
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
@@ -121,4 +120,3 @@
             </div>
         </div>
     </nav>
-@endif
