@@ -47,6 +47,15 @@
                     Overdue
                     <span class="ml-1.5 px-1.5 py-0.5 rounded-md bg-red-50 text-[10px]">{{ $stats['overdue_tab_count'] }}</span>
                 </a>
+
+                <div class="w-px h-4 bg-border/40 mx-1"></div>
+
+                <a href="{{ route('central.invoices.index', ['status' => 'cancelled']) }}"
+                    class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+                                                                       {{ request('status') === 'cancelled' ? 'bg-background text-gray-600 shadow-sm ring-1 ring-border/20' : 'text-muted-foreground hover:text-gray-600 hover:bg-background/50' }}">
+                    Canceled
+                    <span class="ml-1.5 px-1.5 py-0.5 rounded-md bg-gray-50 text-[10px]">{{ $stats['cancelled_count'] }}</span>
+                </a>
             </div>
         </div>
 

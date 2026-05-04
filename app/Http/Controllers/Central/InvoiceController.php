@@ -57,33 +57,53 @@ class InvoiceController extends Controller
             $query->whereDate('issue_date', '<=', $request->input('end_date'));
         }
 
-        if ($request->filled('status') && $request->input('status') !== 'all') {
-            $status = $request->input('status');
-            if ($status === 'pending') {
-                $query->whereIn('status', ['unpaid', 'sent', 'partial']);
-            } else {
-                $query->where('status', (string) $status);
+        if ($request->filled('status') && $request->input('status') === 'cancelled') {
+            $query->where(function ($q) {
+                $q->where('status', 'cancelled')
+                  ->orWhereHas('order', function ($oq) {
+                      $oq->where('status', 'cancelled');
+                  });
+            });
+        } else {
+            $query->where('status', '!=', 'cancelled')
+                  ->whereHas('order', function ($oq) {
+                      $oq->where('status', '!=', 'cancelled');
+                  });
+
+            if ($request->filled('status') && $request->input('status') !== 'all') {
+                $status = $request->input('status');
+                if ($status === 'pending') {
+                    $query->whereIn('status', ['unpaid', 'sent', 'partial']);
+                } else {
+                    $query->where('status', (string) $status);
+                }
             }
         }
 
         // Stats for cards and tabs
         $stats = [
-            'total_receivable' => Invoice::whereNotIn('status', ['paid', 'cancelled', 'returned'])->get()->sum(fn($i) => $i->total_amount - $i->paid_amount),
+            'total_receivable' => Invoice::whereNotIn('status', ['paid', 'cancelled', 'returned'])->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->get()->sum(fn($i) => $i->total_amount - $i->paid_amount),
             'paid_this_month' => Payment::whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)->sum('amount'),
-            'overdue_count' => Invoice::where('status', 'overdue')->count(),
-            'overdue_amount' => Invoice::where('status', 'overdue')->get()->sum(fn($i) => $i->total_amount - $i->paid_amount),
+            'overdue_count' => Invoice::where('status', 'overdue')->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->count(),
+            'overdue_amount' => Invoice::where('status', 'overdue')->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->get()->sum(fn($i) => $i->total_amount - $i->paid_amount),
             
             // Tab counts
-            'all_count' => Invoice::count(),
-            'paid_count' => Invoice::where('status', 'paid')->count(),
-            'pending_count' => Invoice::whereIn('status', ['unpaid', 'sent'])->count(),
-            'partial_count' => Invoice::where('status', 'partial')->count(),
-            'overdue_tab_count' => Invoice::where('status', 'overdue')->count(),
+            'all_count' => Invoice::where('status', '!=', 'cancelled')->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->count(),
+            'paid_count' => Invoice::where('status', 'paid')->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->count(),
+            'pending_count' => Invoice::whereIn('status', ['unpaid', 'sent'])->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->count(),
+            'partial_count' => Invoice::where('status', 'partial')->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->count(),
+            'overdue_tab_count' => Invoice::where('status', 'overdue')->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->count(),
+            'cancelled_count' => Invoice::where(function($q) {
+                $q->where('status', 'cancelled')
+                  ->orWhereHas('order', function($oq) {
+                      $oq->where('status', 'cancelled');
+                  });
+            })->count(),
         ];
         
         // Correcting pending vs partial logic if needed - standardizing on UI tabs: Paid, Pending, Overdue
         // If the code uses 'sent', 'partial', 'overdue', we should sum them or show them correctly.
-        $stats['pending_total_count'] = Invoice::whereIn('status', ['unpaid', 'sent', 'partial'])->count();
+        $stats['pending_total_count'] = Invoice::whereIn('status', ['unpaid', 'sent', 'partial'])->whereHas('order', fn($q) => $q->where('status', '!=', 'cancelled'))->count();
 
         $perPage = (int) $request->input('per_page', 10);
         $perPage = ($perPage > 0 && $perPage <= 100) ? $perPage : 10;
