@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class UserChat extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         "subject",
         "body",
@@ -31,5 +36,13 @@ class UserChat extends Model
     public function parentMessage()
     {
         return $this->belongsTo(UserChat::class, 'parent_message_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

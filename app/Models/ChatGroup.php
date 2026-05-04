@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class ChatGroup extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         "name",
         "members_ids",
@@ -26,5 +31,13 @@ class ChatGroup extends Model
     {
         // Unread messages for a group are Recipient records where recipient_group_id = this group's ID
         return $this->hasMany(UserChatRecipient::class, 'recipient_group_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

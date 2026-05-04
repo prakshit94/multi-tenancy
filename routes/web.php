@@ -104,6 +104,8 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::delete('/activity-logs/clear', [\App\Http\Controllers\Platform\ActivityLogController::class, 'clear'])
+        ->name('central.activity-logs.clear');
     Route::get('/activity-logs', [\App\Http\Controllers\Platform\ActivityLogController::class, 'index'])
         ->name('central.activity-logs.index');
 

@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class UserChatRecipient extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         "message_id",
         "recipient_id",
@@ -26,5 +31,13 @@ class UserChatRecipient extends Model
     public function message()
     {
         return $this->belongsTo(UserChat::class, 'message_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }
