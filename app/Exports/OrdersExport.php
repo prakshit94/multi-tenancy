@@ -52,10 +52,10 @@ class OrdersExport implements FromView, ShouldAutoSize, WithEvents
 
             // 4. Apply Date Filter
             if (!empty($this->filters['start_date'])) {
-                $query->whereDate('created_at', '>=', $this->filters['start_date']);
+                $query->whereDate('orders.created_at', '>=', $this->filters['start_date']);
             }
             if (!empty($this->filters['end_date'])) {
-                $query->whereDate('created_at', '<=', $this->filters['end_date']);
+                $query->whereDate('orders.created_at', '<=', $this->filters['end_date']);
             }
 
             // 5. Apply Regional Filters (Matching OrderProcessingController)

@@ -89,14 +89,13 @@ class OrderProcessingController extends Controller
         $dateFilter = $request->input('date_filter');
 
         match ($dateFilter) {
-            'today' => $query->whereDate('created_at', now()),
-            'yesterday' => $query->whereDate('created_at', now()->subDay()),
-            'this_week' => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
-            'this_month' => $query->whereMonth('created_at', now()->month)
-                                 ->whereYear('created_at', now()->year),
+            'today' => $query->whereBetween('orders.created_at', [now()->startOfDay(), now()->endOfDay()]),
+            'yesterday' => $query->whereBetween('orders.created_at', [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()]),
+            'this_week' => $query->whereBetween('orders.created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'this_month' => $query->whereBetween('orders.created_at', [now()->startOfMonth(), now()->endOfMonth()]),
             'custom' => $query
-                ->when($request->filled('start_date'), fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
-                ->when($request->filled('end_date'), fn($q) => $q->whereDate('created_at', '<=', $request->end_date)),
+                ->when($request->filled('start_date'), fn($q) => $q->whereDate('orders.created_at', '>=', $request->start_date))
+                ->when($request->filled('end_date'), fn($q) => $q->whereDate('orders.created_at', '<=', $request->end_date)),
             default => null,
         };
     }

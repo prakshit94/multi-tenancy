@@ -19,7 +19,8 @@
         if (this.selected.length === 0) return false;
 
         const selectedStatuses = this.selected.map(id => {
-const checkbox = document.querySelector(`#orders-content input[type='checkbox'][value='${id}']`);            return checkbox ? checkbox.getAttribute('data-status') : null;
+            const checkbox = document.querySelector(`#orders-content input[type='checkbox'][value='${id}']`);
+            return checkbox ? checkbox.getAttribute('data-status') : null;
         }).filter(s => s !== null);
 
         if (selectedStatuses.length === 0) return false;
@@ -31,76 +32,39 @@ const checkbox = document.querySelector(`#orders-content input[type='checkbox'][
         const uniqueStatuses = [...new Set(normalizedStatuses)];
         if (uniqueStatuses.length > 1) return false;
 
-        if (targetStatus === 'cancelled') {
-            return normalizedStatuses.every(current =>
-                current !== 'delivered' && current !== 'cancelled'
-            );
-        }
-
-        if (targetStatus === 'delivered') {
-            return normalizedStatuses.every(current => current === 'shipped');
-        }
-
+        const currentStatus = uniqueStatuses[0];
+        const currentIndex = this.statusFlow.indexOf(currentStatus);
         const targetIndex = this.statusFlow.indexOf(targetStatus);
-        if (targetIndex === -1) return false;
 
-        return normalizedStatuses.every(current => {
-            const currentIndex = this.statusFlow.indexOf(current);
-            if (currentIndex === -1) return false;
-
-            return targetIndex === currentIndex + 1;
-        });
+        return targetIndex > currentIndex;
     },
 
-    async loadData(urlStr) {
-        try {
-            const url = new URL(urlStr, window.location.origin);
-            const pushUrl = new URL(urlStr, window.location.origin);
-            pushUrl.searchParams.delete('ajax');
+    loadData(url) {
+        const urlObj = new URL(url);
+        urlObj.searchParams.set('ajax', '1');
+
+        fetch(urlObj.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('orders-content').innerHTML = html;
+            window.history.pushState({}, '', url);
+            this.selected = [];
             
-            url.searchParams.set('ajax', '1');
-            
-            const response = await fetch(url.toString(), { 
-                headers: { 'X-Requested-With': 'XMLHttpRequest' } 
-            });
-            
-            if (response.ok) { 
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newContent = doc.getElementById('orders-content') || doc.body;
+            // Re-sync state from URL
+            const finalUrl = new URL(url, window.location.origin);
+            const newStatus = finalUrl.searchParams.get('status') || 'confirmed';
 
-                const container = document.getElementById('orders-content');
-                if (container && newContent) {
-                    container.innerHTML = newContent.id === 'orders-content' ? newContent.innerHTML : html;
-                    
-                    if (window.Alpine) {
-                        window.Alpine.initTree(container);
-                    }
-                }
+            this.activeStatus = newStatus;
+            this.search = finalUrl.searchParams.get('search') || '';
+            this.id_search = finalUrl.searchParams.get('id_search') || '';
 
-                // ✅ FIX: clear selection after reload
-                this.selected = [];
-
-                window.history.pushState({}, '', pushUrl.toString());
-                
-                const finalUrl = new URL(window.location.href);
-
-                // ✅ FIX: reset if status changed
-                const newStatus = finalUrl.searchParams.get('status') || 'confirmed';
-                if (this.activeStatus !== newStatus) {
-                    this.selected = [];
-                }
-
-                this.activeStatus = newStatus;
-                this.search = finalUrl.searchParams.get('search') || '';
-                this.id_search = finalUrl.searchParams.get('id_search') || '';
-
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        } catch (error) { 
-            console.error('Request Failed:', error); 
-        }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        })
+        .catch(error => {
+            console.error('Error loading orders:', error);
+        });
     },
 
     performFilter() {
@@ -144,16 +108,12 @@ const checkbox = document.querySelector(`#orders-content input[type='checkbox'][
             });
         }
 
-        // Reload with only the active status
+        // Reset date filter state in the URL if present
         const url = new URL(window.location.origin + window.location.pathname);
         url.searchParams.set('status', this.activeStatus);
         this.loadData(url.toString());
     }
-}"
-@click="if ($event.target.closest('nav a')) { $event.preventDefault(); loadData($event.target.closest('nav a').href); }"
-@pagination-click.window="loadData($event.detail.url)"
-@refresh-orders.window="loadData(window.location.href)"
-class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full">
+}" @click="if ($event.target.closest('nav a')) { $event.preventDefault(); loadData($event.target.closest('nav a').href); }" @pagination-click.window="loadData($event.detail.url)" @refresh-orders.window="loadData(window.location.href)" class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full">
 
         <!-- Header Area -->
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">

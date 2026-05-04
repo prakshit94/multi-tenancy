@@ -889,6 +889,9 @@
                     style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
 
                     <input type="hidden" name="per_page" value="{{ request('per_page', 15) }}">
+                    <input type="hidden" name="date_filter" id="main_date_filter" value="{{ request('date_filter') }}">
+                    <input type="hidden" name="start_date" id="main_start_date" value="{{ request('start_date') }}">
+                    <input type="hidden" name="end_date" id="main_end_date" value="{{ request('end_date') }}">
 
                     {{-- Searchable State --}}
                     <div class="prem-dropdown" x-data="{
@@ -1131,6 +1134,48 @@
                             class="prem-tracking-input">
                     </div>
 
+                    {{-- Date Filter --}}
+                    <div class="date-dropdown" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" @click.away="open = false" class="date-btn">
+                            <svg style="width:15px;height:15px;color:var(--text-3)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span x-text="new URLSearchParams(window.location.search).get('date_filter')
+                                ? new URLSearchParams(window.location.search).get('date_filter').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+                                : 'Date Filter'"></span>
+                            <svg style="width:12px;height:12px;color:var(--text-3)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div x-show="open" style="display:none;" class="date-panel">
+                            <div x-data="{
+                                applyFilter(type, start = '', end = '') {
+                                    document.getElementById('main_date_filter').value = type;
+                                    document.getElementById('main_start_date').value = start;
+                                    document.getElementById('main_end_date').value = end;
+                                    performFilter();
+                                    open = false;
+                                }
+                            }">
+                                <div class="date-quick-grid">
+                                    <button type="button" @click="applyFilter('today')" class="date-quick-btn">Today</button>
+                                    <button type="button" @click="applyFilter('yesterday')" class="date-quick-btn">Yesterday</button>
+                                    <button type="button" @click="applyFilter('this_week')" class="date-quick-btn">This Week</button>
+                                    <button type="button" @click="applyFilter('this_month')" class="date-quick-btn">This Month</button>
+                                </div>
+
+                                <div class="bulk-divider"></div>
+                                <div class="date-range-label">Custom Range</div>
+
+                                <input type="date" id="temp_start_date" value="{{ request('start_date') }}" class="date-input">
+                                <input type="date" id="temp_end_date" value="{{ request('end_date') }}" class="date-input">
+                                <button type="button" @click="applyFilter('custom', document.getElementById('temp_start_date').value, document.getElementById('temp_end_date').value)" class="date-apply-btn">Apply Range</button>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Clear Filters --}}
                     <button type="button" @click="resetFilters()" class="prem-clear-btn">
                         <svg class="prem-clear-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
@@ -1366,59 +1411,7 @@ $stats = [
         </div>
     </div>
 
-    {{-- Right: Date Filter + Export + Import --}}
     <div class="toolbar-right">
-
-        {{-- Date Filter --}}
-        <div class="date-dropdown" x-data="{ open: false }">
-            <button @click="open = !open" @click.away="open = false" class="date-btn">
-                <svg style="width:15px;height:15px;color:var(--text-3)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <span x-text="new URLSearchParams(window.location.search).get('date_filter')
-                    ? new URLSearchParams(window.location.search).get('date_filter').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
-                    : 'Date Filter'"></span>
-                <svg style="width:12px;height:12px;color:var(--text-3)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-
-            <div x-show="open" style="display:none;" class="date-panel">
-                <form action="{{ url()->current() }}" method="GET" x-data="{
-                    submitFilter(e) {
-                        e.preventDefault();
-                        const formData = new FormData(e.target);
-                        if (e.submitter && e.submitter.name) { formData.append(e.submitter.name, e.submitter.value); }
-                        const url = new URL(window.location.href);
-                        for (const [key, value] of formData.entries()) {
-                            if (value) url.searchParams.set(key, value);
-                            else url.searchParams.delete(key);
-                        }
-                        url.searchParams.delete('page');
-                        loadData(url.toString());
-                        open = false;
-                    }
-                }" @submit="submitFilter">
-                    @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
-                    @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
-
-                    <div class="date-quick-grid">
-                        <button type="submit" name="date_filter" value="today" class="date-quick-btn">Today</button>
-                        <button type="submit" name="date_filter" value="yesterday" class="date-quick-btn">Yesterday</button>
-                        <button type="submit" name="date_filter" value="this_week" class="date-quick-btn">This Week</button>
-                        <button type="submit" name="date_filter" value="this_month" class="date-quick-btn">This Month</button>
-                    </div>
-
-                    <div class="bulk-divider"></div>
-                    <div class="date-range-label">Custom Range</div>
-
-                    <input type="date" name="start_date" value="{{ request('start_date') }}" class="date-input">
-                    <input type="date" name="end_date" value="{{ request('end_date') }}" class="date-input">
-                    <button type="submit" name="date_filter" value="custom" class="date-apply-btn">Apply Range</button>
-                </form>
-            </div>
-        </div>
 
         {{-- Export --}}
         <form action="{{ route('central.orders.export') }}" method="POST">
