@@ -821,4 +821,303 @@ class OrderProcessingController extends Controller
         return back()->with('error', 'Error updating orders: ' . $e->getMessage());
     }
 }
+
+
+// Bulk status update via CSV
+
+public function downloadBulkActionTemplate()
+{
+    $filename = 'bulk_shipped_template.csv';
+
+    $headers = [
+        "Content-type" => "text/csv",
+        "Content-Disposition" => "attachment; filename=$filename",
+        "Pragma" => "no-cache",
+        "Cache-Control" => "must-revalidate",
+        "Expires" => "0"
+    ];
+
+    $columns = ['order_number', 'action', 'courier', 'tracking_number'];
+
+    $callback = function () use ($columns) {
+        $file = fopen('php://output', 'w');
+
+        fputcsv($file, $columns);
+
+        // Sample rows
+        fputcsv($file, ['ORD001', 'shipped', 'Delhivery', 'DL123456789']);
+        fputcsv($file, ['ORD002', 'deliver', '', '']);
+
+        fclose($file);
+    };
+
+    return response()->stream($callback, 200, $headers);
+}
+
+
+public function bulkProcess(Request $request): JsonResponse
+{
+    $rows = $request->input('rows', []);
+
+    DB::beginTransaction();
+
+    try {
+
+        $processedOrders = [];
+        $successCount = 0;
+        $failCount = 0;
+        $errors = [];
+
+        foreach ($rows as $row) {
+
+            if (($row['status'] ?? '') === 'error') {
+                $failCount++;
+                continue;
+            }
+
+            $orderNumber = trim($row['order_number'] ?? '');
+
+            if (!$orderNumber || in_array($orderNumber, $processedOrders)) {
+                continue;
+            }
+
+            $processedOrders[] = $orderNumber;
+
+            $order = Order::where('order_number', $orderNumber)->first();
+
+            if (!$order) {
+                $failCount++;
+                $errors[] = "Order {$orderNumber} not found";
+                continue;
+            }
+
+            $action = strtolower(trim($row['action'] ?? ''));
+
+            try {
+
+                /*
+                |--------------------------------------------------------------------------
+                | 🚫 STRICT FLOW CONTROL
+                |--------------------------------------------------------------------------
+                */
+                $validTransitions = [
+                    'processing'    => ['shipped'],
+                    'ready_to_ship' => ['shipped'],
+                    'shipped'       => ['deliver'],
+                ];
+
+                $currentStatus = $order->status;
+
+                if (!isset($validTransitions[$currentStatus]) ||
+                    !in_array($action, $validTransitions[$currentStatus])) {
+
+                    throw new Exception("Invalid transition: {$currentStatus} → {$action}");
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | SHIPPED
+                |--------------------------------------------------------------------------
+                */
+                if ($action === 'shipped') {
+
+                    $tracking = trim($row['tracking_number'] ?? '');
+                    $courier  = trim($row['courier'] ?? '');
+
+                    if (!$tracking || !$courier) {
+                        throw new Exception("Tracking & courier required");
+                    }
+
+                    $existing = $order->shipments()->latest()->first();
+
+                    if ($existing && $existing->tracking_number) {
+
+                        if (!($row['confirm_overwrite'] ?? false)) {
+                            throw new Exception("Tracking exists → confirm overwrite");
+                        }
+
+                        $existing->update([
+                            'tracking_number' => $tracking,
+                            'carrier' => $courier,
+                        ]);
+                    }
+
+                    // auto move processing → ready_to_ship
+                    if ($order->status === 'processing') {
+                        $order->update(['status' => 'ready_to_ship']);
+                    }
+
+                    $this->orderService->shipOrder($order, $tracking, $courier);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | DELIVER
+                |--------------------------------------------------------------------------
+                */
+                if ($action === 'deliver') {
+
+                    $order->update([
+                        'status' => 'delivered',
+                        'updated_by' => auth()->id()
+                    ]);
+                }
+
+                $successCount++;
+
+            } catch (Exception $e) {
+                $failCount++;
+                $errors[] = "Order {$orderNumber}: " . $e->getMessage();
+            }
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Processed: {$successCount}, Failed: {$failCount}",
+            'errors'  => array_slice($errors, 0, 5)
+        ]);
+
+    } catch (\Exception $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+
+
+public function bulkPreview(Request $request): JsonResponse
+{
+    $request->validate([
+        'csv_file' => 'required|file|mimes:csv,txt',
+    ]);
+
+    $rows = [];
+    $handle = fopen($request->file('csv_file')->getPathname(), 'r');
+
+    if (!$handle) {
+        return response()->json(['rows' => [], 'error' => 'Unable to read file'], 422);
+    }
+
+    $header = fgetcsv($handle);
+
+    if (!$header) {
+        fclose($handle);
+        return response()->json(['rows' => [], 'error' => 'CSV is empty'], 422);
+    }
+
+    $header = array_map(fn($h) => strtolower(trim($h)), $header);
+
+    $required = ['order_number', 'action'];
+    if ($missing = array_diff($required, $header)) {
+        fclose($handle);
+        return response()->json([
+            'rows' => [],
+            'error' => 'Missing columns: ' . implode(', ', $missing)
+        ], 422);
+    }
+
+    $map = array_flip($header);
+
+    while (($row = fgetcsv($handle)) !== false) {
+
+        if (empty(array_filter($row))) continue;
+
+        $orderNumber = trim($row[$map['order_number']] ?? '');
+        $action      = strtolower(trim($row[$map['action']] ?? ''));
+        $courier     = trim($row[$map['courier']] ?? '');
+        $tracking    = trim($row[$map['tracking_number']] ?? '');
+
+        $order = $orderNumber ? Order::where('order_number', $orderNumber)->first() : null;
+
+        $status = 'valid';
+        $message = 'Ready';
+        $needsConfirmation = false;
+
+        if (!$order) {
+            $status = 'error';
+            $message = 'Order not found';
+        } else {
+
+            /*
+            |--------------------------------------------------------------------------
+            | 🚫 STRICT FLOW CONTROL
+            |--------------------------------------------------------------------------
+            */
+            $validTransitions = [
+                'processing'    => ['shipped'],
+                'ready_to_ship' => ['shipped'],
+                'shipped'       => ['deliver'],
+            ];
+
+            $currentStatus = $order->status;
+
+            if (!isset($validTransitions[$currentStatus]) ||
+                !in_array($action, $validTransitions[$currentStatus])) {
+
+                $status = 'error';
+                $message = "Invalid transition: {$currentStatus} → {$action}";
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | SHIPPED VALIDATION
+            |--------------------------------------------------------------------------
+            */
+            if ($status !== 'error' && $action === 'shipped') {
+
+                if (!$courier || !$tracking) {
+                    $status = 'error';
+                    $message = 'Tracking & courier required';
+                }
+
+                $existing = $order->shipments()->latest()->first();
+
+                if ($existing && $existing->tracking_number) {
+                    $status = 'warning';
+                    $message = 'Tracking exists → confirm overwrite';
+                    $needsConfirmation = true;
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | DELIVER VALIDATION
+            |--------------------------------------------------------------------------
+            */
+            if ($status !== 'error' && $action === 'deliver') {
+
+                if ($order->status !== 'shipped') {
+                    $status = 'error';
+                    $message = 'Order must be SHIPPED';
+                }
+            }
+        }
+
+        $rows[] = [
+            'order_number'       => $orderNumber,
+            'action'             => $action,
+            'courier'            => $courier,
+            'tracking_number'    => $tracking,
+            'current_status'     => $order->status ?? null,
+            'status'             => $status,
+            'message'            => $message,
+            'needs_confirmation' => $needsConfirmation,
+        ];
+    }
+
+    fclose($handle);
+
+    return response()->json(['rows' => $rows]);
+}
+
+
+
+
 }

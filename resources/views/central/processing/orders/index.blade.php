@@ -255,28 +255,159 @@ class="flex flex-1 flex-col space-y-6 p-6 md:p-8 max-w-[1600px] mx-auto w-full">
         </div>
     </div>
 
-    <!-- Import Dispatch CSV Modal -->
-    <div x-data="{ open: false }" x-on:open-import-modal.window="open = true" x-show="open"
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-        style="display: none;">
+    <!-- ✅ SMART BULK IMPORT MODAL (UPDATED) -->
+<div 
+x-data="{
+    open: false,
+    previewRows: [],
+    loading: false,
 
-        <div @click.away="open = false"
-            class="bg-white border border-gray-100 shadow-2xl rounded-2xl w-full max-w-md p-8 space-y-6 animate-in fade-in zoom-in duration-200 relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
-            <div class="space-y-1">
-                <h3 class="text-xl font-bold text-gray-900">Bulk Dispatch</h3>
-                <p class="text-sm text-gray-500">Upload a CSV file to dispatch multiple orders.</p>
+    async previewCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        let formData = new FormData();
+        formData.append('csv_file', file);
+
+        this.loading = true;
+
+        try {
+            const res = await fetch('/processing/orders/bulk-preview', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+            this.previewRows = data.rows;
+
+        } catch (e) {
+            console.error(e);
+            alert('Preview failed');
+        }
+
+        this.loading = false;
+    },
+
+    async confirmImport() {
+        if (!confirm('Proceed with import?')) return;
+
+        try {
+            const res = await fetch('/processing/orders/bulk-process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                },
+                body: JSON.stringify({ rows: this.previewRows })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert('Bulk operation completed');
+                this.open = false;
+                this.previewRows = [];
+                window.dispatchEvent(new CustomEvent('refresh-orders'));
+            } else {
+                alert(data.message || 'Error occurred');
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert('Processing failed');
+        }
+    }
+}"
+x-on:open-import-modal.window="open = true"
+x-show="open"
+class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+style="display: none;"
+>
+
+    <div @click.away="open = false"
+        class="bg-white border border-gray-100 shadow-2xl rounded-2xl w-full max-w-4xl p-8 space-y-6 animate-in fade-in zoom-in duration-200 relative overflow-hidden">
+
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+
+       <!-- Header -->
+<div class="flex justify-between items-start">
+    <div class="space-y-1">
+        <h3 class="text-xl font-bold text-gray-900">Smart Bulk Import</h3>
+        <p class="text-sm text-gray-500">
+            Upload CSV to Dispatch or Deliver orders (Preview before confirm)
+        </p>
+    </div>
+
+    <!-- ✅ NEW: Download Template Button -->
+    <a href="{{ route('central.processing.orders.download-template') }}"
+       class="text-xs font-bold text-primary hover:underline whitespace-nowrap">
+        Download Template
+    </a>
+</div>
+
+        <!-- File Input -->
+        <input 
+            type="file" 
+            accept=".csv"
+            @change="previewCSV($event)"
+            class="flex w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+
+        <!-- Loading -->
+        <div x-show="loading" class="text-sm text-gray-500 font-semibold">
+            Processing CSV...
+        </div>
+
+        <!-- Preview Table -->
+        <template x-if="previewRows.length > 0">
+            <div class="overflow-auto border rounded-xl max-h-[400px]">
+                <table class="w-full text-xs">
+                    <thead class="bg-gray-100 sticky top-0">
+                        <tr>
+                            <th class="p-2 text-left">Order</th>
+                            <th class="p-2 text-center">Action</th>
+                            <th class="p-2 text-center">Current</th>
+                            <th class="p-2 text-center">Status</th>
+                            <th class="p-2 text-left">Message</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <template x-for="row in previewRows" :key="row.order_number">
+                            <tr :class="row.status === 'error' ? 'bg-red-50' : 'bg-green-50'">
+                                <td class="p-2 font-mono" x-text="row.order_number"></td>
+                                <td class="p-2 text-center font-semibold" x-text="row.action"></td>
+                                <td class="p-2 text-center" x-text="row.current_status"></td>
+                                <td class="p-2 text-center font-bold" x-text="row.status"></td>
+                                <td class="p-2 text-xs" x-text="row.message"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
             </div>
-            <form action="{{ route('central.processing.orders.bulk-dispatch') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
-                @csrf
-                <input type="file" name="csv_file" accept=".csv, .txt" required class="flex w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" @click="open = false" class="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
-                    <button type="submit" class="px-5 py-2.5 text-sm font-semibold bg-gray-900 text-white hover:bg-black rounded-xl shadow-lg shadow-gray-900/20 transition-all transform hover:-translate-y-0.5">Upload & Dispatch</button>
-                </div>
-            </form>
+        </template>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-3 pt-2">
+            <button 
+                type="button" 
+                @click="open = false"
+                class="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors">
+                Cancel
+            </button>
+
+            <button 
+                type="button"
+                x-show="previewRows.length > 0"
+                @click="confirmImport()"
+                class="px-5 py-2.5 text-sm font-semibold bg-gray-900 text-white hover:bg-black rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5">
+                Confirm Import
+            </button>
         </div>
     </div>
+</div>
 
     <!-- Premium Processed Order Modal (AJAX) -->
     <div x-data="{ 

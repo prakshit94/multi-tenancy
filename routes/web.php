@@ -284,6 +284,31 @@ Route::middleware('auth')->group(function () {
     Route::post('processing/orders/bulk-status', [\App\Http\Controllers\Central\OrderProcessingController::class, 'bulkStatusUpdate'])->name('central.processing.orders.bulk-status');
     Route::post('processing/orders/bulk-dispatch', [\App\Http\Controllers\Central\OrderProcessingController::class, 'bulkDispatch'])->name('central.processing.orders.bulk-dispatch');
 
+
+
+
+// Bulk Dispatch & Deliver (CSV)
+
+Route::get(
+    'processing/orders/download-template',
+    [\App\Http\Controllers\Central\OrderProcessingController::class, 'downloadBulkActionTemplate']
+)->name('central.processing.orders.download-template');
+
+Route::post(
+    'processing/orders/bulk-preview',
+    [\App\Http\Controllers\Central\OrderProcessingController::class, 'bulkPreview']
+)->name('central.processing.orders.bulk-preview');
+
+Route::post(
+    'processing/orders/bulk-process',
+    [\App\Http\Controllers\Central\OrderProcessingController::class, 'bulkProcess']
+)->name('central.processing.orders.bulk-process');
+
+
+
+
+
+
     Route::get('processing/returns', [\App\Http\Controllers\Central\OrderProcessingController::class, 'indexReturns'])->name('central.processing.returns.index');
     Route::post('processing/returns/{orderReturn}/receive', [\App\Http\Controllers\Central\OrderProcessingController::class, 'receiveReturn'])->name('central.processing.returns.receive');
 
