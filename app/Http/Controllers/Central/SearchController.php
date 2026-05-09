@@ -24,140 +24,485 @@ class SearchController extends Controller
      * Search for customers via AJAX.
      */
     public function customers(Request $request): JsonResponse
-    {
-        $term = (string) $request->input('q', '');
-        if (strlen($term) < 2) {
-            return response()->json([]);
-        }
+{
+    $term = trim((string) $request->input('q', ''));
 
-        $customers = Customer::where('mobile', 'like', "%{$term}%")
-            ->orWhere('first_name', 'like', "%{$term}%")
-            ->orWhere('last_name', 'like', "%{$term}%")
-            ->orWhere('customer_code', 'like', "%{$term}%")
-            ->limit(10)
-            ->with('addresses')
-            ->withCount('orders')
-            ->get();
-
-        $data = $customers->map(fn($customer) => [
-            'id' => $customer->id,
-            'first_name' => $customer->first_name,
-            'middle_name' => $customer->middle_name,
-            'last_name' => $customer->last_name,
-            'mobile' => $customer->mobile,
-            'phone_number_2' => $customer->phone_number_2,
-            'email' => $customer->email,
-            'customer_code' => $customer->customer_code,
-            'outstanding_balance' => (float) ($customer->outstanding_balance ?? 0.00),
-            'credit_limit' => (float) ($customer->credit_limit ?? 0.00),
-            'orders_count' => (int) ($customer->orders_count ?? 0),
-            'addresses' => $customer->addresses,
-            'company_name' => $customer->company_name,
-            'gst_number' => $customer->gst_number,
-            'pan_number' => $customer->pan_number,
-            'type' => $customer->type,
-            'category' => $customer->category,
-            'aadhaar_last4' => $customer->aadhaar_last4,
-            'kyc_completed' => (bool) $customer->kyc_completed,
-            'kyc_verified_at' => $customer->kyc_verified_at ? $customer->kyc_verified_at->format('d M Y') : null,
-            'credit_valid_till' => $customer->credit_valid_till,
-            'internal_notes' => $customer->internal_notes,
-            'tags' => $customer->tags,
-            'crops' => $customer->crops,
-            'land_area' => $customer->land_area,
-            'land_unit' => $customer->land_unit,
-            'irrigation_type' => $customer->irrigation_type,
-            'created_at' => $customer->created_at->format('M Y'),
-            'is_active' => (bool) $customer->is_active,
-            'is_blacklisted' => (bool) $customer->is_blacklisted,
-        ]);
-
-        return response()->json($data);
+    if (strlen($term) < 2) {
+        return response()->json([]);
     }
+
+    $customers = Customer::query()
+
+        ->select([
+            'id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'mobile',
+            'phone_number_2',
+            'email',
+            'customer_code',
+            'outstanding_balance',
+            'credit_limit',
+            'company_name',
+            'gst_number',
+            'pan_number',
+            'type',
+            'category',
+            'aadhaar_last4',
+            'kyc_completed',
+            'kyc_verified_at',
+            'credit_valid_till',
+            'internal_notes',
+            'tags',
+            'crops',
+            'land_area',
+            'land_unit',
+            'irrigation_type',
+            'created_at',
+            'is_active',
+            'is_blacklisted',
+        ])
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search Optimization
+        |--------------------------------------------------------------------------
+        */
+
+        ->where(function ($query) use ($term) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | FullText Search
+            |--------------------------------------------------------------------------
+            */
+
+            $query->whereRaw(
+                "MATCH(
+                    first_name,
+                    last_name,
+                    display_name,
+                    company_name
+                ) AGAINST(? IN BOOLEAN MODE)",
+                [$term . '*']
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | Indexed Prefix Search
+            |--------------------------------------------------------------------------
+            */
+
+            ->orWhere('mobile', 'like', "{$term}%")
+
+            ->orWhere('customer_code', 'like', "{$term}%");
+        })
+
+        /*
+        |--------------------------------------------------------------------------
+        | Optimized Eager Loading
+        |--------------------------------------------------------------------------
+        */
+
+        ->with([
+            'addresses:id,customer_id,address_line1,address_line2,city,state,pincode,type,is_default'
+        ])
+
+        ->withCount('orders')
+
+        ->limit(10)
+
+        ->get();
+
+    $data = $customers->map(fn($customer) => [
+
+        'id' => $customer->id,
+
+        'first_name' => $customer->first_name,
+
+        'middle_name' => $customer->middle_name,
+
+        'last_name' => $customer->last_name,
+
+        'mobile' => $customer->mobile,
+
+        'phone_number_2' => $customer->phone_number_2,
+
+        'email' => $customer->email,
+
+        'customer_code' => $customer->customer_code,
+
+        'outstanding_balance' =>
+            (float) ($customer->outstanding_balance ?? 0.00),
+
+        'credit_limit' =>
+            (float) ($customer->credit_limit ?? 0.00),
+
+        'orders_count' =>
+            (int) ($customer->orders_count ?? 0),
+
+        'addresses' =>
+            $customer->addresses,
+
+        'company_name' =>
+            $customer->company_name,
+
+        'gst_number' =>
+            $customer->gst_number,
+
+        'pan_number' =>
+            $customer->pan_number,
+
+        'type' =>
+            $customer->type,
+
+        'category' =>
+            $customer->category,
+
+        'aadhaar_last4' =>
+            $customer->aadhaar_last4,
+
+        'kyc_completed' =>
+            (bool) $customer->kyc_completed,
+
+        'kyc_verified_at' =>
+            $customer->kyc_verified_at
+                ? $customer->kyc_verified_at->format('d M Y')
+                : null,
+
+        'credit_valid_till' =>
+            $customer->credit_valid_till,
+
+        'internal_notes' =>
+            $customer->internal_notes,
+
+        'tags' =>
+            $customer->tags,
+
+        'crops' =>
+            $customer->crops,
+
+        'land_area' =>
+            $customer->land_area,
+
+        'land_unit' =>
+            $customer->land_unit,
+
+        'irrigation_type' =>
+            $customer->irrigation_type,
+
+        'created_at' =>
+            $customer->created_at->format('M Y'),
+
+        'is_active' =>
+            (bool) $customer->is_active,
+
+        'is_blacklisted' =>
+            (bool) $customer->is_blacklisted,
+    ]);
+
+    return response()->json($data);
+}
 
     /**
      * Search for products via AJAX.
      */
     public function products(Request $request): JsonResponse
-    {
-        $term = (string) $request->input('q', '');
-        $query = Product::where('is_active', true)
-            ->where('is_sku_enabled', true)
-            ->with(['category', 'brand', 'images', 'stocks', 'taxClass.rates']);
+{
+    $term = trim((string) $request->input('q', ''));
 
-        if (empty($term)) {
-            $products = $query->limit(20)->get();
-        } else {
-            $products = $query->where(function ($q) use ($term) {
-                $q->where('name', 'like', "%{$term}%")
-                    ->orWhere('sku', 'like', "%{$term}%")
-                    ->orWhere('slug', 'like', "%{$term}%");
-            })
-                ->orWhereHas('category', function ($q) use ($term) {
-                    $q->where('name', 'like', "%{$term}%");
-                })
-                ->limit(20)
-                ->get();
+    $query = Product::query()
+
+        ->select([
+            'id',
+            'name',
+            'sku',
+            'slug',
+            'price',
+            'mrp',
+            'description',
+            'brand_id',
+            'category_id',
+            'tax_rate',
+            'tax_class_id',
+            'allow_oversell',
+            'oversell_limit',
+            'unit_type',
+            'origin',
+            'is_organic',
+            'default_discount_type',
+            'default_discount_value',
+            'image',
+        ])
+
+        ->where('is_active', true)
+
+        ->where('is_sku_enabled', true)
+
+        /*
+        |--------------------------------------------------------------------------
+        | Optimized Eager Loading
+        |--------------------------------------------------------------------------
+        */
+
+        ->with([
+            'category:id,name',
+            'brand:id,name',
+
+            'taxClass:id,name',
+
+            'taxClass.rates:id,tax_class_id,rate,name',
+        ])
+
+        /*
+        |--------------------------------------------------------------------------
+        | SQL Aggregation Instead Of PHP SUM
+        |--------------------------------------------------------------------------
+        */
+
+        ->withSum('stocks as total_physical_qty', 'quantity')
+
+        ->withSum('stocks as total_reserved_qty', 'reserve_quantity');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Search
+    |--------------------------------------------------------------------------
+    */
+
+    if (!empty($term)) {
+
+        $query->where(function ($q) use ($term) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | FullText Search (Fast)
+            |--------------------------------------------------------------------------
+            */
+
+            $q->whereRaw(
+                "MATCH(
+                    name,
+                    description,
+                    technical_name,
+                    usage_instructions
+                ) AGAINST(? IN BOOLEAN MODE)",
+                [$term . '*']
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | Indexed Prefix Search
+            |--------------------------------------------------------------------------
+            */
+
+            ->orWhere('sku', 'like', "{$term}%")
+
+            ->orWhere('slug', 'like', "{$term}%")
+
+            ->orWhereHas('category', function ($categoryQuery) use ($term) {
+
+                $categoryQuery->where(
+                    'name',
+                    'like',
+                    "{$term}%"
+                );
+            });
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fetch Products
+    |--------------------------------------------------------------------------
+    */
+
+    $products = $query
+        ->limit(20)
+        ->get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pending Product Quantities
+    |--------------------------------------------------------------------------
+    */
+
+    $pendingProductQuantities = \App\Models\OrderItem::query()
+
+        ->selectRaw('product_id, SUM(quantity) as total_pending')
+
+        ->whereHas('order', function ($q) {
+
+            $q->whereIn('status', ['pending', 'draft']);
+        })
+
+        ->groupBy('product_id')
+
+        ->pluck('total_pending', 'product_id');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Response Transformation
+    |--------------------------------------------------------------------------
+    */
+
+    $data = $products->map(function ($product) use ($pendingProductQuantities) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Stock Calculations
+        |--------------------------------------------------------------------------
+        */
+
+        $totalPhysicalQty =
+            (float) ($product->total_physical_qty ?? 0);
+
+        $totalReservedQty =
+            (float) ($product->total_reserved_qty ?? 0);
+
+        $pendingQty =
+            (float) ($pendingProductQuantities[$product->id] ?? 0);
+
+        $totalCommitment =
+            $totalReservedQty + $pendingQty;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tax Calculation
+        |--------------------------------------------------------------------------
+        */
+
+        $taxAmount = 0.00;
+
+        if (
+            $product->taxClass &&
+            $product->taxClass->rates->isNotEmpty()
+        ) {
+
+            $taxAmount =
+                $product->price *
+                (
+                    $product->taxClass
+                        ->rates
+                        ->sum('rate') / 100
+                );
+
+        } elseif (($product->tax_rate ?? 0) > 0) {
+
+            $taxAmount =
+                $product->price *
+                ($product->tax_rate / 100);
         }
 
-        $pendingProductQuantities = \App\Models\OrderItem::whereHas('order', function ($q) {
-            $q->whereIn('status', ['pending', 'draft']);
-        })->selectRaw('product_id, SUM(quantity) as total_pending')
-            ->groupBy('product_id')
-            ->pluck('total_pending', 'product_id');
+        /*
+        |--------------------------------------------------------------------------
+        | Oversell Calculation
+        |--------------------------------------------------------------------------
+        */
 
-        $data = $products->map(function ($product) use ($pendingProductQuantities) {
-            $totalPhysicalQty = $product->stocks->sum('quantity');
-            $totalReservedQty = $product->stocks->sum('reserve_quantity');
-            $pendingQty = $pendingProductQuantities->get($product->id, 0);
-            $totalCommitment = $totalReservedQty + $pendingQty;
+        $currentOversoldAmount =
+            max(0, $totalCommitment - $totalPhysicalQty);
 
-            $taxAmount = 0.00;
-            if ($product->taxClass && $product->taxClass->rates->isNotEmpty()) {
-                $taxAmount = $product->price * ($product->taxClass->rates->sum('rate') / 100);
-            } elseif ($product->tax_rate > 0) {
-                $taxAmount = $product->price * ($product->tax_rate / 100);
-            }
+        $oversellLimit =
+            $product->oversell_limit !== null
+                ? (int) $product->oversell_limit
+                : null;
 
-            $currentOversoldAmount = max(0, $totalCommitment - $totalPhysicalQty);
-            $oversellLimit = $product->oversell_limit !== null ? (int) $product->oversell_limit : null;
-            $effectiveOversellLimit = $oversellLimit !== null ? max(0, $oversellLimit - $currentOversoldAmount) : null;
+        $effectiveOversellLimit =
+            $oversellLimit !== null
+                ? max(
+                    0,
+                    $oversellLimit - $currentOversoldAmount
+                )
+                : null;
 
-            return [
-                'id' => $product->id,
-                'name' => $product->name,
-                'sku' => $product->sku,
-                'price' => (float) $product->price,
-                'mrp' => (float) $product->mrp,
-                'tax_amount' => (float) $taxAmount,
-                'total_price_with_tax' => (float) ($product->price + $taxAmount),
-                'stock_on_hand' => (float) max(0, $totalPhysicalQty - $totalCommitment),
-                'allow_oversell' => (bool) $product->allow_oversell,
-                'oversell_limit' => $effectiveOversellLimit,
-                'unit_type' => $product->unit_type,
-                'brand' => $product->brand->name ?? 'N/A',
-                'description' => $product->description,
-                'is_organic' => $product->is_organic,
-                'origin' => $product->origin,
-                'image_url' => $product->image_url,
-                'category' => $product->category->name ?? 'Uncategorized',
-                'default_discount_type' => $product->default_discount_type,
-                'default_discount_value' => (float) $product->default_discount_value,
-                'tax_rate' => $product->tax_rate,
-                'tax_class_id' => $product->tax_class_id,
-                'tax_class' => $product->taxClass ? [
+        return [
+
+            'id' => $product->id,
+
+            'name' => $product->name,
+
+            'sku' => $product->sku,
+
+            'price' => (float) $product->price,
+
+            'mrp' => (float) $product->mrp,
+
+            'tax_amount' => round($taxAmount, 2),
+
+            'total_price_with_tax' => round(
+                $product->price + $taxAmount,
+                2
+            ),
+
+            'stock_on_hand' => (float) max(
+                0,
+                $totalPhysicalQty - $totalCommitment
+            ),
+
+            'allow_oversell' =>
+                (bool) $product->allow_oversell,
+
+            'oversell_limit' =>
+                $effectiveOversellLimit,
+
+            'unit_type' =>
+                $product->unit_type,
+
+            'brand' =>
+                $product->brand->name ?? 'N/A',
+
+            'description' =>
+                $product->description,
+
+            'is_organic' =>
+                (bool) $product->is_organic,
+
+            'origin' =>
+                $product->origin,
+
+            'image_url' =>
+                $product->image_url,
+
+            'category' =>
+                $product->category->name
+                    ?? 'Uncategorized',
+
+            'default_discount_type' =>
+                $product->default_discount_type,
+
+            'default_discount_value' =>
+                (float) $product->default_discount_value,
+
+            'tax_rate' =>
+                $product->tax_rate,
+
+            'tax_class_id' =>
+                $product->tax_class_id,
+
+            'tax_class' => $product->taxClass
+                ? [
                     'id' => $product->taxClass->id,
-                    'name' => $product->taxClass->name,
-                    'rates' => $product->taxClass->rates->map(fn($r) => [
-                        'rate' => $r->rate,
-                        'name' => $r->name
-                    ])
-                ] : null,
-            ];
-        });
 
-        return response()->json($data);
-    }
+                    'name' => $product->taxClass->name,
+
+                    'rates' => $product
+                        ->taxClass
+                        ->rates
+                        ->map(fn($r) => [
+
+                            'rate' => $r->rate,
+
+                            'name' => $r->name,
+                        ]),
+                ]
+                : null,
+        ];
+    });
+
+    return response()->json($data);
+}
 
     /**
      * Store or update a customer via AJAX.
@@ -359,88 +704,305 @@ class SearchController extends Controller
      * Search for customer orders via AJAX.
      */
     public function customerOrders(Request $request): JsonResponse
-    {
-        $customerId = $request->input('customer_id');
-        if (!$customerId) {
-            return response()->json([]);
-        }
+{
+    $customerId = $request->input('customer_id');
 
-        $orders = \App\Models\Order::where('customer_id', $customerId)
-            ->latest()
-            ->limit(5)
-            ->get()
-            ->map(function ($order) {
-                return [
-                    'id' => $order->id,
-                    'order_number' => $order->order_number ?? 'ORD-' . $order->id,
-                    'placed_at' => $order->placed_at ? $order->placed_at->format('d M Y') : '-',
-                    'grand_total' => (float) $order->grand_total,
-                    'status' => ucfirst($order->status),
-                    'payment_status' => ucfirst($order->payment_status ?? 'unpaid'),
-                    'item_count' => $order->items->count(),
-                ];
-            });
-
-        return response()->json($orders);
+    if (!$customerId) {
+        return response()->json([]);
     }
+
+    $orders = \App\Models\Order::query()
+
+        ->select([
+            'id',
+            'customer_id',
+            'order_number',
+            'placed_at',
+            'grand_total',
+            'status',
+            'payment_status',
+        ])
+
+        ->where('customer_id', $customerId)
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent N+1 Queries
+        |--------------------------------------------------------------------------
+        */
+
+        ->withCount('items')
+
+        ->latest()
+
+        ->limit(5)
+
+        ->get()
+
+        ->map(function ($order) {
+
+            return [
+
+                'id' => $order->id,
+
+                'order_number' =>
+                    $order->order_number ?? 'ORD-' . $order->id,
+
+                'placed_at' =>
+                    $order->placed_at
+                        ? $order->placed_at->format('d M Y')
+                        : '-',
+
+                'grand_total' =>
+                    (float) $order->grand_total,
+
+                'status' =>
+                    ucfirst($order->status),
+
+                'payment_status' =>
+                    ucfirst($order->payment_status ?? 'unpaid'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Uses SQL COUNT Instead Of Extra Queries
+                |--------------------------------------------------------------------------
+                */
+
+                'item_count' =>
+                    (int) $order->items_count,
+            ];
+        });
+
+    return response()->json($orders);
+}
     public function customerActivity(Request $request): JsonResponse
-    {
-        $customerId = $request->input('customer_id');
-        if (!$customerId) {
-            return response()->json(['orders' => [], 'interactions' => []]);
-        }
+{
+    $customerId = $request->input('customer_id');
 
-        $orders = \App\Models\Order::where('customer_id', $customerId)
-            ->with('items.product.images', 'creator', 'shipments')
-            ->latest()
-            ->limit(10)
-            ->get()
-            ->map(function ($order) {
-                return [
-                    'id' => $order->id,
-                    'type' => 'order',
-                    'order_number' => $order->order_number ?? 'ORD-' . $order->id,
-                    'placed_at' => $order->placed_at ? $order->placed_at->format('d M Y, h:i A') : '-',
-                    'date' => $order->created_at->toIso8601String(), // For sorting
-                    'grand_total' => (float) $order->grand_total,
-                    'status' => ucfirst($order->status),
-                    'payment_status' => ucfirst($order->payment_status ?? 'unpaid'),
-                    'item_count' => $order->items->count(),
-                    'items' => $order->items, // Return items for display
-                    'creator_name' => optional($order->creator)->name ?? 'System',
-                    'shipments' => $order->shipments->map(function ($shipment) {
-                        return [
-                            'tracking_number' => $shipment->tracking_number,
-                            'carrier' => $shipment->carrier,
-                            'status' => $shipment->status,
-                            'shipped_at' => $shipment->shipped_at ? $shipment->shipped_at->format('d M Y') : null,
-                        ];
-                    }),
-                ];
-            });
-
-        // Fetch Interactions
-        $interactions = \App\Models\CustomerInteraction::where('customer_id', $customerId)
-            ->with('user')
-            ->latest()
-            ->limit(10)
-            ->get()
-            ->map(function ($interaction) {
-                return [
-                    'id' => $interaction->id,
-                    'type' => 'interaction',
-                    'interaction_type' => $interaction->type, // 'type' column
-                    'outcome' => $interaction->outcome,
-                    'notes' => $interaction->notes,
-                    'created_at' => $interaction->created_at->format('d M Y, h:i A'),
-                    'date' => $interaction->created_at->toIso8601String(),
-                    'user_name' => $interaction->user->name ?? 'System',
-                ];
-            });
-
+    if (!$customerId) {
         return response()->json([
-            'orders' => $orders,
-            'interactions' => $interactions
+            'orders' => [],
+            'interactions' => []
         ]);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orders
+    |--------------------------------------------------------------------------
+    */
+
+    $orders = \App\Models\Order::query()
+
+        ->select([
+            'id',
+            'customer_id',
+            'order_number',
+            'placed_at',
+            'created_at',
+            'grand_total',
+            'status',
+            'payment_status',
+        ])
+
+        ->where('customer_id', $customerId)
+
+        /*
+        |--------------------------------------------------------------------------
+        | Optimized Eager Loading
+        |--------------------------------------------------------------------------
+        */
+
+        ->with([
+
+            'creator:id,name',
+
+            'shipments:id,order_id,tracking_number,carrier,status,shipped_at',
+
+            'items:id,order_id,product_id,quantity',
+
+            'items.product:id,name,sku,image',
+        ])
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent N+1 Queries
+        |--------------------------------------------------------------------------
+        */
+
+        ->withCount('items')
+
+        ->latest()
+
+        ->limit(10)
+
+        ->get()
+
+        ->map(function ($order) {
+
+            return [
+
+                'id' => $order->id,
+
+                'type' => 'order',
+
+                'order_number' =>
+                    $order->order_number ?? 'ORD-' . $order->id,
+
+                'placed_at' =>
+                    $order->placed_at
+                        ? $order->placed_at->format('d M Y, h:i A')
+                        : '-',
+
+                'date' =>
+                    $order->created_at->toIso8601String(),
+
+                'grand_total' =>
+                    (float) $order->grand_total,
+
+                'status' =>
+                    ucfirst($order->status),
+
+                'payment_status' =>
+                    ucfirst($order->payment_status ?? 'unpaid'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | SQL Count
+                |--------------------------------------------------------------------------
+                */
+
+                'item_count' =>
+                    (int) $order->items_count,
+
+                /*
+                |--------------------------------------------------------------------------
+                | Optimized Items
+                |--------------------------------------------------------------------------
+                */
+
+                'items' => $order->items->map(function ($item) {
+
+                    return [
+
+                        'id' => $item->id,
+
+                        'product_id' => $item->product_id,
+
+                        'quantity' => $item->quantity,
+
+                        'product' => $item->product
+                            ? [
+
+                                'name' =>
+                                    $item->product->name,
+
+                                'sku' =>
+                                    $item->product->sku,
+
+                                'image_url' =>
+                                    $item->product->image,
+                            ]
+                            : null,
+                    ];
+                }),
+
+                'creator_name' =>
+                    optional($order->creator)->name ?? 'System',
+
+                /*
+                |--------------------------------------------------------------------------
+                | Optimized Shipments
+                |--------------------------------------------------------------------------
+                */
+
+                'shipments' => $order->shipments->map(function ($shipment) {
+
+                    return [
+
+                        'tracking_number' =>
+                            $shipment->tracking_number,
+
+                        'carrier' =>
+                            $shipment->carrier,
+
+                        'status' =>
+                            $shipment->status,
+
+                        'shipped_at' =>
+                            $shipment->shipped_at
+                                ? $shipment->shipped_at->format('d M Y')
+                                : null,
+                    ];
+                }),
+            ];
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Interactions
+    |--------------------------------------------------------------------------
+    */
+
+    $interactions = \App\Models\CustomerInteraction::query()
+
+        ->select([
+            'id',
+            'customer_id',
+            'user_id',
+            'type',
+            'outcome',
+            'notes',
+            'created_at',
+        ])
+
+        ->where('customer_id', $customerId)
+
+        ->with([
+            'user:id,name'
+        ])
+
+        ->latest()
+
+        ->limit(10)
+
+        ->get()
+
+        ->map(function ($interaction) {
+
+            return [
+
+                'id' => $interaction->id,
+
+                'type' => 'interaction',
+
+                'interaction_type' =>
+                    $interaction->type,
+
+                'outcome' =>
+                    $interaction->outcome,
+
+                'notes' =>
+                    $interaction->notes,
+
+                'created_at' =>
+                    $interaction->created_at
+                        ->format('d M Y, h:i A'),
+
+                'date' =>
+                    $interaction->created_at
+                        ->toIso8601String(),
+
+                'user_name' =>
+                    $interaction->user->name ?? 'System',
+            ];
+        });
+
+    return response()->json([
+
+        'orders' => $orders,
+
+        'interactions' => $interactions,
+    ]);
+}
 }

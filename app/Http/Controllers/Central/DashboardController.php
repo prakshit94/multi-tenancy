@@ -156,10 +156,36 @@ class DashboardController extends Controller
 
         // ✅ SAFE eager loading (NO column errors)
         $recentOrders = (clone $filteredOrders)
-            ->with(['customer', 'creator'])
-            ->latest()
-            ->limit(5)
-            ->get();
+
+    ->select([
+        'id',
+        'customer_id',
+        'created_by',
+        'order_number',
+        'grand_total',
+        'status',
+        'payment_status',
+        'created_at',
+    ])
+
+    /*
+    |--------------------------------------------------------------------------
+    | Optimized Eager Loading
+    |--------------------------------------------------------------------------
+    */
+
+    ->with([
+
+        'customer:id,first_name,last_name',
+
+        'creator:id,name',
+    ])
+
+    ->latest()
+
+    ->limit(5)
+
+    ->get();
 
         // Chart data optimized
         $chartQuery = clone $orderQuery;
@@ -186,10 +212,48 @@ class DashboardController extends Controller
         }
 
         $orderHistory = (clone $filteredOrders)
-            ->with(['customer', 'creator', 'items.product'])
-            ->latest()
-            ->limit(20)
-            ->get();
+
+    ->select([
+        'id',
+        'customer_id',
+        'created_by',
+        'order_number',
+        'grand_total',
+        'status',
+        'payment_status',
+        'created_at',
+    ])
+
+    /*
+    |--------------------------------------------------------------------------
+    | Optimized Eager Loading
+    |--------------------------------------------------------------------------
+    */
+
+    ->with([
+
+        'customer:id,first_name,last_name',
+
+        'creator:id,name',
+
+        'items:id,order_id,product_id,quantity,total_price',
+
+        'items.product:id,name,sku,image',
+    ])
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prevent N+1 Queries
+    |--------------------------------------------------------------------------
+    */
+
+    ->withCount('items')
+
+    ->latest()
+
+    ->limit(20)
+
+    ->get();
 
         // Online users
         $onlineUsers = \App\Models\User::query()
