@@ -158,7 +158,7 @@ class ChatServices
                 ->get();
         }
         // 1. Fetch Chat History FIRST to identify relevant users
-       $oneMonthAgo = Carbon::today()->subDays(30);
+        $oneMonthAgo = Carbon::today()->subYears(20);
         $today = Carbon::now();
 
         $your_messages = UserChat::select([
@@ -177,7 +177,7 @@ class ChatServices
                     ->orwhere('user_chat_recipients.recipient_id', $you);
             })
             ->with('user')
-            ->orderBy('user_chats.created_at', 'DESC')->take(100)->get();
+            ->orderBy('user_chats.created_at', 'DESC')->take(2000)->get();
 
         $your_last_chat_with_users = array();
         $chat_user_ids = [];

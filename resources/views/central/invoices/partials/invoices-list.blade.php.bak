@@ -86,11 +86,11 @@
                 <div class="mt-6">
                     <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
                         <span>Payment Progress</span>
-                        <span>{{ $invoice->total_amount > 0 ? number_format(($invoice->paid_amount / $invoice->total_amount) * 100, 0) : 0 }}%</span>
+                        <span>{{ number_format(($invoice->paid_amount / $invoice->total_amount) * 100, 0) }}%</span>
                     </div>
                     <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden shadow-inner">
                         <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-1000" 
-                             style="width: {{ $invoice->total_amount > 0 ? ($invoice->paid_amount / $invoice->total_amount) * 100 : 0 }}%"></div>
+                             style="width: {{ ($invoice->paid_amount / $invoice->total_amount) * 100 }}%"></div>
                     </div>
                 </div>
                 @endif

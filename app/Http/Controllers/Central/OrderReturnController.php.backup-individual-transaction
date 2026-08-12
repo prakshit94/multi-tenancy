@@ -680,45 +680,40 @@ class OrderReturnController extends Controller
             'rows.*.preview_status' => 'required|in:valid',
         ]);
 
-    try {
-        $errors = [];
-        $createdCount = 0;
-        $createdRMAs = [];
+        try {
+            $errors = [];
+            $createdCount = 0;
 
-        foreach ($validated['rows'] as $row) {
-            try {
-                DB::transaction(function () use ($row, &$createdCount, &$createdRMAs) {
+            $createdRMAs = [];
+
+            DB::transaction(function () use ($validated, &$errors, &$createdCount, &$createdRMAs) {
+                foreach ($validated['rows'] as $row) {
                     $order = Order::with(['items', 'returns.items'])->find($row['order_id']);
 
                     if (!$order) {
-                        throw new Exception("Order ID {$row['order_id']} not found.");
+                        $errors[] = "Order ID {$row['order_id']} not found. Skipping this row.";
+                        continue;
                     }
 
                     $productId = $row['product_id'];
 
                     // Final validation check
                     $orderItem = $order->items->where('product_id', $productId)->first();
-
                     if (!$orderItem) {
-                        throw new Exception("Order #{$order->order_number}: Product not found in order.");
+                        $errors[] = "Order #{$order->order_number}: Product not found in order.";
+                        continue;
                     }
 
                     $returnedQty = 0;
-
                     foreach ($order->returns as $rma) {
-                        if ($rma->status === 'rejected') {
-                            continue;
-                        }
-
-                        $returnedQty += $rma->items
-                            ->where('product_id', $productId)
-                            ->sum('quantity');
+                        if ($rma->status === 'rejected') continue;
+                        $returnedQty += $rma->items->where('product_id', $productId)->sum('quantity');
                     }
 
                     $availableQty = max(0, $orderItem->quantity - $returnedQty);
-
                     if ($row['quantity'] > $availableQty) {
-                        throw new Exception("Order #{$order->order_number}: Insufficient quantity available.");
+                        $errors[] = "Order #{$order->order_number}: Insufficient quantity available.";
+                        continue;
                     }
 
                     if (!isset($createdRMAs[$order->id])) {
@@ -730,7 +725,6 @@ class OrderReturnController extends Controller
                             'reason' => $row['reason'] ?? 'Bulk CSV Upload',
                             'refund_method' => 'credit',
                         ]);
-
                         $createdRMAs[$order->id] = $rma;
                         $createdCount++;
                     } else {
@@ -742,28 +736,19 @@ class OrderReturnController extends Controller
                         'quantity' => $row['quantity'],
                         'condition' => strtolower($row['condition'] ?? 'sellable'),
                     ]);
-                });
-            } catch (Exception $e) {
-                $errors[] = "Order ID {$row['order_id']}: " . $e->getMessage();
+                }
+            });
 
-                unset($createdRMAs[$row['order_id']]);
-
-                continue;
+            if (count($errors) > 0) {
+                return redirect()->route('central.returns.index')->with('warning', "Created $createdCount RMAs. Some errors occurred: " . implode(', ', $errors));
             }
+
+            return redirect()->route('central.returns.index')->with('success', "Successfully created $createdCount bulk RMA requests.");
+
+        } catch (Exception $e) {
+            return back()->with('error', 'Failed to store bulk returns: ' . $e->getMessage());
         }
-
-        if (count($errors) > 0) {
-            return redirect()->route('central.returns.index')
-                ->with('warning', "Created $createdCount RMAs. Some errors occurred: " . implode(', ', $errors));
-        }
-
-        return redirect()->route('central.returns.index')
-            ->with('success', "Successfully created $createdCount bulk RMA requests.");
-
-    } catch (Exception $e) {
-        return back()->with('error', 'Failed to store bulk returns: ' . $e->getMessage());
     }
-}
 
     private function generateRmaNumber()
     {

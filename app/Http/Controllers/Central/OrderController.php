@@ -755,7 +755,7 @@ class OrderController extends Controller
         try {
             $this->authorize('orders view');
             $order->load(['items.product', 'customer']);
-            $pdf = Pdf::loadView('central.receipts.cod', compact('order'))->setPaper('a5', 'portrait');
+            $pdf = Pdf::loadView('central.receipts.cod', compact('order'))->setPaper([0, 0, 283.46, 425.20], 'portrait');
             return $pdf->download("receipt-{$order->order_number}.pdf");
         } catch (\Exception $e) {
             \Log::error('PDF Generation Error (Receipt): ' . $e->getMessage());

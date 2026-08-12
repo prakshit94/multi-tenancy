@@ -6,21 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COD Receipt - {{ $order->order_number }}</title>
     <style>
-        @page {
-            size: 100mm 150mm;
-            margin: 0;
-        }
-
-        html, body {
-            width: 100mm;
-            height: 150mm;
-            margin: 0 !important;
-            padding: 4px !important;
+        body {
             font-family: 'Courier', monospace;
-            font-size: 10px;
+            width: 100%;
+            margin: 0;
+            padding: 5px;
+            font-size: 11px;
             color: #000;
-            box-sizing: border-box;
-            overflow: hidden;
         }
 
         .center {
@@ -33,7 +25,7 @@
 
         .separator {
             border-top: 1px dashed #000;
-            margin: 4px 0;
+            margin: 5px 0;
         }
 
         .row-table {
@@ -42,7 +34,7 @@
         }
 
         .row-table td {
-            padding: 1px 0;
+            padding: 2px 0;
             vertical-align: top;
         }
 
@@ -51,14 +43,14 @@
         }
 
         .item-row {
-            margin-bottom: 3px;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 
 <body>
     <div class="center">
-        <h2 style="margin:0; font-size: 14px;">{{ tenant('id') ? ucfirst(tenant('id')) : config('app.name') }}</h2>
+        <h2 style="margin:0; font-size: 16px;">{{ tenant('id') ? ucfirst(tenant('id')) : config('app.name') }}</h2>
         <p style="margin:2px 0;">CASH ON DELIVERY RECEIPT</p>
     </div>
 
@@ -75,20 +67,17 @@
         </tr>
         <tr>
             <td>Customer:</td>
-            <td class="text-right">{{ $order->customer->name ?? '' }}</td>
+            <td class="text-right">{{ $order->customer->name }}</td>
         </tr>
         <tr>
             <td>Contact:</td>
-            <td class="text-right">
-                {{ $order->customer->mobile ?? '' }}
-                @if(!empty($order->customer->phone_number_2)) / {{ $order->customer->phone_number_2 }} @endif
-            </td>
+            <td class="text-right">{{ $order->customer->mobile }} @if($order->customer->phone_number_2) / {{ $order->customer->phone_number_2 }} @endif</td>
         </tr>
     </table>
 
     <div class="separator"></div>
 
-    <div class="bold" style="margin-bottom: 3px;">ITEMS</div>
+    <div class="bold" style="margin-bottom: 5px;">ITEMS</div>
     @foreach($order->items as $item)
         <div class="item-row">
             <div class="bold">{{ $item->product_name ?? $item->product->name ?? 'Unknown' }}</div>
@@ -96,8 +85,7 @@
                 <tr>
                     <td>{{ $item->quantity }} x {{ number_format($item->unit_price, 2) }}</td>
                     <td class="text-right">
-                        {{ number_format(($item->quantity * $item->unit_price) - $item->discount_amount, 2) }}
-                    </td>
+                        {{ number_format(($item->quantity * $item->unit_price) - $item->discount_amount, 2) }}</td>
                 </tr>
             </table>
         </div>
@@ -105,7 +93,7 @@
 
     <div class="separator"></div>
 
-    <table class="row-table" style="font-size: 13px;">
+    <table class="row-table" style="font-size: 14px;">
         <tr class="bold">
             <td>TOTAL TO PAY:</td>
             <td class="text-right">Rs {{ number_format($order->grand_total, 2) }}</td>
@@ -114,11 +102,12 @@
 
     <div class="separator"></div>
 
-    <div class="center" style="margin-top: 10px;">
-        <p style="margin:2px 0;">Customer Signature</p>
-        <br>
-        <p style="margin:2px 0;">____________________</p>
-        <p style="margin-top: 5px;">Thank you for your order!</p>
+    <div class="center" style="margin-top: 15px;">
+        <p>Customer Signature</p>
+        <br><br>
+        <p>____________________</p>
+        <p style="margin-top: 10px;">Thank you for your order!</p>
     </div>
 </body>
+
 </html>

@@ -603,22 +603,25 @@ class OrderController extends Controller
         }
     }
 
-    public function downloadReceipt(Order $order)
+public function downloadReceipt(Order $order)
     {
         try {
             $this->authorize('orders view');
             $order->load(['items.product', 'customer']);
 
-            // Use Tenant view or fallback to Central
-            $view = view()->exists('tenant.receipts.cod') ? 'tenant.receipts.cod' : 'central.receipts.cod';
+            // Use tenant view explicitly
+            $view = 'tenant.receipts.cod';
 
-            $pdf = Pdf::loadView($view, compact('order'))->setPaper('a5', 'portrait');
-            return $pdf->download("receipt-{$order->order_number}.pdf");
+            // Set paper to 100mm x 150mm points [0, 0, 283.46, 425.20]
+            $pdf = Pdf::loadView($view, compact('order'))
+                      ->setPaper([0, 0, 283.46, 425.20], 'portrait');
+
+            return $pdf->stream("receipt-{$order->order_number}.pdf");
         } catch (\Exception $e) {
             Log::error('PDF Generation Error (Receipt): ' . $e->getMessage());
             return back()->with('error', 'Could not generate PDF: ' . $e->getMessage());
         }
-    }
+    } 
 
     public function export(Request $request)
     {

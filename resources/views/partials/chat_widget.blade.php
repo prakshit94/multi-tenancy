@@ -422,7 +422,7 @@
                     } else if (this.isOpen && this.currentView === 'chat' && this.currentUser) {
                         this.fetchChat(this.currentUser, true);
                     }
-                }, 10000);
+                }, 30000);
             },
 
             toggleChat() {
